@@ -21,6 +21,11 @@ __kernels__ = {}  # the kernel(s) running in this interpeter
 __twin_id__ = 'main'  # id of this interpreter
 __is_master__ = True  # whether this is the parent process
 
+# twin call type
+__E_CALL_FUNC__ = 1
+__E_CALL_METHOD__ = 2
+__E_GET_MEMBER__ = 4
+
 
 def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
 	"""Check whether this interpreter is running a specific kernel"""
@@ -37,12 +42,6 @@ def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
 
 def get_kernel(kernel_id):
 	return __kernels__[kernel_id]
-
-
-def debug(*args, **kwargs):
-	return
-	kwargs['file'] = sys.stderr
-	print(*args, **kwargs)
 
 
 class SingleThreadKernel(object):
@@ -64,37 +63,30 @@ class SingleThreadKernel(object):
 
 	def run(self):
 		"""Run the kernel request server"""
-		debug(self, '\t', "startup")
 		while True:
 			try:
 				self._handle_request()
 			except KeyboardInterrupt:
-				debug(self, '\t', "interrupt")
 				break
 			except cpy2py.ipyc.IPyCTerminated:
-				debug(self, '\t', "terminate")
 				break
-		debug(self, '\t', "shutdown")
 
 	def _handle_request(self):
-		debug(self, '\t', "read ...")
 		request_id, directive = self.ipc.receive()
-		debug(self, '\t', "recv", request_id, directive)
 		self.ipc.send((request_id, self._execute_directive(directive)))
 
 	def _execute_directive(self, directive):
-		if directive[0] == 'call':
+		if directive[0] == __E_CALL_FUNC__:
 			return directive[1](*directive[2], **directive[3])
-		if directive[0] == 'method':
+		if directive[0] == __E_CALL_METHOD__:
 			pass
 		raise ValueError
 
 	def dispatch_call(self, call, *call_args, **call_kwargs):
 		self._request_id += 1
 		my_id = self._request_id
-		self.ipc.send((my_id, ('call', call, call_args, call_kwargs)))
+		self.ipc.send((my_id, (__E_CALL_FUNC__, call, call_args, call_kwargs)))
 		request_id, result = self.ipc.receive()
-		debug(self, '\t', 'recv', request_id, result)
 		return result
 
 	def dispatch_method_call(self, instance_id, method_name, *method_args, **methods_kwargs):
