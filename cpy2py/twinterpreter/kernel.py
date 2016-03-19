@@ -22,9 +22,11 @@ __twin_id__ = 'main'  # id of this interpreter
 __is_master__ = True  # whether this is the parent process
 
 # twin call type
+__E_SHUTDOWN__ = -1
 __E_CALL_FUNC__ = 1
 __E_CALL_METHOD__ = 2
 __E_GET_MEMBER__ = 4
+__E_CALL_CTOR__ = 8
 
 
 def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
@@ -41,6 +43,13 @@ def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
 
 
 def get_kernel(kernel_id):
+	assert not is_twinterpreter, 'Attempted call to own interpeter'
+	if kernel_id is TWIN_MASTER:
+		return __kernels__['main']
+	if kernel_id in (TWIN_ONLY_SLAVE, TWIN_ANY_SLAVE):
+		if len(__kernels__) != 1:
+			raise RuntimeError("Twinterpeter kenerl_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
+		return __kernels__.keys()[0]
 	return __kernels__[kernel_id]
 
 
@@ -63,24 +72,26 @@ class SingleThreadKernel(object):
 
 	def run(self):
 		"""Run the kernel request server"""
-		while True:
-			try:
-				self._handle_request()
-			except KeyboardInterrupt:
-				break
-			except cpy2py.ipyc.IPyCTerminated:
-				break
-
-	def _handle_request(self):
-		request_id, directive = self.ipc.receive()
-		self.ipc.send((request_id, self._execute_directive(directive)))
-
-	def _execute_directive(self, directive):
-		if directive[0] == __E_CALL_FUNC__:
-			return directive[1](*directive[2], **directive[3])
-		if directive[0] == __E_CALL_METHOD__:
+		try:
+			while True:
+				request_id, directive = self.ipc.receive()
+				if directive[0] == __E_CALL_FUNC__:
+					self.ipc.send((
+						request_id,
+						directive[1](*directive[2], **directive[3])
+					))
+				elif directive[0] == __E_CALL_METHOD__:
+					pass
+				elif directive[0] == __E_SHUTDOWN__:
+					del __kernels__[self.peer_id]
+					self.ipc.send((request_id, True))
+					break
+				else:
+					raise RuntimeError
+		except KeyboardInterrupt:
 			pass
-		raise ValueError
+		except cpy2py.ipyc.IPyCTerminated:
+			pass
 
 	def dispatch_call(self, call, *call_args, **call_kwargs):
 		self._request_id += 1
@@ -91,6 +102,14 @@ class SingleThreadKernel(object):
 
 	def dispatch_method_call(self, instance_id, method_name, *method_args, **methods_kwargs):
 		pass
+
+	def stop(self):
+		self._request_id += 1
+		my_id = self._request_id
+		self.ipc.send((my_id, (__E_SHUTDOWN__, )))
+		request_id, result = self.ipc.receive()
+		del __kernels__[self.peer_id]
+		return result
 
 	def __repr__(self):
 		return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())

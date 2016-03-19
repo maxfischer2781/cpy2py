@@ -50,6 +50,10 @@ class TwinMaster(object):
 			)
 		)
 
+	def stop(self):
+		if self._master is not None:
+			self._master.stop()
+
 	def execute(self, call, *call_args, **call_kwargs):
 		assert self._master is not None
 		return self._master.dispatch_call(call, *call_args, **call_kwargs)
