@@ -42,6 +42,9 @@ class TwinProxy(object):
 			)
 		self.__instance_id__ = __instance_id__
 
+	def __repr__(self):
+		return '<%s.%s twin proxy object at %x>' %(self.__class__.__module__, self.__class__.__name__, id(self))
+
 
 class ProxyMethod(object):
 	"""
@@ -89,9 +92,7 @@ class TwinMeta(type):
 			class_dict['__twin_id__'] = twin_id
 		# if we are in the appropriate interpeter, proceed as normal
 		if cpy2py.twinterpreter.kernel.is_twinterpreter(twin_id):
-			class_dict['__is_native__'] = True
 			return type.__new__(mcs, name, bases, class_dict)
-		class_dict['__is_native__'] = False
 		# if we are in any other interpeter, create a proxy class
 		# inherit only from proxy
 		bases = (TwinProxy,)
