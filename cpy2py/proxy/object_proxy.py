@@ -11,23 +11,52 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
+import types
+
 import cpy2py.twinterpreter.kernel
 
 
+# proxy internals
 class TwinProxy(object):
 	"""
 	Proxy for instances existing in the twinterpreter
-	"""
-	def __init__(self, instance_id, twin_id, members, methods):
-		self.__twin_id__ = twin_id
-		self.__instance_id__ = instance_id
-		self.__twin_members__ = members
-		self.__twin_methods__ = methods
 
-	# value member access
-	def __getattr__(self, item):
-		if item in self.__twin_members__:
-			return
+	:param __instance_id__: global id of this instance
+	:param __twin_id__: id of the native instance's twinterpeter
+
+	:note: Parameters must be provided via keywords.
+
+	:warning: This class should never be instantiated or subclassed manually. It
+	          will be subclassed automatically by :py:class:`~.TwinMeta`
+	"""
+	__twin_id__ = None  # will be set by metaclass
+
+	def __init__(self, *args, **kwargs):
+		try:
+			__instance_id__ = kwargs['__instance_id__']
+		except KeyError:
+			# native instance has not been created yet
+			__instance_id__ = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).instantiate_class(
+				type(self),
+				*args, **kwargs
+			)
+		self.__instance_id__ = __instance_id__
+
+
+class ProxyMethod(object):
+	"""
+	Proxy for Methods
+	"""
+	def __init__(self, real_method):
+		for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
+			try:
+				setattr(self, attribute, getattr(real_method, attribute))
+			except AttributeError:
+				pass
+		self.__real_method__ = real_method
+
+	def __get__(self, instance, owner):
+		return self.__real_method__.__get__(instance, owner)
 
 
 class TwinMeta(type):
@@ -38,6 +67,10 @@ class TwinMeta(type):
 	interpreter, the class is accessible directly. In any other, a proxy is
 	created with all class members transformed to appropriate calls to the
 	twinterpeter master.
+
+	Using this metaclass allows setting `__twin_id__` in a class definition.
+	This specifies which interpeter the class natively resides in. The default
+	is always the main interpeter.
 	"""
 	def __new__(mcs, name, bases, class_dict):
 		# find out which interpeter scope is appropriate for us
@@ -56,6 +89,16 @@ class TwinMeta(type):
 			class_dict['__twin_id__'] = twin_id
 		# if we are in the appropriate interpeter, proceed as normal
 		if cpy2py.twinterpreter.kernel.is_twinterpreter(twin_id):
+			class_dict['__is_native__'] = True
 			return type.__new__(mcs, name, bases, class_dict)
+		class_dict['__is_native__'] = False
 		# if we are in any other interpeter, create a proxy class
-
+		# inherit only from proxy
+		bases = (TwinProxy,)
+		# change methods to method proxies
+		for aname in class_dict.keys():
+			if aname == '__init__':
+				del class_dict[aname]
+			elif isinstance(class_dict[aname], types.FunctionType):
+				class_dict[aname] = ProxyMethod(class_dict[aname])
+		return type.__new__(mcs, name, bases, class_dict)
