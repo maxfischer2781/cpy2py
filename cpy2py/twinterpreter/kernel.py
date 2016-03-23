@@ -103,7 +103,11 @@ class SingleThreadKernel(object):
 					))
 				elif directive[0] == __E_CALL_METHOD__:
 					self._logger.warning('Directive __E_CALL_METHOD__')
-					raise NotImplementedError
+					method = getattr(self._instances[directive[1]], directive[2])
+					self.ipc.send((
+						request_id,
+						method(*directive[3], **directive[4])
+					))
 				elif directive[0] == __E_GET_MEMBER__:
 					self._logger.warning('Directive __E_GET_MEMBER__')
 					raise NotImplementedError
@@ -118,7 +122,7 @@ class SingleThreadKernel(object):
 					self._instances[id(instance)] = instance
 					self.ipc.send((
 						request_id,
-						instance
+						id(instance)
 					))
 				elif directive[0] == __E_SHUTDOWN__:
 					del __kernels__[self.peer_id]
@@ -149,7 +153,14 @@ class SingleThreadKernel(object):
 		return result
 
 	def dispatch_method_call(self, instance_id, method_name, *method_args, **methods_kwargs):
-		raise NotImplementedError
+		"""
+		Execute a method call and return the result
+		"""
+		self._request_id += 1
+		my_id = self._request_id
+		self.ipc.send((my_id, (__E_CALL_METHOD__, instance_id, method_name, method_args, methods_kwargs)))
+		request_id, result = self.ipc.receive()
+		return result
 
 	def instantiate_class(self, cls, *cls_args, **cls_kwargs):
 		"""

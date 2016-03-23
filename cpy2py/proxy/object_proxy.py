@@ -59,7 +59,12 @@ class ProxyMethod(object):
 		self.__real_method__ = real_method
 
 	def __get__(self, instance, owner):
-		return self.__real_method__.__get__(instance, owner)
+		__twin_id__ = instance.__twin_id__
+		__instance_id__ = instance.__instance_id__
+		kernel = cpy2py.twinterpreter.kernel.get_kernel(__twin_id__)
+		def proxy_method(*args, **kwargs):
+			return kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
+		return proxy_method
 
 
 class TwinMeta(type):
