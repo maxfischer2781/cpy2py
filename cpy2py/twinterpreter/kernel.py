@@ -17,8 +17,8 @@ The kernel is the main thread of execution running inside a twinterpreter.
 from __future__ import print_function
 
 import sys
-import argparse
 import os
+import logging
 
 from cpy2py.utility.enum import Unique
 import cpy2py.ipyc
@@ -39,7 +39,7 @@ __E_SHUTDOWN__ = -1
 __E_CALL_FUNC__ = 1
 __E_CALL_METHOD__ = 2
 __E_GET_MEMBER__ = 4
-__E_CALL_CTOR__ = 8
+__E_INSTANTIATE__ = 8
 
 
 def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
@@ -48,7 +48,7 @@ def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
 		return __is_master__
 	if kernel_id is TWIN_ONLY_SLAVE:
 		if len(__kernels__) != 1:
-			raise RuntimeError("Twinterpeter kenerl_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
+			raise RuntimeError("Twinterpeter kenrel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
 		return not __is_master__
 	if kernel_id is TWIN_ANY_SLAVE:
 		return not __is_master__
@@ -56,12 +56,12 @@ def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
 
 
 def get_kernel(kernel_id):
-	assert not is_twinterpreter, 'Attempted call to own interpeter'
+	assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
 	if kernel_id is TWIN_MASTER:
 		return __kernels__['main']
 	if kernel_id in (TWIN_ONLY_SLAVE, TWIN_ANY_SLAVE):
 		if len(__kernels__) != 1:
-			raise RuntimeError("Twinterpeter kenerl_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
+			raise RuntimeError("Twinterpeter kenrel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
 		return __kernels__.keys()[0]
 	return __kernels__[kernel_id]
 
@@ -78,6 +78,7 @@ class SingleThreadKernel(object):
 		return __kernels__[peer_id]
 
 	def __init__(self, peer_id, ipc=cpy2py.ipyc.StdIPC()):
+		self._logger = logging.getLogger('__cpy2py__.%s.%s' % (os.path.basename(sys.executable), peer_id))
 		self.peer_id = peer_id
 		self.ipc = ipc
 		self._request_id = 0
@@ -85,16 +86,40 @@ class SingleThreadKernel(object):
 
 	def run(self):
 		"""Run the kernel request server"""
+		exit_code = 1
+		self._logger.warning('run()')
+		self._logger.warning('Starting')
 		try:
 			while True:
+				self._logger.warning('Listening')
 				request_id, directive = self.ipc.receive()
+				self._logger.warning('Received: %d', request_id)
+				self._logger.warning(repr(directive))
 				if directive[0] == __E_CALL_FUNC__:
+					self._logger.warning('Directive __E_CALL_FUNC__')
 					self.ipc.send((
 						request_id,
 						directive[1](*directive[2], **directive[3])
 					))
 				elif directive[0] == __E_CALL_METHOD__:
-					pass
+					self._logger.warning('Directive __E_CALL_METHOD__')
+					raise NotImplementedError
+				elif directive[0] == __E_GET_MEMBER__:
+					self._logger.warning('Directive __E_GET_MEMBER__')
+					raise NotImplementedError
+				elif directive[0] == __E_INSTANTIATE__:
+					self._logger.warning('Directive __E_INSTANTIATE__')
+					cls = directive[1]
+					self._logger.warning('%s (%s)', cls, is_twinterpreter(cls.__twin_id__))
+					for attr in ['__twin_id__'] + dir(cls):
+						self._logger.warning('%20s \t %r', attr, getattr(cls, attr, '<nonde>'))
+					instance = directive[1](*directive[2], **directive[3])
+					self._logger.warning(repr(instance))
+					self._instances[id(instance)] = instance
+					self.ipc.send((
+						request_id,
+						instance
+					))
 				elif directive[0] == __E_SHUTDOWN__:
 					del __kernels__[self.peer_id]
 					self.ipc.send((request_id, True))
@@ -104,9 +129,19 @@ class SingleThreadKernel(object):
 		except KeyboardInterrupt:
 			pass
 		except cpy2py.ipyc.IPyCTerminated:
-			pass
+			exit_code = 0
+		except Exception:
+			self._logger.warning('Shutdown:', exc_info=sys.exc_info())
+		finally:
+			# always free resources and exit when the kernel stops
+			del self._instances
+			del self.ipc
+			sys.exit(exit_code)
 
 	def dispatch_call(self, call, *call_args, **call_kwargs):
+		"""
+		Execute a function call and return the result
+		"""
 		self._request_id += 1
 		my_id = self._request_id
 		self.ipc.send((my_id, (__E_CALL_FUNC__, call, call_args, call_kwargs)))
@@ -114,7 +149,17 @@ class SingleThreadKernel(object):
 		return result
 
 	def dispatch_method_call(self, instance_id, method_name, *method_args, **methods_kwargs):
-		pass
+		raise NotImplementedError
+
+	def instantiate_class(self, cls, *cls_args, **cls_kwargs):
+		"""
+		Instantiate a class and return its id
+		"""
+		self._request_id += 1
+		my_id = self._request_id
+		self.ipc.send((my_id, (__E_INSTANTIATE__, cls, cls_args, cls_kwargs)))
+		request_id, result = self.ipc.receive()
+		return result
 
 	def stop(self):
 		self._request_id += 1
