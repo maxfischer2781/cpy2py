@@ -27,5 +27,6 @@ if __name__ == "__main__":
 	print instance.foo()
 	print instance.bar
 	print instance.bar
+	del instance
 	twinterpreter.stop()
 time.sleep(0.1)

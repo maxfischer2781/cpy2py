@@ -22,5 +22,3 @@ Any pickle'able objects may be used as parameters.
 Functions may not have side-effects.
 
 Dispatching calls is a blocking action and not threadsafe.
-
-Objects may only persits in the main interpeter.
