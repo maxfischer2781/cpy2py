@@ -13,6 +13,9 @@
 # - # limitations under the License.
 import time
 
+# Object setup
+import cpy2py.proxy.object_proxy
+
 
 def time_call(call, *args, **kwargs):
 	stime = time.time()
@@ -45,3 +48,18 @@ def adder(size):
 	for _ in xrange(size):
 		value += 1.1
 	return value
+
+
+class TwinTest(object):
+	__metaclass__ = cpy2py.proxy.object_proxy.TwinMeta
+	__twin_id__ = 'pypy'
+
+	def __init__(self):
+		self.bar = 2
+
+	def foo(self, a=2):
+		"""A Foo Method"""
+		print(self, a)
+		return 1
+
+	a = 2
