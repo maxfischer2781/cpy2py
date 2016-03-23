@@ -126,30 +126,3 @@ class SingleThreadKernel(object):
 
 	def __repr__(self):
 		return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())
-
-
-def kernel_main():
-	"""
-	Deploy a kernel to make this interpreter a twinterpreter
-	"""
-	global __twin_id__
-
-	parser = argparse.ArgumentParser("Python Twinterpreter Kernel")
-	parser.add_argument(
-		'--twin-id',
-		help="unique identifier for this twinterpreter",
-		default=os.path.basename(sys.executable),
-	)
-	parser.add_argument(
-		'--peer-id',
-		help="unique identifier for our owner",
-		default='main',
-	)
-	settings = parser.parse_args()
-	__twin_id__ = settings.twin_id
-	kernel = SingleThreadKernel(peer_id=settings.peer_id)
-	kernel.run()
-
-
-if __name__ == "__main__":
-	kernel_main()

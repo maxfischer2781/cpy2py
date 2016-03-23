@@ -12,10 +12,11 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import subprocess
-import kernel
 import os
 import errno
 
+import kernel
+import bootstrap
 import cpy2py.ipyc.stdstream
 
 
@@ -25,7 +26,7 @@ class TwinMaster(object):
 
 	def __init__(self, ipc=None):
 		self._process = None
-		self._master = None
+		self._kernel = None
 		self._ipc = ipc
 
 	@property
@@ -40,7 +41,7 @@ class TwinMaster(object):
 					raise
 				# no such process anymore, cleanup
 				self._process = None
-				self._master = None
+				self._kernel = None
 			else:
 				return True
 		return False
@@ -48,14 +49,14 @@ class TwinMaster(object):
 	def start(self):
 		self._process = subprocess.Popen(
 			[
-				self.executable, '-m', kernel.__name__,
+				self.executable, '-m', bootstrap.__name__,
 				'--twin-id', self.twinterpeter_id,
 				'--peer-id', kernel.__twin_id__,
 			],
 			stdin=subprocess.PIPE,
 			stdout=subprocess.PIPE,
 		)
-		self._master = kernel.SingleThreadKernel(
+		self._kernel = kernel.SingleThreadKernel(
 			self.twinterpeter_id,
 			ipc=cpy2py.ipyc.stdstream.StdIPC(
 				readstream=self._process.stdout,
@@ -64,12 +65,12 @@ class TwinMaster(object):
 		)
 
 	def stop(self):
-		if self._master is not None:
-			self._master.stop()
+		if self._kernel is not None:
+			self._kernel.stop()
 
 	def execute(self, call, *call_args, **call_kwargs):
-		assert self._master is not None
-		return self._master.dispatch_call(call, *call_args, **call_kwargs)
+		assert self._kernel is not None
+		return self._kernel.dispatch_call(call, *call_args, **call_kwargs)
 
 
 class TwinPyPy(TwinMaster):
