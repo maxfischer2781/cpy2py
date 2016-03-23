@@ -10,7 +10,7 @@ CPy2Py makes this possible in a single application.
 
 CPy2Py uses twinterpeters - additional, alternative interpeters running along the primary ones.
 Function calls can be dispatched and objects may reside in either interpeter.
-The module abstracts the mechanisms of this, allowing for an almost seamless interaction.
+The package abstracts the mechanisms of this, allowing for an almost seamless interaction.
 
 ## Current State ##
 
