@@ -40,6 +40,8 @@ class TwinProxy(object):
 				type(self),
 				*args, **kwargs
 			)
+		else:
+			cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).increment_instance_ref(__instance_id__)
 		self.__instance_id__ = __instance_id__
 
 	def __repr__(self):
@@ -48,6 +50,11 @@ class TwinProxy(object):
 	def __getattr__(self, item):
 		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
 		return kernel.get_attribute(self.__instance_id__, item)
+
+	def __del__(self):
+		if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
+			kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+			kernel.decrement_instance_ref(self.__instance_id__)
 
 
 class ProxyMethod(object):

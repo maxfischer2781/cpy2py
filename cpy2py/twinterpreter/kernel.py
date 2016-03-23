@@ -87,7 +87,7 @@ class SingleThreadKernel(object):
 		self.peer_id = peer_id
 		self.ipc = ipc
 		self._request_id = 0
-		self._instances = {}  # instance_id => instance
+		self._instances = {}  # instance_id => [ref_count, instance]
 
 	def run(self):
 		"""Run the kernel request server"""
@@ -112,23 +112,41 @@ class SingleThreadKernel(object):
 					inst_id, method_name, method_args, method_kwargs = directive[1]
 					self.ipc.send((
 						request_id,
-						getattr(self._instances[inst_id], method_name)(*method_args, **method_kwargs)
+						getattr(self._instances[inst_id][1], method_name)(*method_args, **method_kwargs)
 					))
 				elif directive[0] == __E_GET_MEMBER__:
 					self._logger.warning('Directive __E_GET_MEMBER__')
 					inst_id, attribute_name = directive[1]
 					self.ipc.send((
 						request_id,
-						getattr(self._instances[inst_id], attribute_name)
+						getattr(self._instances[inst_id][1], attribute_name)
 					))
 				elif directive[0] == __E_INSTANTIATE__:
 					self._logger.warning('Directive __E_INSTANTIATE__')
 					cls, cls_args, cls_kwargs = directive[1]
 					instance = cls(*cls_args, **cls_kwargs)
-					self._instances[id(instance)] = instance
+					self._instances[id(instance)] = [1, instance]
 					self.ipc.send((
 						request_id,
 						id(instance)
+					))
+				elif directive[0] == __E_REF_DECR__:
+					self._logger.warning('Directive __E_REF_DECR__')
+					inst_id = directive[1][0]
+					self._instances[inst_id][0] -= 1
+					self.ipc.send((
+						request_id,
+						self._instances[inst_id][0],
+					))
+					if self._instances[inst_id][0] <= 0:
+						del self._instances[inst_id]
+				elif directive[0] == __E_REF_INCR__:
+					self._logger.warning('Directive __E_REF_INCR__')
+					inst_id = directive[1][0]
+					self._instances[inst_id][0] += 1
+					self.ipc.send((
+						request_id,
+						self._instances[inst_id][0],
 					))
 				elif directive[0] == __E_SHUTDOWN__:
 					del __kernels__[self.peer_id]
@@ -148,6 +166,7 @@ class SingleThreadKernel(object):
 			del self.ipc
 			sys.exit(exit_code)
 
+	# dispatching: execute actions in other interpeter
 	def _dispatch_request(self, request_type, *args):
 		self._request_id += 1
 		my_id = self._request_id
@@ -156,39 +175,32 @@ class SingleThreadKernel(object):
 		return result
 
 	def dispatch_call(self, call, *call_args, **call_kwargs):
-		"""
-		Execute a function call and return the result
-		"""
+		"""Execute a function call and return the result"""
 		return self._dispatch_request(__E_CALL_FUNC__, call, call_args, call_kwargs)
 
 	def dispatch_method_call(self, instance_id, method_name, *method_args, **methods_kwargs):
-		"""
-		Execute a method call and return the result
-		"""
+		"""Execute a method call and return the result"""
 		return self._dispatch_request(__E_CALL_METHOD__, instance_id, method_name, method_args, methods_kwargs)
 
 	def get_attribute(self, instance_id, attribute_name):
-		"""
-		Execute a method call and return the result
-		"""
+		"""Execute a method call and return the result"""
 		return self._dispatch_request(__E_GET_MEMBER__, instance_id, attribute_name)
 
 	def instantiate_class(self, cls, *cls_args, **cls_kwargs):
-		"""
-		Instantiate a class and return its id
-		"""
+		"""Instantiate a class, increments its reference count, and return its id"""
 		return self._dispatch_request(__E_INSTANTIATE__, cls, cls_args, cls_kwargs)
 
 	def decrement_instance_ref(self, instance_id):
-		"""
-		Decrement the reference count to an instance by one
-		"""
-		return self._dispatch_request(__E_REF_DECR__, instance_id)
+		"""Decrement the reference count to an instance by one"""
+		try:
+			return self._dispatch_request(__E_REF_DECR__, instance_id)
+		except cpy2py.ipyc.IPyCTerminated:
+			pass
+		except Exception as err:
+			print('foo', type(err), err)
 
 	def increment_instance_ref(self, instance_id):
-		"""
-		Increment the reference count to an instance by one
-		"""
+		"""Increment the reference count to an instance by one"""
 		return self._dispatch_request(__E_REF_INCR__, instance_id)
 
 	def stop(self):
