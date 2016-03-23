@@ -36,10 +36,15 @@ __is_master__ = True  # whether this is the parent process
 
 # twin call type
 __E_SHUTDOWN__ = -1
+
 __E_CALL_FUNC__ = 1
+
 __E_CALL_METHOD__ = 2
 __E_GET_MEMBER__ = 4
+
 __E_INSTANTIATE__ = 8
+__E_REF_INCR__ = 16
+__E_REF_DECR__ = 32
 
 
 def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
@@ -97,28 +102,29 @@ class SingleThreadKernel(object):
 				self._logger.warning(repr(directive))
 				if directive[0] == __E_CALL_FUNC__:
 					self._logger.warning('Directive __E_CALL_FUNC__')
+					func_obj, func_args, func_kwargs = directive[1]
 					self.ipc.send((
 						request_id,
-						directive[1](*directive[2], **directive[3])
+						func_obj(*func_args, **func_kwargs)
 					))
 				elif directive[0] == __E_CALL_METHOD__:
 					self._logger.warning('Directive __E_CALL_METHOD__')
-					method = getattr(self._instances[directive[1]], directive[2])
+					inst_id, method_name, method_args, method_kwargs = directive[1]
 					self.ipc.send((
 						request_id,
-						method(*directive[3], **directive[4])
+						getattr(self._instances[inst_id], method_name)(*method_args, **method_kwargs)
 					))
 				elif directive[0] == __E_GET_MEMBER__:
 					self._logger.warning('Directive __E_GET_MEMBER__')
-					raise NotImplementedError
+					inst_id, attribute_name = directive[1]
+					self.ipc.send((
+						request_id,
+						getattr(self._instances[inst_id], attribute_name)
+					))
 				elif directive[0] == __E_INSTANTIATE__:
 					self._logger.warning('Directive __E_INSTANTIATE__')
-					cls = directive[1]
-					self._logger.warning('%s (%s)', cls, is_twinterpreter(cls.__twin_id__))
-					for attr in ['__twin_id__'] + dir(cls):
-						self._logger.warning('%20s \t %r', attr, getattr(cls, attr, '<nonde>'))
-					instance = directive[1](*directive[2], **directive[3])
-					self._logger.warning(repr(instance))
+					cls, cls_args, cls_kwargs = directive[1]
+					instance = cls(*cls_args, **cls_kwargs)
 					self._instances[id(instance)] = instance
 					self.ipc.send((
 						request_id,
@@ -142,43 +148,51 @@ class SingleThreadKernel(object):
 			del self.ipc
 			sys.exit(exit_code)
 
+	def _dispatch_request(self, request_type, *args):
+		self._request_id += 1
+		my_id = self._request_id
+		self.ipc.send((my_id, (request_type, args)))
+		request_id, result = self.ipc.receive()
+		return result
+
 	def dispatch_call(self, call, *call_args, **call_kwargs):
 		"""
 		Execute a function call and return the result
 		"""
-		self._request_id += 1
-		my_id = self._request_id
-		self.ipc.send((my_id, (__E_CALL_FUNC__, call, call_args, call_kwargs)))
-		request_id, result = self.ipc.receive()
-		return result
+		return self._dispatch_request(__E_CALL_FUNC__, call, call_args, call_kwargs)
 
 	def dispatch_method_call(self, instance_id, method_name, *method_args, **methods_kwargs):
 		"""
 		Execute a method call and return the result
 		"""
-		self._request_id += 1
-		my_id = self._request_id
-		self.ipc.send((my_id, (__E_CALL_METHOD__, instance_id, method_name, method_args, methods_kwargs)))
-		request_id, result = self.ipc.receive()
-		return result
+		return self._dispatch_request(__E_CALL_METHOD__, instance_id, method_name, method_args, methods_kwargs)
+
+	def get_attribute(self, instance_id, attribute_name):
+		"""
+		Execute a method call and return the result
+		"""
+		return self._dispatch_request(__E_GET_MEMBER__, instance_id, attribute_name)
 
 	def instantiate_class(self, cls, *cls_args, **cls_kwargs):
 		"""
 		Instantiate a class and return its id
 		"""
-		self._request_id += 1
-		my_id = self._request_id
-		self.ipc.send((my_id, (__E_INSTANTIATE__, cls, cls_args, cls_kwargs)))
-		request_id, result = self.ipc.receive()
-		return result
+		return self._dispatch_request(__E_INSTANTIATE__, cls, cls_args, cls_kwargs)
+
+	def decrement_instance_ref(self, instance_id):
+		"""
+		Decrement the reference count to an instance by one
+		"""
+		return self._dispatch_request(__E_REF_DECR__, instance_id)
+
+	def increment_instance_ref(self, instance_id):
+		"""
+		Increment the reference count to an instance by one
+		"""
+		return self._dispatch_request(__E_REF_INCR__, instance_id)
 
 	def stop(self):
-		self._request_id += 1
-		my_id = self._request_id
-		self.ipc.send((my_id, (__E_SHUTDOWN__, )))
-		request_id, result = self.ipc.receive()
-		del __kernels__[self.peer_id]
-		return result
+		return self._dispatch_request(__E_SHUTDOWN__)
 
 	def __repr__(self):
 		return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())

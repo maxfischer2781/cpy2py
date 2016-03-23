@@ -45,6 +45,10 @@ class TwinProxy(object):
 	def __repr__(self):
 		return '<%s.%s twin proxy object at %x>' %(self.__class__.__module__, self.__class__.__name__, id(self))
 
+	def __getattr__(self, item):
+		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+		return kernel.get_attribute(self.__instance_id__, item)
+
 
 class ProxyMethod(object):
 	"""
