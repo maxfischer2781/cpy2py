@@ -21,6 +21,9 @@ if __name__ == "__main__":
 	twinterpreter = cpy2py.twinterpreter.twin_pypy.TwinPyPy()
 	twinterpreter.start()
 	print cpy2py.twinterpreter.kernel.__kernels__
-	print example_module.TwinTest()
+	instance = example_module.TwinTest()
+	print instance
+	print instance.foo()
+	print instance.foo()
 	twinterpreter.stop()
 time.sleep(0.1)

@@ -59,7 +59,6 @@ class TwinTest(object):
 
 	def foo(self, a=2):
 		"""A Foo Method"""
-		print(self, a)
-		return 1
+		return '%s says %s' % (repr(self), str(a))
 
 	a = 2
