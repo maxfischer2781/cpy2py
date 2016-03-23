@@ -34,17 +34,18 @@ __kernels__ = {}  # the kernel(s) running in this interpeter
 __twin_id__ = 'main'  # id of this interpreter
 __is_master__ = True  # whether this is the parent process
 
+# Message Enums
 # twin call type
 __E_SHUTDOWN__ = -1
-
 __E_CALL_FUNC__ = 1
-
 __E_CALL_METHOD__ = 2
 __E_GET_MEMBER__ = 4
-
 __E_INSTANTIATE__ = 8
 __E_REF_INCR__ = 16
 __E_REF_DECR__ = 32
+# twin reply type
+__E_SUCCESS__ = 0
+__E_EXCEPTION__ = 1
 
 
 def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
@@ -100,66 +101,53 @@ class SingleThreadKernel(object):
 				request_id, directive = self.ipc.receive()
 				self._logger.warning('Received: %d', request_id)
 				self._logger.warning(repr(directive))
-				if directive[0] == __E_CALL_FUNC__:
-					self._logger.warning('Directive __E_CALL_FUNC__')
-					func_obj, func_args, func_kwargs = directive[1]
-					self.ipc.send((
-						request_id,
-						func_obj(*func_args, **func_kwargs)
-					))
-				elif directive[0] == __E_CALL_METHOD__:
-					self._logger.warning('Directive __E_CALL_METHOD__')
-					inst_id, method_name, method_args, method_kwargs = directive[1]
-					self.ipc.send((
-						request_id,
-						getattr(self._instances[inst_id][1], method_name)(*method_args, **method_kwargs)
-					))
-				elif directive[0] == __E_GET_MEMBER__:
-					self._logger.warning('Directive __E_GET_MEMBER__')
-					inst_id, attribute_name = directive[1]
-					self.ipc.send((
-						request_id,
-						getattr(self._instances[inst_id][1], attribute_name)
-					))
-				elif directive[0] == __E_INSTANTIATE__:
-					self._logger.warning('Directive __E_INSTANTIATE__')
-					cls, cls_args, cls_kwargs = directive[1]
-					instance = cls(*cls_args, **cls_kwargs)
-					self._instances[id(instance)] = [1, instance]
-					self.ipc.send((
-						request_id,
-						id(instance)
-					))
-				elif directive[0] == __E_REF_DECR__:
-					self._logger.warning('Directive __E_REF_DECR__')
-					inst_id = directive[1][0]
-					self._instances[inst_id][0] -= 1
-					self.ipc.send((
-						request_id,
-						self._instances[inst_id][0],
-					))
-					if self._instances[inst_id][0] <= 0:
-						del self._instances[inst_id]
-				elif directive[0] == __E_REF_INCR__:
-					self._logger.warning('Directive __E_REF_INCR__')
-					inst_id = directive[1][0]
-					self._instances[inst_id][0] += 1
-					self.ipc.send((
-						request_id,
-						self._instances[inst_id][0],
-					))
-				elif directive[0] == __E_SHUTDOWN__:
-					del __kernels__[self.peer_id]
-					self.ipc.send((request_id, True))
-					break
+				try:
+					if directive[0] == __E_CALL_FUNC__:
+						self._logger.warning('Directive __E_CALL_FUNC__')
+						func_obj, func_args, func_kwargs = directive[1]
+						response = func_obj(*func_args, **func_kwargs)
+					elif directive[0] == __E_CALL_METHOD__:
+						self._logger.warning('Directive __E_CALL_METHOD__')
+						inst_id, method_name, method_args, method_kwargs = directive[1]
+						response = getattr(self._instances[inst_id][1], method_name)(*method_args, **method_kwargs)
+					elif directive[0] == __E_GET_MEMBER__:
+						self._logger.warning('Directive __E_GET_MEMBER__')
+						inst_id, attribute_name = directive[1]
+						response = getattr(self._instances[inst_id][1], attribute_name)
+					elif directive[0] == __E_INSTANTIATE__:
+						self._logger.warning('Directive __E_INSTANTIATE__')
+						cls, cls_args, cls_kwargs = directive[1]
+						instance = cls(*cls_args, **cls_kwargs)
+						self._instances[id(instance)] = [1, instance]
+						response = id(instance)
+					elif directive[0] == __E_REF_DECR__:
+						self._logger.warning('Directive __E_REF_DECR__')
+						inst_id = directive[1][0]
+						self._instances[inst_id][0] -= 1
+						response = self._instances[inst_id][0]
+						if self._instances[inst_id][0] <= 0:
+							del self._instances[inst_id]
+					elif directive[0] == __E_REF_INCR__:
+						self._logger.warning('Directive __E_REF_INCR__')
+						inst_id = directive[1][0]
+						self._instances[inst_id][0] += 1
+						response = self._instances[inst_id][0]
+					elif directive[0] == __E_SHUTDOWN__:
+						del __kernels__[self.peer_id]
+						self.ipc.send((request_id, __E_SHUTDOWN__, True))
+						break
+					else:
+						raise RuntimeError
+				except Exception as err:
+					self.ipc.send((request_id, __E_EXCEPTION__, err))
+					if isinstance(err, KeyboardInterrupt):
+						break
 				else:
-					raise RuntimeError
-		except KeyboardInterrupt:
-			pass
+					self.ipc.send((request_id, __E_SUCCESS__, response))
 		except cpy2py.ipyc.IPyCTerminated:
 			exit_code = 0
 		except Exception:
-			self._logger.warning('Shutdown:', exc_info=sys.exc_info())
+			self._logger.exception('TWIN KERNEL EXCEPTION')
 		finally:
 			# always free resources and exit when the kernel stops
 			del self._instances
@@ -171,8 +159,14 @@ class SingleThreadKernel(object):
 		self._request_id += 1
 		my_id = self._request_id
 		self.ipc.send((my_id, (request_type, args)))
-		request_id, result = self.ipc.receive()
-		return result
+		request_id, result_type, result_body = self.ipc.receive()
+		if result_type == __E_EXCEPTION__:
+			raise result_body
+		elif result_type == __E_SHUTDOWN__:
+			return True
+		elif result_type == __E_SUCCESS__:
+			return result_body
+		raise RuntimeError
 
 	def dispatch_call(self, call, *call_args, **call_kwargs):
 		"""Execute a function call and return the result"""
