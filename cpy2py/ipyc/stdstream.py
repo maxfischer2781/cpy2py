@@ -22,8 +22,11 @@ class StdIPC(object):
 		self._writestream = writestream
 
 	def send(self, payload):
-		pickle.dump(payload, self._writestream)
-		sys.stdout.flush()
+		try:
+			pickle.dump(payload, self._writestream)
+			self._writestream.flush()
+		except IOError:
+			raise IPyCTerminated
 
 	def receive(self):
 		try:
