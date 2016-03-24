@@ -39,10 +39,11 @@ __is_master__ = True  # whether this is the parent process
 __E_SHUTDOWN__ = -1
 __E_CALL_FUNC__ = 1
 __E_CALL_METHOD__ = 2
-__E_GET_MEMBER__ = 4
-__E_INSTANTIATE__ = 8
-__E_REF_INCR__ = 16
-__E_REF_DECR__ = 32
+__E_GET_ATTRIBUTE__ = 3
+__E_SET_ATTRIBUTE__ = 4
+__E_INSTANTIATE__ = 5
+__E_REF_INCR__ = 6
+__E_REF_DECR__ = 7
 # twin reply type
 __E_SUCCESS__ = 0
 __E_EXCEPTION__ = 1
@@ -110,10 +111,14 @@ class SingleThreadKernel(object):
 						self._logger.warning('Directive __E_CALL_METHOD__')
 						inst_id, method_name, method_args, method_kwargs = directive[1]
 						response = getattr(self._instances[inst_id][1], method_name)(*method_args, **method_kwargs)
-					elif directive[0] == __E_GET_MEMBER__:
+					elif directive[0] == __E_GET_ATTRIBUTE__:
 						self._logger.warning('Directive __E_GET_MEMBER__')
 						inst_id, attribute_name = directive[1]
 						response = getattr(self._instances[inst_id][1], attribute_name)
+					elif directive[0] == __E_SET_ATTRIBUTE__:
+						self._logger.warning('Directive __E_SET_ATTRIBUTE__')
+						inst_id, attribute_name, new_value = directive[1]
+						response = setattr(self._instances[inst_id][1], attribute_name, new_value)
 					elif directive[0] == __E_INSTANTIATE__:
 						self._logger.warning('Directive __E_INSTANTIATE__')
 						cls, cls_args, cls_kwargs = directive[1]
@@ -177,8 +182,12 @@ class SingleThreadKernel(object):
 		return self._dispatch_request(__E_CALL_METHOD__, instance_id, method_name, method_args, methods_kwargs)
 
 	def get_attribute(self, instance_id, attribute_name):
-		"""Execute a method call and return the result"""
-		return self._dispatch_request(__E_GET_MEMBER__, instance_id, attribute_name)
+		"""Get an attribute of an instance"""
+		return self._dispatch_request(__E_GET_ATTRIBUTE__, instance_id, attribute_name)
+
+	def set_attribute(self, instance_id, attribute_name, new_value):
+		"""Set an attribute of an instance"""
+		return self._dispatch_request(__E_SET_ATTRIBUTE__, instance_id, attribute_name, new_value)
 
 	def instantiate_class(self, cls, *cls_args, **cls_kwargs):
 		"""Instantiate a class, increments its reference count, and return its id"""

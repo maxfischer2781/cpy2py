@@ -42,14 +42,18 @@ class TwinProxy(object):
 			)
 		else:
 			cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).increment_instance_ref(__instance_id__)
-		self.__instance_id__ = __instance_id__
+		object.__setattr__(self, '__instance_id__', __instance_id__)
 
 	def __repr__(self):
 		return '<%s.%s twin proxy object at %x>' %(self.__class__.__module__, self.__class__.__name__, id(self))
 
-	def __getattr__(self, item):
+	def __getattr__(self, name):
 		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
-		return kernel.get_attribute(self.__instance_id__, item)
+		return kernel.get_attribute(self.__instance_id__, name)
+
+	def __setattr__(self, name, value):
+		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+		return kernel.set_attribute(self.__instance_id__, name, value)
 
 	def __del__(self):
 		if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
