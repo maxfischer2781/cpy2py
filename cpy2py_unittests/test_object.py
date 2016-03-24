@@ -19,6 +19,9 @@ class PrimitiveObject(object):
 	def method_arg(self, arg1=4):
 		return arg1
 
+	def get_instance_attribute(self):
+		return self.instance_attribute
+
 
 class TestObjectPrimitives(unittest.TestCase):
 	def setUp(self):
@@ -35,7 +38,12 @@ class TestObjectPrimitives(unittest.TestCase):
 		self.assertEqual(PrimitiveObject().class_attribute, 1)
 
 	def test_instance_attribute(self):
-		self.assertEqual(PrimitiveObject().instance_attribute, 2)
+		instance = PrimitiveObject()
+		self.assertEqual(instance.instance_attribute, 2)
+		self.assertEqual(instance.get_instance_attribute(), 2)
+		instance.instance_attribute = 3
+		self.assertEqual(instance.instance_attribute, 3)
+		self.assertEqual(instance.get_instance_attribute(), 3)
 
 	def test_method_call(self):
 		instance = PrimitiveObject()

@@ -15,6 +15,8 @@ The package abstracts the mechanisms of this, allowing for an almost seamless in
 ## Current State ##
 
 The module currently allows dispatching arbitrary function calls.
+Objects may be created and persist inside the twinterpeter.
+Object attributes and methods can be accessed and used.
 Any pickle'able objects may be used as parameters.
 
 ### Current Limitations ###
@@ -23,4 +25,6 @@ Any pickle'able objects may be used as parameters.
 
    * Dispatching calls is a blocking action and not threadsafe.
 
-   * Objects used inline may be garbage collected pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`
+   * Proxy Objects used inline may be garbage collected pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`
+
+   * Proxy Objects are not valid parameters to twin calls, including magic methods such as `__lt__`.
