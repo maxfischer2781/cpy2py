@@ -19,8 +19,8 @@ Any pickle'able objects may be used as parameters.
 
 ### Current Limitations ###
 
-Functions may not have side-effects.
+   * Functions may not have side-effects.
 
-Dispatching calls is a blocking action and not threadsafe.
+   * Dispatching calls is a blocking action and not threadsafe.
 
-Objects used inline may day pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`
+   * Objects used inline may be garbage collected pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`
