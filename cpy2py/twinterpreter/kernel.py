@@ -198,7 +198,10 @@ class SingleThreadKernel(object):
 		return self._dispatch_request(__E_REF_INCR__, instance_id)
 
 	def stop(self):
-		return self._dispatch_request(__E_SHUTDOWN__)
+		if self._dispatch_request(__E_SHUTDOWN__):
+			del __kernels__[self.peer_id]
+			return True
+		return False
 
 	def __repr__(self):
 		return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())
