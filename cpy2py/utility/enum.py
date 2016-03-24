@@ -32,17 +32,22 @@ class Unique(object):
 		return self.name
 
 	def __repr__(self):
-		return "<%s@%d>"%(self.representation, id(self))
+		return "<%s@%d>" % (self.representation, id(self))
 
 	def __eq__(self, other):
 		return self is other
+
 	def __ne__(self, other):
-		return not self is other
+		return self is not other
+
 	def __gt__(self, other):
 		return NotImplemented
+
 	def __lt__(self, other):
 		return NotImplemented
+
 	def __ge__(self, other):
 		return NotImplemented
+
 	def __le__(self, other):
 		return NotImplemented

@@ -205,14 +205,14 @@ def filehash(filepath, blocksize=65536, maxbytes=float("inf")):
 	:type maxbytes: int or float
 	:return:
 	"""
-	hash = hashlib.sha512()
+	fhash = hashlib.sha512()
 	with open(filepath, "rb") as filedata:
 		bytesread, databuffer = 0, filedata.read(blocksize)
 		while databuffer and bytesread < maxbytes:
-			hash.update(databuffer)
+			fhash.update(databuffer)
 			bytesread += len(databuffer)
 			databuffer = filedata.read(blocksize)
-	return hash.hexdigest()
+	return fhash.hexdigest()
 
 
 def write_license(license_url, license_file):
@@ -410,12 +410,3 @@ if __name__ == "__main__":
 	for file_path in get_license_target_files(source_files=options.source_files, source_dirs=options.source_dirs):
 		print(file_path)
 		update_license_header(file_path)
-	if False:
-		if options.fetch_license or options.force:
-			if get_license():
-				print "Added LICENSE"
-			else:
-				print "Skipped LICENSE"
-		for file_path in options.update_source_files:
-			if update_license_header(file_path):
-				print "Added Header <%s>" % file_path

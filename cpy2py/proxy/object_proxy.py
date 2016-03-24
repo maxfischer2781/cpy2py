@@ -45,7 +45,7 @@ class TwinProxy(object):
 		object.__setattr__(self, '__instance_id__', __instance_id__)
 
 	def __repr__(self):
-		return '<%s.%s twin proxy object at %x>' %(self.__class__.__module__, self.__class__.__name__, id(self))
+		return '<%s.%s twin proxy object at %x>' % (self.__class__.__module__, self.__class__.__name__, id(self))
 
 	def __getattr__(self, name):
 		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
@@ -86,9 +86,7 @@ class ProxyMethod(object):
 		__twin_id__ = instance.__twin_id__
 		__instance_id__ = instance.__instance_id__
 		kernel = cpy2py.twinterpreter.kernel.get_kernel(__twin_id__)
-		def proxy_method(*args, **kwargs):
-			return kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
-		return proxy_method
+		return lambda *args, **kwargs: kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
 
 
 class TwinMeta(type):
