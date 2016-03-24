@@ -64,14 +64,23 @@ class TwinProxy(object):
 class ProxyMethod(object):
 	"""
 	Proxy for Methods
+
+	:param real_method: the function/method object to be proxied
+	:param name: name of the function/method to be proxied
+
+	:note: It is in general sufficient to supply either `real_method` *or*
+	       `name`.
 	"""
-	def __init__(self, real_method):
-		for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
-			try:
-				setattr(self, attribute, getattr(real_method, attribute))
-			except AttributeError:
-				pass
-		self.__real_method__ = real_method
+	def __init__(self, real_method=None, name=None):
+		if real_method is not None:
+			for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
+				try:
+					setattr(self, attribute, getattr(real_method, attribute))
+				except AttributeError:
+					pass
+		if name is not None:
+			self.__name__ = name
+		assert hasattr(self, '__name__')
 
 	def __get__(self, instance, owner):
 		__twin_id__ = instance.__twin_id__
@@ -122,4 +131,8 @@ class TwinMeta(type):
 				del class_dict[aname]
 			elif isinstance(class_dict[aname], types.FunctionType):
 				class_dict[aname] = ProxyMethod(class_dict[aname])
+		# always forward default methods
+		for aname in ['__hash__', '__cmp__']:
+			if aname not in class_dict:
+				class_dict[aname] = ProxyMethod(name=aname)
 		return type.__new__(mcs, name, bases, class_dict)
