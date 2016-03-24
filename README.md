@@ -22,3 +22,5 @@ Any pickle'able objects may be used as parameters.
 Functions may not have side-effects.
 
 Dispatching calls is a blocking action and not threadsafe.
+
+Objects used inline may day pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`
