@@ -27,4 +27,4 @@ Any pickle'able objects may be used as parameters.
 
    * Proxy Objects used inline may be garbage collected pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`
 
-   * Proxy Objects are not valid parameters to twin calls, including magic methods such as `__lt__`.
+   * The native Twintepeter may not be changed when inheriting.
