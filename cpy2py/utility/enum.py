@@ -13,10 +13,10 @@
 # - # limitations under the License.
 
 
-__all__ = ['Unique']
+__all__ = ['UniqueObj']
 
 
-class Unique(object):
+class UniqueObj(object):
 	"""
 	Collectionless unique element
 
@@ -24,30 +24,34 @@ class Unique(object):
 	It offers configurable str and repr for verbosity. In addition, it supports
 	equality comparisons.
 	"""
-	def __init__(self, name="UniqueObj", representation=None):
-		self.name = name
-		self.representation = representation or name
+	name = None
 
-	def __str__(self):
-		return self.name
+	class __metaclass__(type):
+		def __new__(mcs, name, bases, class_dict):
+			if class_dict.get('name', None) is None:
+				class_dict['name'] = name
+			return type.__new__(mcs, name, bases, class_dict)
 
-	def __repr__(self):
-		return "<%s@%d>" % (self.representation, id(self))
+		def __str__(cls):
+			return cls.name
 
-	def __eq__(self, other):
-		return self is other
+		def __repr__(cls):
+			return "<unique object %s at 0x%x>" % (cls.__name__, id(cls))
 
-	def __ne__(self, other):
-		return self is not other
+		def __eq__(cls, other):
+			return cls is other
 
-	def __gt__(self, other):
-		return NotImplemented
+		def __ne__(cls, other):
+			return cls is not other
 
-	def __lt__(self, other):
-		return NotImplemented
+		def __gt__(cls, other):
+			return NotImplemented
 
-	def __ge__(self, other):
-		return NotImplemented
+		def __lt__(cls, other):
+			return NotImplemented
 
-	def __le__(self, other):
-		return NotImplemented
+		def __ge__(cls, other):
+			return NotImplemented
+
+		def __le__(cls, other):
+			return NotImplemented

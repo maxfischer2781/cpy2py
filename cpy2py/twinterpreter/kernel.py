@@ -22,16 +22,24 @@ import time
 import random
 import logging
 
-from cpy2py.utility.enum import Unique
+from cpy2py.utility.enum import UniqueObj
 from cpy2py.utility.exceptions import format_exception
 import cpy2py.ipyc
 from kernel_exceptions import TwinterpeterUnavailable
 
 
 # shorthands for special kernels
-TWIN_MASTER = Unique(name='<Master Kernel>')
-TWIN_ANY_SLAVE = Unique(name='<Any Twin Kernel>')
-TWIN_ONLY_SLAVE = Unique(name='<Single Twin Kernel>')
+class TWIN_MASTER(UniqueObj):
+	name = '<Master Kernel>'
+
+
+class TWIN_ANY_SLAVE(UniqueObj):
+	name = '<Any Twin Kernel>'
+
+
+class TWIN_ONLY_SLAVE(UniqueObj):
+	name = '<Single Twin Kernel>'
+
 
 # current twin state
 #: the kernel(s) running in this interpeter
@@ -68,7 +76,7 @@ def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
 		return __is_master__
 	if kernel_id is TWIN_ONLY_SLAVE:
 		if len(__kernels__) != 1:
-			raise RuntimeError("Twinterpeter kenrel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
+			raise RuntimeError("Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
 		return not __is_master__
 	if kernel_id is TWIN_ANY_SLAVE:
 		return not __is_master__
@@ -82,7 +90,7 @@ def get_kernel(kernel_id):
 			return __kernels__['main']
 		if kernel_id in (TWIN_ONLY_SLAVE, TWIN_ANY_SLAVE):
 			if len(__kernels__) != 1:
-				raise RuntimeError("Twinterpeter kenrel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
+				raise RuntimeError("Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
 			return __kernels__.keys()[0]
 		return __kernels__[kernel_id]
 	except KeyError:
