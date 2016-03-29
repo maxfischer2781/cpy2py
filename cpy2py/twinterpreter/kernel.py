@@ -18,9 +18,12 @@ from __future__ import print_function
 
 import sys
 import os
+import time
+import random
 import logging
 
 from cpy2py.utility.enum import Unique
+from cpy2py.utility.exceptions import format_exception
 import cpy2py.ipyc
 
 
@@ -30,9 +33,18 @@ TWIN_ANY_SLAVE = Unique(name='Any Twin Kernel')
 TWIN_ONLY_SLAVE = Unique(name='Single Twin Kernel')
 
 # current twin state
-__kernels__ = {}  # the kernel(s) running in this interpeter
-__twin_id__ = 'main'  # id of this interpreter
-__is_master__ = True  # whether this is the parent process
+#: the kernel(s) running in this interpeter
+__kernels__ = {}
+#: id of this interpreter/process
+__twin_id__ = 'main'
+#: whether this is the parent process
+__is_master__ = True
+#: id of the active group of twinterpeters
+__twin_group_id__ = '%08X%08X%08X' % (
+	time.time() * 16,
+	os.getpid(),
+	random.random() * pow(16, 8)
+)
 
 # Message Enums
 # twin call type
@@ -94,7 +106,7 @@ class SingleThreadKernel(object):
 	def run(self):
 		"""Run the kernel request server"""
 		exit_code = 1
-		self._logger.warning('run()')
+		self._logger.warning('run @ %.1f', time.time())
 		self._logger.warning('Starting')
 		try:
 			while True:
@@ -152,7 +164,8 @@ class SingleThreadKernel(object):
 		except cpy2py.ipyc.IPyCTerminated:
 			exit_code = 0
 		except Exception:
-			self._logger.exception('TWIN KERNEL EXCEPTION')
+			self._logger.critical('TWIN KERNEL EXCEPTION')
+			format_exception(self._logger, 3)
 		finally:
 			# always free resources and exit when the kernel stops
 			del self._instances
