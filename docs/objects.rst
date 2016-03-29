@@ -11,7 +11,7 @@ Plain objects are *copied* (pass-by-value), while twin objects preserve their id
 Since the former is not how Python usually handles objects, this may lead to unexpected side-effects.
 
 Working with :py:class:`TwinObject`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 CPy2Py's baseclass :py:class:`TwinObject` behaves like :py:class:`object` whenever possible.
 Both are meant to be used as the baseclass for custom classes.
@@ -50,8 +50,20 @@ The underlying hooks of CPy2Py ensure that behaviour appears the same in any twi
     my_instance.foo()  # return 2
     my_instance.bar = 2  # add attribute, visible to native object and all proxies
 
+The native Twinterpeter
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Any class derived from :py:class:`TwinObject` is native to only one twinterpreter.
+This is where its instances actually "live", i.e. where data are kept and methods executed.
+All other twinterpreters just use proxies to the live instances.
+
+A class' native twinterpeter is set via the class' attribute `__twin_id__`.
+It can be a string, in which case it must name a twinterpeter, e.g. `"pypy"` or `"python"`.
+Alternatively, it can be a magic CPy2Py key, e.g. to always use the main twinterpeter.
+The corresponding twinterpeter must be running whenever an instance is created or used.
+
 Working with :py:class:`object`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
 
 Using plain :py:class:`object` classes with CPy2Py is fine in principle.
 They will behave as usual and may be used in any twinterpeter.
@@ -74,7 +86,11 @@ Their behaviour is only affected when they are explicitly or implicitly passed b
 
 CPy2Py must serialize and de-serialize objects to pass them between twinterpeters.
 The side effects of this depend on the object.
-Mainly, this is dictated by whether an object can be manipulated inplace.
+Mostly, this is dictated by whether an object can be manipulated inplace.
+In addition, passing objects back and forth creates clones.
+
+Limitation of :py:class:`object`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 *Immutable types*, such as :py:class:`int` or :py:class:`frozenset`, will transition gracefully.
 The most notable effect is that identity may be violated.
