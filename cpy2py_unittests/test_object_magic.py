@@ -2,7 +2,6 @@ import unittest
 
 import cpy2py.twinterpreter.twin_pypy
 import cpy2py.proxy.object_proxy
-import logging
 
 
 class MagicMethodObject(cpy2py.proxy.object_proxy.TwinObject):
