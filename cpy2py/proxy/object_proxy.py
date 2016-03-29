@@ -12,83 +12,62 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import types
+import weakref
+import sys
+import cPickle as pickle
 
 import cpy2py.twinterpreter.kernel
 
+#: instances of twin objects or proxies currently alive in this twinterpeter
+__active_instances__ = weakref.WeakValueDictionary()
 
-# proxy internals
-class TwinProxy(object):
-	"""
-	Proxy for instances existing in the twinterpreter
 
-	:param __instance_id__: global id of this instance
-	:param __twin_id__: id of the native instance's twinterpeter
-
-	:note: Parameters must be provided via keywords.
-
-	:warning: This class should never be instantiated or subclassed manually. It
-	          will be subclassed automatically by :py:class:`~.TwinMeta`
-	"""
-	__twin_id__ = None  # will be set by metaclass
-
-	def __init__(self, *args, **kwargs):
+# pickling for inter-twinterpeter communication
+def persistent_twin_id(obj):
+	"""Twin Pickler for inter-twinterpeter communication"""
+	try:
+		# twin object or proxy
+		__twin_id__ = obj.__twin_id__
+		if isinstance(obj, TwinMeta):
+			raise AttributeError
+	except AttributeError:
+		# object
+		return None
+	else:
 		try:
-			__instance_id__ = kwargs['__instance_id__']
-		except KeyError:
-			# native instance has not been created yet
-			__instance_id__ = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).instantiate_class(
-				type(self),
-				*args, **kwargs
-			)
-		else:
-			cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).increment_instance_ref(__instance_id__)
-		object.__setattr__(self, '__instance_id__', __instance_id__)
-
-	def __repr__(self):
-		return '<%s.%s twin proxy object at %x>' % (self.__class__.__module__, self.__class__.__name__, id(self))
-
-	def __getattr__(self, name):
-		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
-		return kernel.get_attribute(self.__instance_id__, name)
-
-	def __setattr__(self, name, value):
-		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
-		return kernel.set_attribute(self.__instance_id__, name, value)
-
-	def __del__(self):
-		if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
-			kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
-			kernel.decrement_instance_ref(self.__instance_id__)
+			# twin proxy
+			return '%s\t%s\t%s' % (obj.__instance_id__, __twin_id__, pickle.dumps(type(obj)))
+		except AttributeError:
+			# twin object
+			return '%s\t%s\t%s' % (id(obj), __twin_id__, pickle.dumps(type(obj)))
 
 
-class ProxyMethod(object):
-	"""
-	Proxy for Methods
-
-	:param real_method: the function/method object to be proxied
-	:param name: name of the function/method to be proxied
-
-	:note: It is in general sufficient to supply either `real_method` *or*
-	       `name`.
-	"""
-	def __init__(self, real_method=None, name=None):
-		if real_method is not None:
-			for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
-				try:
-					setattr(self, attribute, getattr(real_method, attribute))
-				except AttributeError:
-					pass
-		if name is not None:
-			self.__name__ = name
-		assert hasattr(self, '__name__')
-
-	def __get__(self, instance, owner):
-		__twin_id__ = instance.__twin_id__
-		__instance_id__ = instance.__instance_id__
-		kernel = cpy2py.twinterpreter.kernel.get_kernel(__twin_id__)
-		return lambda *args, **kwargs: kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
+def persistent_twin_load(persid):
+	"""Twin Loader for inter-twinterpeter communication"""
+	instance_id, twin_id, class_pkl = persid.split('\t')
+	instance_id, twin_id = int(instance_id), str(twin_id)
+	try:
+		return __active_instances__[twin_id, instance_id]
+	except KeyError:
+		# twin object always exists - persid is enough for new proxies
+		return pickle.loads(class_pkl)(__twin_id__=twin_id, __instance_id__=instance_id)
 
 
+def twin_pickler(*args, **kwargs):
+	"""Create a Pickler capable of handling twins"""
+	pickler = pickle.Pickler(*args, **kwargs)
+	pickler.persistent_id = persistent_twin_id
+	return pickler
+
+
+def twin_unpickler(*args, **kwargs):
+	"""Create an Unpickler capable of handling twins"""
+	unpickler = pickle.Unpickler(*args, **kwargs)
+	unpickler.persistent_load = persistent_twin_load
+	return unpickler
+
+
+# classes to create proxies
 class TwinMeta(type):
 	"""
 	Metaclass for Twin objects
@@ -134,3 +113,96 @@ class TwinMeta(type):
 			if aname not in class_dict:
 				class_dict[aname] = ProxyMethod(name=aname)
 		return type.__new__(mcs, name, bases, class_dict)
+
+
+class TwinProxy(object):
+	"""
+	Proxy for instances existing in the twinterpreter
+
+	:warning: This class should never be instantiated or subclassed manually. It
+	          will be subclassed automatically by :py:class:`~.TwinMeta`
+	"""
+	__twin_id__ = None  # will be set by metaclass
+
+	def __new__(cls, *args, **kwargs):
+		self = object.__new__(cls)
+		try:
+			# native instance exists, but no proxy yet
+			__instance_id__ = kwargs['__instance_id__']
+		except KeyError:
+			# native instance has not been created yet
+			__instance_id__ = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).instantiate_class(
+				type(self),
+				*args, **kwargs
+			)
+		else:
+			cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).increment_instance_ref(__instance_id__)
+		object.__setattr__(self, '__instance_id__', __instance_id__)
+		__active_instances__[self.__twin_id__, id(self)] = self
+		return self
+
+	def __repr__(self):
+		return '<%s.%s twin proxy object at %x>' % (self.__class__.__module__, self.__class__.__name__, id(self))
+
+	def __getattr__(self, name):
+		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+		return kernel.get_attribute(self.__instance_id__, name)
+
+	def __setattr__(self, name, value):
+		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+		return kernel.set_attribute(self.__instance_id__, name, value)
+
+	def __del__(self):
+		if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
+			kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+			kernel.decrement_instance_ref(self.__instance_id__)
+
+	def __setstate__(self, state):
+		object.__setattr__(self, '__instance_id__', state['__instance_id__'])
+
+
+class ProxyMethod(object):
+	"""
+	Proxy for Methods
+
+	:param real_method: the function/method object to be proxied
+	:param name: name of the function/method to be proxied
+
+	:note: It is in general sufficient to supply either `real_method` *or*
+	       `name`.
+	"""
+	def __init__(self, real_method=None, name=None):
+		if real_method is not None:
+			for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
+				try:
+					setattr(self, attribute, getattr(real_method, attribute))
+				except AttributeError:
+					pass
+		if name is not None:
+			self.__name__ = name
+		assert hasattr(self, '__name__')
+
+	def __get__(self, instance, owner):
+		__twin_id__ = instance.__twin_id__
+		__instance_id__ = instance.__instance_id__
+		kernel = cpy2py.twinterpreter.kernel.get_kernel(__twin_id__)
+		return lambda *args, **kwargs: kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
+
+
+class TwinObject(object):
+	"""
+	Objects for instances accessible from twinterpreters
+
+	To define which twinterpeter the class is native to, set the class attribute
+	`__twin_id__`. It must be a :py:class:`str` identifying the native
+	twinterpeter.
+
+	:note: This class can be used in place of :py:class:`object` as a base class.
+	"""
+	__twin_id__ = cpy2py.twinterpreter.kernel.TWIN_MASTER
+	__metaclass__ = TwinMeta
+
+	def __new__(cls, *args, **kwargs):
+		self = object.__new__(cls)
+		__active_instances__[self.__twin_id__, id(self)] = self
+		return self
