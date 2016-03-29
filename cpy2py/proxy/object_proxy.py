@@ -13,10 +13,10 @@
 # - # limitations under the License.
 import types
 import weakref
-import sys
 import cPickle as pickle
 
 import cpy2py.twinterpreter.kernel
+from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
 
 #: instances of twin objects or proxies currently alive in this twinterpeter
 __active_instances__ = weakref.WeakValueDictionary()
@@ -154,8 +154,13 @@ class TwinProxy(object):
 
 	def __del__(self):
 		if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
-			kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
-			kernel.decrement_instance_ref(self.__instance_id__)
+			try:
+				kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+			except TwinterpeterUnavailable:
+				# __del__ during shutdown, twin already dead
+				pass
+			else:
+				kernel.decrement_instance_ref(self.__instance_id__)
 
 	def __setstate__(self, state):
 		object.__setattr__(self, '__instance_id__', state['__instance_id__'])
