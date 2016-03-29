@@ -104,7 +104,7 @@ class TwinMeta(type):
 		bases = (TwinProxy,)
 		# change methods to method proxies
 		for aname in class_dict.keys():
-			if aname == '__init__':
+			if aname in ('__init__', '__new__'):
 				del class_dict[aname]
 			elif isinstance(class_dict[aname], types.FunctionType):
 				class_dict[aname] = ProxyMethod(class_dict[aname])
