@@ -17,6 +17,7 @@ import logging
 import sys
 
 import cpy2py.twinterpreter.kernel
+from cpy2py.proxy import object_proxy
 
 
 def bootstrap_kernel():
@@ -25,20 +26,29 @@ def bootstrap_kernel():
 	"""
 	parser = argparse.ArgumentParser("Python Twinterpreter Kernel")
 	parser.add_argument(
-		'--twin-id',
-		help="unique identifier for this twinterpreter",
-		default=os.path.basename(sys.executable),
-	)
-	parser.add_argument(
 		'--peer-id',
 		help="unique identifier for our owner",
-		default='main',
+	)
+	parser.add_argument(
+		'--twin-id',
+		help="unique identifier for this twinterpreter",
+	)
+	parser.add_argument(
+		'--twin-group-id',
+		help="unique identifier for our owner",
 	)
 	settings = parser.parse_args()
 	logging.getLogger().addHandler(logging.FileHandler(filename='%s.%s' % (os.path.basename(sys.executable), settings.peer_id)))
 	cpy2py.twinterpreter.kernel.__twin_id__ = settings.twin_id
 	cpy2py.twinterpreter.kernel.__is_master__ = False
-	kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(peer_id=settings.peer_id)
+	cpy2py.twinterpreter.kernel.__twin_group_id__ = settings.twin_group_id
+	kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
+		peer_id=settings.peer_id,
+		ipc=cpy2py.ipyc.stdstream.StdIPC(
+			pickler_cls=object_proxy.twin_pickler,
+			unpickler_cls=object_proxy.twin_unpickler,
+		)
+	)
 	kernel.run()
 
 if __name__ == "__main__":

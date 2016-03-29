@@ -18,6 +18,7 @@ import errno
 import kernel
 import bootstrap
 import cpy2py.ipyc.stdstream
+from cpy2py.proxy import object_proxy
 
 
 class TwinMaster(object):
@@ -50,8 +51,9 @@ class TwinMaster(object):
 		self._process = subprocess.Popen(
 			[
 				self.executable, '-m', bootstrap.__name__,
-				'--twin-id', self.twinterpeter_id,
 				'--peer-id', kernel.__twin_id__,
+				'--twin-id', self.twinterpeter_id,
+				'--twin-group-id', kernel.__twin_group_id__,
 			],
 			stdin=subprocess.PIPE,
 			stdout=subprocess.PIPE,
@@ -61,6 +63,8 @@ class TwinMaster(object):
 			ipc=cpy2py.ipyc.stdstream.StdIPC(
 				readstream=self._process.stdout,
 				writestream=self._process.stdin,
+				pickler_cls=object_proxy.twin_pickler,
+				unpickler_cls=object_proxy.twin_unpickler,
 			)
 		)
 
