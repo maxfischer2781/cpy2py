@@ -104,14 +104,12 @@ class TwinMeta(type):
 		bases = (TwinProxy,)
 		# change methods to method proxies
 		for aname in class_dict.keys():
+			# initialization should only ever happen on the real object
+			# TODO: figure out semantics when changing __twin_id__
 			if aname in ('__init__', '__new__'):
 				del class_dict[aname]
 			elif isinstance(class_dict[aname], types.FunctionType):
 				class_dict[aname] = ProxyMethod(class_dict[aname])
-		# always forward default methods
-		for aname in ['__hash__', '__cmp__']:
-			if aname not in class_dict:
-				class_dict[aname] = ProxyMethod(name=aname)
 		return type.__new__(mcs, name, bases, class_dict)
 
 
@@ -170,24 +168,19 @@ class ProxyMethod(object):
 	"""
 	Proxy for Methods
 
-	:param real_method: the function/method object to be proxied
-	:param name: name of the function/method to be proxied
-
-	:note: It is in general sufficient to supply either `real_method` *or*
-	       `name`.
+	:param real_method: the method object to be proxied
 	"""
-	def __init__(self, real_method=None, name=None):
-		if real_method is not None:
-			for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
-				try:
-					setattr(self, attribute, getattr(real_method, attribute))
-				except AttributeError:
-					pass
-		if name is not None:
-			self.__name__ = name
-		assert hasattr(self, '__name__')
+	def __init__(self, real_method):
+		self.__wrapped__ = real_method
+		for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
+			try:
+				setattr(self, attribute, getattr(real_method, attribute))
+			except AttributeError:
+				pass
+		assert hasattr(self, '__name__'), "%s must be able to extract method __name__" % self.__class__.__name__
 
 	def __get__(self, instance, owner):
+		assert instance is not None, "%s %s must be accessed from an instance, not class" % (self.__class__.__name__, self.__name__)
 		__twin_id__ = instance.__twin_id__
 		__instance_id__ = instance.__instance_id__
 		kernel = cpy2py.twinterpreter.kernel.get_kernel(__twin_id__)
