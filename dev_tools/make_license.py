@@ -30,7 +30,8 @@ from license_data import notice_template, license_header_template, primary_autho
 # symbol sequence at the start of each license line, per file extension
 license_start_symbols = {
 	None: "# - # ",  # default
-	"py": "# - # ",
+	".py": "# - # ",
+	".rst": ".. ",
 }
 preserve_lines = [
 	"^#!",  # shebang
@@ -43,7 +44,7 @@ temp_ext = ".lsc.tmp"
 repo_base = os.path.realpath(
 	os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 )
-source_file_re = ".*.py$|.*.sh$"
+source_file_re = ".*.py$|.*.sh$|.*.rst$"
 
 
 CLI = argparse.ArgumentParser(
