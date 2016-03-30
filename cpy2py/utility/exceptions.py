@@ -48,6 +48,9 @@ def format_exception(logger, variable_depth=1):
 		tracebacks.append(traceback)
 	trace_depth = len(tracebacks)
 	for traceback in tracebacks:
+		if traceback is None:
+			logger.critical('-+-%02d/%02d <no frame information>', trace_depth, len(tracebacks))
+			continue
 		current_file = traceback.tb_frame.f_code.co_filename
 		current_call = traceback.tb_frame.f_code.co_name
 		current_line = traceback.tb_lineno
