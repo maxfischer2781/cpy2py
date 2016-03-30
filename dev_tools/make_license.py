@@ -31,7 +31,7 @@ from license_data import notice_template, license_header_template, primary_autho
 license_start_symbols = {
 	None: "# - # ",  # default
 	".py": "# - # ",
-	".rst": ".. ",
+	".rst": ".. # - #",
 }
 preserve_lines = [
 	"^#!",  # shebang
