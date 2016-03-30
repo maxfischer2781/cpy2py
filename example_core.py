@@ -40,13 +40,13 @@ if __name__ == "__main__":
 	twinterpreter.start()
 	time.sleep(1)
 	try:
-		for rep in xrange(2):
+		for rep in xrange(4):
 			for func in (example_module.square, example_module.compute): #, example_module.adder, example_module.powerize):
 				timing.setdefault(func.__name__, {})
 				print "#############"
 				print func.__name__, '(%03d)' % rep
 				print 'V', fmt_header
-				for power in xrange(2):
+				for power in xrange(8):
 					scale = 1 * pow(10, power)
 					if scale not in timing[func.__name__]:
 						timing[func.__name__][scale] = {}
