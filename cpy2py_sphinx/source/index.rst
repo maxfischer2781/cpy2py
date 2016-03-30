@@ -9,8 +9,11 @@ Welcome to CPy2Py's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
+The following overview pages are available:
+
+* :doc:`docs/objects`
 
 
 Indices and tables
