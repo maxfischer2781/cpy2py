@@ -84,9 +84,7 @@ class TwinMeta(type):
 	"""
 	def __new__(mcs, name, bases, class_dict):
 		# find out which interpeter scope is appropriate for us
-		try:
-			twin_id = class_dict['__twin_id__']
-		except KeyError:
+		if '__twin_id__' not in class_dict:
 			for base_class in bases:
 				try:
 					twin_id = base_class.__twin_id__
