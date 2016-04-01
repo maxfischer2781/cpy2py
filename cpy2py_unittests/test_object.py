@@ -4,8 +4,7 @@ import cpy2py.twinterpreter.twin_pypy
 import cpy2py.proxy.object_proxy
 
 
-class PrimitiveObject(object):
-	__metaclass__ = cpy2py.proxy.object_proxy.TwinMeta
+class PrimitiveObject(cpy2py.proxy.object_proxy.TwinObject):
 	__twin_id__ = 'pypy'
 
 	class_attribute = 1
@@ -32,7 +31,8 @@ class TestObjectPrimitives(unittest.TestCase):
 		self.twinterpreter.stop()
 
 	def test_init(self):
-		self.assertIsInstance(PrimitiveObject(), cpy2py.proxy.object_proxy.TwinProxy)
+		instance = PrimitiveObject()
+		self.assertIsInstance(instance, cpy2py.proxy.object_proxy.TwinProxy)
 
 	def test_class_attribute(self):
 		self.assertEqual(PrimitiveObject().class_attribute, 1)

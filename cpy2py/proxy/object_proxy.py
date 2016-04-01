@@ -31,12 +31,13 @@ def persistent_twin_id(obj):
 		if isinstance(obj, TwinMeta):
 			raise AttributeError
 	except AttributeError:
-		# object
+		# regular object, let pickle do the work
 		return None
 	else:
+		# twin object, only send reference
 		try:
 			# twin proxy
-			return '%s\t%s\t%s' % (obj.__instance_id__, __twin_id__, pickle.dumps(type(obj)))
+			return '%s\t%s\t%s' % (obj.__instance_id__, __twin_id__, pickle.dumps(obj.__real_class__))
 		except AttributeError:
 			# twin object
 			return '%s\t%s\t%s' % (id(obj), __twin_id__, pickle.dumps(type(obj)))
@@ -96,11 +97,15 @@ class TwinMeta(type):
 			else:
 				twin_id = cpy2py.twinterpreter.kernel.TWIN_MASTER
 			class_dict['__twin_id__'] = twin_id
-		# if we are in the appropriate interpeter, proceed as normal
-		if cpy2py.twinterpreter.kernel.is_twinterpreter(twin_id):
-			return mcs.__new_real_class__(name, bases, class_dict)
-		# if we are in any other interpeter, create a proxy class
-		return mcs.__new_proxy_class__(name, bases, class_dict)
+		# make both real and proxy class available
+		real_class = mcs.__new_real_class__(name, bases, class_dict)
+		proxy_class = mcs.__new_proxy_class__(name, bases, class_dict)
+		# TODO: decide which gets weakref'd - MF@20160401
+		# proxy_class.__real_class__ as weakref, as real_class is global anyway?
+		real_class.__proxy_class__ = proxy_class
+		proxy_class.__real_class__ = real_class
+		# always return real_class, let its __new__ sort out the rest
+		return real_class
 
 	# helper methods
 	@classmethod
@@ -127,9 +132,10 @@ class TwinProxy(object):
 	Proxy for instances existing in the twinterpreter
 
 	:warning: This class should never be instantiated or subclassed manually. It
-	          will be subclassed automatically by :py:class:`~.TwinMeta`
+	          will be subclassed automatically by :py:class:`~.TwinMeta`.
 	"""
-	__twin_id__ = None  # will be set by metaclass
+	__twin_id__ = None  # to be set by metaclass
+	__real_class__ = None  # to be set by metaclass
 
 	def __new__(cls, *args, **kwargs):
 		self = object.__new__(cls)
@@ -139,7 +145,7 @@ class TwinProxy(object):
 		except KeyError:
 			# native instance has not been created yet
 			__instance_id__ = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).instantiate_class(
-				type(self),
+				self.__real_class__,  # only real class can be pickled
 				*args, **kwargs
 			)
 		else:
@@ -206,10 +212,16 @@ class TwinObject(object):
 
 	:note: This class can be used in place of :py:class:`object` as a base class.
 	"""
-	__twin_id__ = cpy2py.twinterpreter.kernel.TWIN_MASTER
+	__twin_id__ = None  # to be set by metaclass or manually
+	__proxy_class__ = None  # to be set by metaclass
 	__metaclass__ = TwinMeta
 
 	def __new__(cls, *args, **kwargs):
-		self = object.__new__(cls)
-		__active_instances__[self.__twin_id__, id(self)] = self
-		return self
+		# if we are in the appropriate interpeter, proceed as normal
+		if cpy2py.twinterpreter.kernel.is_twinterpreter(cls.__twin_id__):
+			self = object.__new__(cls)
+			# register our reference for lookup
+			__active_instances__[self.__twin_id__, id(self)] = self
+			return self
+		# return a proxy to the real object otherwise
+		return cls.__proxy_class__(*args, **kwargs)
