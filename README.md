@@ -1,4 +1,5 @@
 # CPy2Py #
+[![Code Issues](https://www.quantifiedcode.com/api/v1/project/fa44a076922a4047a736e29bb0a206f4/badge.svg)](https://www.quantifiedcode.com/app/project/fa44a076922a4047a736e29bb0a206f4)
 
 ## About ##
 
