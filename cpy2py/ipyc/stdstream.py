@@ -17,6 +17,15 @@ from cpy2py.ipyc.ipyc_exceptions import IPyCTerminated
 
 
 class StdIPC(object):
+	"""
+	IPyC using streams, defaulting to :py:class:`sys.stdin` and :py:class:`sys.stdout`
+
+	:param readstream: file-like object to receive messages from
+	:param writestream: file-like object to write messages to
+	:param pickler_cls: serializer class, according to :py:mod:`pickle`
+	:param unpickler_cls: deserializer class, according to :py:mod:`pickle`
+	:param pickle_protocol: pickling protocol to use
+	"""
 	def __init__(
 			self,
 			readstream=sys.stdin,

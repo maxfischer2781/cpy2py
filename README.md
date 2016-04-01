@@ -22,7 +22,7 @@ Any pickle'able objects may be used as parameters.
 
 ### Current Limitations ###
 
-   * Functions may not have side-effects.
+   * Dispatched class may not write to `sys.stdout`, e.g. via `print`.
 
    * Dispatching calls is a blocking action and not threadsafe.
 

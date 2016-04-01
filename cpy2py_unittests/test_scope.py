@@ -38,7 +38,7 @@ class TestCallScope(unittest.TestCase):
 		self.assertFalse(test_kernel('foobar'))
 
 	def test_function_twin(self):
-		self.assertTrue(self.twinterpreter.execute(test_kernel, self.twinterpreter.twinterpeter_id))
+		self.assertTrue(self.twinterpreter.execute(test_kernel, self.twinterpreter.twinterpreter_id))
 		self.assertTrue(self.twinterpreter.execute(test_kernel, 'pypy'))
 		self.assertTrue(self.twinterpreter.execute(test_kernel, cpy2py.twinterpreter.kernel.TWIN_ONLY_SLAVE))
 		self.assertFalse(self.twinterpreter.execute(test_kernel, 'foobar'))
