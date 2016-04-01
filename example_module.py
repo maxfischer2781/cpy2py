@@ -50,15 +50,19 @@ def adder(size):
 	return value
 
 
-class TwinTest(object):
-	__metaclass__ = cpy2py.proxy.object_proxy.TwinMeta
-	__twin_id__ = 'pypy'
+def lots(size):
+	value = 1.1
+	for _ in xrange(size):
+		value *= value
+		value += value
+		value %= 10000
+	return value
 
-	def __init__(self):
-		self.bar = 2
 
-	def foo(self, a=2):
-		"""A Foo Method"""
-		return '%s says %s' % (repr(self), str(a))
-
-	a = 2
+def lots_const(size):
+	value = 1.1
+	for _ in xrange(size):
+		value *= 1.1
+		value += 1.1
+		value %= 10000
+	return value
