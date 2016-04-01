@@ -28,7 +28,7 @@ class UniqueObj(object):
 
 	class __metaclass__(type):
 		def __new__(mcs, name, bases, class_dict):
-			if class_dict.get('name', None) is None:
+			if class_dict.get('name') is None:
 				class_dict['name'] = name
 			return type.__new__(mcs, name, bases, class_dict)
 

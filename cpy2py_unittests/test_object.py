@@ -12,10 +12,12 @@ class PrimitiveObject(cpy2py.proxy.object_proxy.TwinObject):
 	def __init__(self):
 		self.instance_attribute = 2
 
-	def method(self):
+	@staticmethod
+	def method():
 		return 3
 
-	def method_arg(self, arg1=4):
+	@staticmethod
+	def method_arg(arg1=4):
 		return arg1
 
 	def get_instance_attribute(self):

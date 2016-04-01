@@ -13,9 +13,6 @@
 # - # limitations under the License.
 import time
 
-# Object setup
-import cpy2py.proxy.object_proxy
-
 
 def time_call(call, *args, **kwargs):
 	stime = time.time()

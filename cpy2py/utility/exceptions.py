@@ -55,14 +55,17 @@ def format_exception(logger, variable_depth=1):
 		current_call = traceback.tb_frame.f_code.co_name
 		current_line = traceback.tb_lineno
 		linecache.checkcache(current_file)
-		format_line = lambda line_no: linecache.getline(current_file, line_no).rstrip().replace('\t', '  ')
+
+		def format_line(line_no):
+			"""Get source file line, formatted for printing"""
+			linecache.getline(current_file, line_no).rstrip().replace('\t', '  ')
 		# log position and code
 		logger.critical('-+-%02d/%02d "%s" (%s[%d])', trace_depth, len(tracebacks), current_call, current_file, current_line)
 		logger.critical(' \>%s', format_line(current_line))
 		# log current variables
 		if trace_depth <= variable_depth:
 			local_vars = dict(traceback.tb_frame.f_locals)
-			local_class = local_vars.get('self', None)
+			local_class = local_vars.get('self')
 			format_namespace(logger, local_vars, 'local')
 			if local_class is not None:
 				class_vars = getattr(local_class, '__dict__', getattr(local_class, '__slots__', getattr(local_class, '_fields', None)))

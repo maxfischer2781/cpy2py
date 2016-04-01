@@ -20,7 +20,8 @@ class TestFunctionCall(unittest.TestCase):
 	def tearDown(self):
 		self.twinterpreter.stop()
 
-	def _get_test_args(self):
+	@staticmethod
+	def _get_test_args():
 		return [(1, 1), (50, 100), (500, 250)] + [(random.random(), random.random()) for _ in xrange(5)]
 
 	def test_args(self):
