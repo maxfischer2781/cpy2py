@@ -30,14 +30,12 @@ from kernel_exceptions import TwinterpeterUnavailable, TwinterpeterTerminated
 
 # shorthands for special kernels
 class TWIN_MASTER(UniqueObj):
+	"""The master twinterpeter"""
 	name = '<Master Kernel>'
 
 
-class TWIN_ANY_SLAVE(UniqueObj):
-	name = '<Any Twin Kernel>'
-
-
 class TWIN_ONLY_SLAVE(UniqueObj):
+	"""The slave twinterpeter, if unambigous"""
 	name = '<Single Twin Kernel>'
 
 
@@ -70,15 +68,13 @@ __E_SUCCESS__ = 0
 __E_EXCEPTION__ = 1
 
 
-def is_twinterpreter(kernel_id=TWIN_ANY_SLAVE):
+def is_twinterpreter(kernel_id=TWIN_ONLY_SLAVE):
 	"""Check whether this interpreter is running a specific kernel"""
 	if kernel_id is TWIN_MASTER:
 		return __is_master__
 	if kernel_id is TWIN_ONLY_SLAVE:
 		if len(__kernels__) != 1:
 			raise RuntimeError("Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
-		return not __is_master__
-	if kernel_id is TWIN_ANY_SLAVE:
 		return not __is_master__
 	return __twin_id__ == kernel_id
 
@@ -88,7 +84,7 @@ def get_kernel(kernel_id):
 	try:
 		if kernel_id is TWIN_MASTER:
 			return __kernels__['main']
-		if kernel_id in (TWIN_ONLY_SLAVE, TWIN_ANY_SLAVE):
+		if kernel_id is TWIN_ONLY_SLAVE:
 			if len(__kernels__) != 1:
 				raise RuntimeError("Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
 			return __kernels__.keys()[0]
