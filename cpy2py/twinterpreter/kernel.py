@@ -223,9 +223,8 @@ class SingleThreadKernel(object):
 		try:
 			return self._dispatch_request(__E_REF_DECR__, instance_id)
 		except cpy2py.ipyc.IPyCTerminated:
+			# twinterpeter has already shut down, cleanup done
 			pass
-		except Exception as err:
-			print('foo', type(err), err)
 
 	def increment_instance_ref(self, instance_id):
 		"""Increment the reference count to an instance by one"""
