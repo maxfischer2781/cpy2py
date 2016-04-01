@@ -98,8 +98,17 @@ class TwinMeta(type):
 			class_dict['__twin_id__'] = twin_id
 		# if we are in the appropriate interpeter, proceed as normal
 		if cpy2py.twinterpreter.kernel.is_twinterpreter(twin_id):
-			return type.__new__(mcs, name, bases, class_dict)
+			return mcs.__new_real_class__(name, bases, class_dict)
 		# if we are in any other interpeter, create a proxy class
+		return mcs.__new_proxy_class__(name, bases, class_dict)
+
+	# helper methods
+	@classmethod
+	def __new_real_class__(mcs, name, bases, class_dict):
+		return type.__new__(mcs, name, bases, class_dict)
+
+	@classmethod
+	def __new_proxy_class__(mcs, name, bases, class_dict):
 		# inherit only from proxy
 		bases = (TwinProxy,)
 		# change methods to method proxies
