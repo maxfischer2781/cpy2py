@@ -25,7 +25,7 @@ import logging
 from cpy2py.utility.enum import UniqueObj
 from cpy2py.utility.exceptions import format_exception
 import cpy2py.ipyc
-from kernel_exceptions import TwinterpeterUnavailable
+from kernel_exceptions import TwinterpeterUnavailable, TwinterpeterTerminated
 
 
 # shorthands for special kernels
@@ -188,8 +188,11 @@ class SingleThreadKernel(object):
 	def _dispatch_request(self, request_type, *args):
 		self._request_id += 1
 		my_id = self._request_id
-		self.ipc.send((my_id, (request_type, args)))
-		request_id, result_type, result_body = self.ipc.receive()
+		try:
+			self.ipc.send((my_id, (request_type, args)))
+			request_id, result_type, result_body = self.ipc.receive()
+		except cpy2py.ipyc.IPyCTerminated:
+			raise TwinterpeterTerminated(twin_id=self.peer_id)
 		if result_type == __E_EXCEPTION__:
 			raise result_body
 		elif result_type == __E_SHUTDOWN__:
@@ -220,11 +223,7 @@ class SingleThreadKernel(object):
 
 	def decrement_instance_ref(self, instance_id):
 		"""Decrement the reference count to an instance by one"""
-		try:
-			return self._dispatch_request(__E_REF_DECR__, instance_id)
-		except cpy2py.ipyc.IPyCTerminated:
-			# twinterpeter has already shut down, cleanup done
-			pass
+		return self._dispatch_request(__E_REF_DECR__, instance_id)
 
 	def increment_instance_ref(self, instance_id):
 		"""Increment the reference count to an instance by one"""

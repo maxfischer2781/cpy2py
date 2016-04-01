@@ -24,3 +24,10 @@ class TwinterpeterUnavailable(TwinterpeterException, RuntimeError):
 	def __init__(self, twin_id):
 		super(TwinterpeterException, self).__init__("Twinterpeter '%s' not available" % twin_id)
 		self.twin_id = twin_id
+
+
+class TwinterpeterTerminated(TwinterpeterUnavailable):
+	"""A requested Twinterpeter is not available, because it was terminated already"""
+	def __init__(self, twin_id):
+		super(TwinterpeterException, self).__init__("Twinterpeter '%s' already terminated" % twin_id)
+		self.twin_id = twin_id
