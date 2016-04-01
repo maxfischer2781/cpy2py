@@ -12,7 +12,7 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
-import cpy2py.twinterpreter.twin_pypy
+import cpy2py.twinterpreter.twin_master
 import time
 import math
 import matplotlib.pyplot as plt
@@ -62,6 +62,12 @@ options = CLI.parse_args()
 
 
 def get_callable(callable_string):
+	"""
+	Load a callable based on <module>.<name>
+
+	:param callable_string: callable name of the form <module>.<name>
+	:type callable_string: str
+	"""
 	call_module, _, call_name = callable_string.rpartition('.')
 	if not call_module:
 		raise ValueError("callable must reside in module/package. Expected '<package>.<callable>'")
@@ -73,12 +79,14 @@ def get_callable(callable_string):
 
 
 def get_time(call_result):
+	"""Extract timing information from nested timing call"""
 	tot_tme, call_result = call_result
 	call_tme, other = call_result
 	return tot_tme, call_tme, tot_tme-call_tme
 
 
 def fmt_time(call_result):
+	"""Format timing information from nested timing call"""
 	return '%7.5f %7.5f %7.5f' % get_time(call_result)
 
 tme_header = ['total', 'call', 'delta']
@@ -88,7 +96,7 @@ timing = {}  # {func => size => interpreter => tme => [rep]}
 
 if __name__ == "__main__":
 	print "starting"
-	twinterpreter = cpy2py.twinterpreter.twin_pypy.TwinPyPy()
+	twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
 	twinterpreter.start()
 	time.sleep(1)
 	callables = (get_callable(options.callable), )

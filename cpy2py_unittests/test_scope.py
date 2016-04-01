@@ -1,6 +1,6 @@
 import unittest
 
-import cpy2py.twinterpreter.twin_pypy
+import cpy2py.twinterpreter.twin_master
 import cpy2py.twinterpreter.kernel
 import cpy2py.proxy.object_proxy
 
@@ -19,7 +19,7 @@ class PyPyObject(cpy2py.proxy.object_proxy.TwinObject):
 
 class TestCallScope(unittest.TestCase):
 	def setUp(self):
-		self.twinterpreter = cpy2py.twinterpreter.twin_pypy.TwinPyPy()
+		self.twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
 		self.twinterpreter.start()
 
 	def tearDown(self):

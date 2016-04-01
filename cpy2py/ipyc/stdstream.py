@@ -43,6 +43,7 @@ class StdIPC(object):
 		self._load = self._unpickler_cls(self._readstream).load
 
 	def send(self, payload):
+		"""Send an object"""
 		try:
 			self._dump(payload)
 			self._writestream.flush()
@@ -50,6 +51,7 @@ class StdIPC(object):
 			raise IPyCTerminated
 
 	def receive(self):
+		"""Receive an object"""
 		try:
 			return self._load()
 		except EOFError:

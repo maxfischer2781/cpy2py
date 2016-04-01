@@ -217,6 +217,7 @@ def filehash(filepath, blocksize=65536, maxbytes=float("inf")):
 
 
 def write_license(license_url, license_file):
+	"""Write license file"""
 	try:
 		license_data = urllib2.urlopen(license_url)
 	except urllib2.URLError:

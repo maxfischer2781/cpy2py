@@ -14,12 +14,23 @@
 import sys
 import linecache
 
+
 class CPy2PyException(Exception):
 	"""Base class for all custom exceptions"""
 	pass
 
 
 def format_namespace(logger, namespace, namespace_name):
+	"""
+	Format information from a namespace dict
+
+	:param logger: a :py:class:`~logging.Logger` to write to
+	:type logger: :py:class:`~logging.Logger`
+	:param namespace: namespace to format
+	:type namespace: :py:class:`dict`
+	:param namespace_name: name to identify namespace with
+	:type namespace_name: str
+	"""
 	logger.critical('   Namespace %s', namespace_name)
 	if not namespace:
 		logger.critical('     <none>')
@@ -30,6 +41,14 @@ def format_namespace(logger, namespace, namespace_name):
 
 
 def format_repr(obj, max_len=120):
+	"""
+	Return the representation of an object for display
+
+	:param obj: any object to represent
+	:param max_len: maximum length of representation
+	:type max_len: int
+	:return: formatted object representation
+	"""
 	try:
 		obj_repr = repr(obj)
 		if len(obj_repr) > max_len:
@@ -39,7 +58,15 @@ def format_repr(obj, max_len=120):
 		return '<not representable>'
 
 
-def format_exception(logger, variable_depth=1):
+def format_exception(logger, variable_depth=float('inf')):
+	"""
+	Write the current stacktrace to a logger
+
+	:param logger: a :py:class:`~logging.Logger` to write to
+	:type logger: :py:class:`~logging.Logger`
+	:param variable_depth: maximum depth of tracebacks to include full namespace
+	:type variable_depth: int, float
+	"""
 	exception_type, exception, traceback = sys.exc_info()
 	logger.critical('  %s: %s', exception.__class__.__name__, exception)
 	tracebacks = []

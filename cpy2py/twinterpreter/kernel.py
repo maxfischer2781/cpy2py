@@ -80,6 +80,15 @@ def is_twinterpreter(kernel_id=TWIN_ONLY_SLAVE):
 
 
 def get_kernel(kernel_id):
+	"""
+	Get this interpreter's interface to a specific kernel
+
+	:param kernel_id: id of the desired kernel
+	:type kernel_id: str, TWIN_MASTER or TWIN_ONLY_SLAVE
+
+	:raises TwinterpeterUnavailable: if no active kernel matches `kernel_id`
+	:raise RuntimeError: if :py:class:`TWIN_ONLY_SLAVE` is requested but there are multiple kernels
+	"""
 	assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
 	try:
 		if kernel_id is TWIN_MASTER:
@@ -97,7 +106,18 @@ class SingleThreadKernel(object):
 	"""
 	Default kernel for handling requests between interpeters
 
-	Any kernel is composed of two objects, one in each interpreter.
+	Any connection between twinterpreters is handled by two kernels, one in each
+	twinterpreter. In each twinterpreter, the local kernel provides as a client
+	interface for dispatching calls. At the same time, it acts as a server that
+	handles requests from its peer.
+
+	The kernels assume that they have been setup properly. Use
+	:py:class:`~TwinMaster` start kernel peers.
+
+	:param peer_id: id of the kernel/twinterpreter this kernel is peered with
+	:type peer_id: str
+	:param ipc: :py:mod:`~IPyC` connecting to other kernel
+	:type ipc: :py:class:`~StdIPC`
 	"""
 	def __new__(cls, peer_id, *args, **kwargs):
 		assert peer_id not in __kernels__, 'Twinterpreters must have unique IDs'
@@ -112,7 +132,11 @@ class SingleThreadKernel(object):
 		self._instances = {}  # instance_id => [ref_count, instance]
 
 	def run(self):
-		"""Run the kernel request server"""
+		"""
+		Run the kernel request server
+
+		:returns: exit code indicating potential failure
+		"""
 		exit_code = 1
 		self._logger.warning('run @ %s', time.asctime())
 		self._logger.warning('Starting')
@@ -178,10 +202,11 @@ class SingleThreadKernel(object):
 			# always free resources and exit when the kernel stops
 			del self._instances
 			del self.ipc
-			sys.exit(exit_code)
+			return exit_code
 
 	# dispatching: execute actions in other interpeter
 	def _dispatch_request(self, request_type, *args):
+		"""Forward a request to peer and return result"""
 		self._request_id += 1
 		my_id = self._request_id
 		try:
@@ -226,6 +251,7 @@ class SingleThreadKernel(object):
 		return self._dispatch_request(__E_REF_INCR__, instance_id)
 
 	def stop(self):
+		"""Shutdown the peer's server"""
 		if self._dispatch_request(__E_SHUTDOWN__):
 			del __kernels__[self.peer_id]
 			return True

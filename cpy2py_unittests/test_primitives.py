@@ -1,7 +1,7 @@
 import random
 import unittest
 
-import cpy2py.twinterpreter.twin_pypy
+import cpy2py.twinterpreter.twin_master
 
 
 def add(a, b):
@@ -14,7 +14,7 @@ def add_default(a=10, b=20):
 
 class TestFunctionCall(unittest.TestCase):
 	def setUp(self):
-		self.twinterpreter = cpy2py.twinterpreter.twin_pypy.TwinPyPy()
+		self.twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
 		self.twinterpreter.start()
 
 	def tearDown(self):
