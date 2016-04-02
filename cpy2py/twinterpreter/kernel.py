@@ -19,40 +19,14 @@ from __future__ import print_function
 import sys
 import os
 import time
-import random
 import logging
 import weakref
 
-from cpy2py.utility.enum import UniqueObj
+from cpy2py.twinterpreter.kernel_state import __kernels__
+
 from cpy2py.utility.exceptions import format_exception
 import cpy2py.ipyc
-from kernel_exceptions import TwinterpeterUnavailable, TwinterpeterTerminated
-
-
-# shorthands for special kernels
-class TWIN_MASTER(UniqueObj):
-	"""The master twinterpeter"""
-	name = '<Master Kernel>'
-
-
-class TWIN_ONLY_SLAVE(UniqueObj):
-	"""The slave twinterpeter, if unambigous"""
-	name = '<Single Twin Kernel>'
-
-
-# current twin state
-#: the kernel(s) running in this interpeter
-__kernels__ = {}
-#: id of this interpreter/process
-__twin_id__ = 'main'
-#: whether this is the parent process
-__is_master__ = True
-#: id of the active group of twinterpeters
-__twin_group_id__ = '%08X%08X%08X' % (
-	time.time() * 16,
-	os.getpid(),
-	random.random() * pow(16, 8)
-)
+from kernel_exceptions import TwinterpeterTerminated
 
 # Message Enums
 # twin call type
@@ -68,40 +42,6 @@ __E_REF_DECR__ = 33
 # twin reply type
 __E_SUCCESS__ = 0
 __E_EXCEPTION__ = 1
-
-
-def is_twinterpreter(kernel_id=TWIN_ONLY_SLAVE):
-	"""Check whether this interpreter is running a specific kernel"""
-	if kernel_id is TWIN_MASTER:
-		return __is_master__
-	if kernel_id is TWIN_ONLY_SLAVE:
-		if len(__kernels__) != 1:
-			raise RuntimeError("Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
-		return not __is_master__
-	return __twin_id__ == kernel_id
-
-
-def get_kernel(kernel_id):
-	"""
-	Get this interpreter's interface to a specific kernel
-
-	:param kernel_id: id of the desired kernel
-	:type kernel_id: str, TWIN_MASTER or TWIN_ONLY_SLAVE
-
-	:raises TwinterpeterUnavailable: if no active kernel matches `kernel_id`
-	:raise RuntimeError: if :py:class:`TWIN_ONLY_SLAVE` is requested but there are multiple kernels
-	"""
-	assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
-	try:
-		if kernel_id is TWIN_MASTER:
-			return __kernels__['main']
-		if kernel_id is TWIN_ONLY_SLAVE:
-			if len(__kernels__) != 1:
-				raise RuntimeError("Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
-			return __kernels__.keys()[0]
-		return __kernels__[kernel_id]
-	except KeyError:
-		raise TwinterpeterUnavailable(twin_id=kernel_id)
 
 
 class SingleThreadKernel(object):

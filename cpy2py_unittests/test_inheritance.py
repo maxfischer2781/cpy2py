@@ -1,5 +1,6 @@
 import unittest
 import random
+import cpy2py.twinterpreter.kernel_state
 
 import cpy2py.twinterpreter.twin_master
 import cpy2py.twinterpreter.kernel
@@ -14,7 +15,7 @@ class PyPyBaseA1(cpy2py.proxy.proxy_object.TwinObject):
 
 	def test_kernel(self, kernel_id=None):
 		kernel_id = kernel_id if kernel_id is not None else self.__twin_id__
-		return cpy2py.twinterpreter.kernel.is_twinterpreter(kernel_id=kernel_id)
+		return cpy2py.twinterpreter.kernel_state.is_twinterpreter(kernel_id=kernel_id)
 
 	def get_instance_attribute(self):
 		return self.numeric_value

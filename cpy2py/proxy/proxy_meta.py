@@ -13,6 +13,7 @@
 # - # limitations under the License.
 import types
 import cpy2py.twinterpreter.kernel
+import cpy2py.twinterpreter.kernel_state
 
 from proxy_twin import TwinProxy, ProxyMethod
 
@@ -52,7 +53,7 @@ class TwinMeta(type):
 				else:
 					break
 			else:
-				twin_id = cpy2py.twinterpreter.kernel.TWIN_MASTER
+				twin_id = cpy2py.twinterpreter.kernel_state.TWIN_MASTER
 			class_dict['__twin_id__'] = twin_id
 		# make both real and proxy class available
 		real_class = mcs.__new_real_class__(name, bases, class_dict)

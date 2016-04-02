@@ -18,6 +18,7 @@ import sys
 
 import cpy2py.twinterpreter.kernel
 from cpy2py import proxy
+import cpy2py.twinterpreter.kernel_state
 
 
 def bootstrap_kernel():
@@ -39,9 +40,9 @@ def bootstrap_kernel():
 	)
 	settings = parser.parse_args()
 	logging.getLogger().addHandler(logging.FileHandler(filename='%s.%s' % (os.path.basename(sys.executable), settings.peer_id)))
-	cpy2py.twinterpreter.kernel.__twin_id__ = settings.twin_id
-	cpy2py.twinterpreter.kernel.__is_master__ = False
-	cpy2py.twinterpreter.kernel.__twin_group_id__ = settings.twin_group_id
+	cpy2py.twinterpreter.kernel_state.__twin_id__ = settings.twin_id
+	cpy2py.twinterpreter.kernel_state.__is_master__ = False
+	cpy2py.twinterpreter.kernel_state.__twin_group_id__ = settings.twin_group_id
 	kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
 		peer_id=settings.peer_id,
 		ipc=cpy2py.ipyc.stdstream.StdIPC(

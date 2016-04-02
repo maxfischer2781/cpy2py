@@ -14,6 +14,7 @@
 import subprocess
 import os
 import errno
+import cpy2py.twinterpreter.kernel_state
 
 import kernel
 import bootstrap
@@ -73,9 +74,10 @@ class TwinMaster(object):
 			self._process = subprocess.Popen(
 				[
 					self.executable, '-m', bootstrap.__name__,
-					'--peer-id', kernel.__twin_id__,
+					'--peer-id', cpy2py.twinterpreter.kernel_state.__twin_id__,
 					'--twin-id', self.twinterpreter_id,
-					'--twin-group-id', kernel.__twin_group_id__,
+					'--twin-group-id',
+					cpy2py.twinterpreter.kernel_state.__twin_group_id__,
 				],
 				stdin=subprocess.PIPE,
 				stdout=subprocess.PIPE,

@@ -13,6 +13,7 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import cpy2py.twinterpreter.kernel
+import cpy2py.twinterpreter.kernel_state
 import cpy2py.twinterpreter.twin_master
 import example_module
 import time
@@ -20,7 +21,7 @@ import time
 if __name__ == "__main__":
 	twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
 	twinterpreter.start()
-	print cpy2py.twinterpreter.kernel.__kernels__
+	print cpy2py.twinterpreter.kernel_state.__kernels__
 	instance = example_module.TwinTest()
 	print instance
 	print instance.foo()

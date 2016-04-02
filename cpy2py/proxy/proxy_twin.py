@@ -13,6 +13,7 @@
 # - # limitations under the License.
 import cpy2py.twinterpreter.kernel
 from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
+import cpy2py.twinterpreter.kernel_state
 
 import proxy_tracker
 
@@ -36,7 +37,7 @@ class ProxyMethod(object):
 		assert instance is not None, "%s %s must be accessed from an instance, not class" % (self.__class__.__name__, self.__name__)
 		__twin_id__ = instance.__twin_id__
 		__instance_id__ = instance.__instance_id__
-		kernel = cpy2py.twinterpreter.kernel.get_kernel(__twin_id__)
+		kernel = cpy2py.twinterpreter.kernel_state.get_kernel(__twin_id__)
 		return lambda *args, **kwargs: kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
 
 
@@ -57,12 +58,12 @@ class TwinProxy(object):
 			__instance_id__ = kwargs['__instance_id__']
 		except KeyError:
 			# native instance has not been created yet
-			__instance_id__ = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).instantiate_class(
+			__instance_id__ = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__).instantiate_class(
 				self.__real_class__,  # only real class can be pickled
 				*args, **kwargs
 			)
 		else:
-			cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__).increment_instance_ref(__instance_id__)
+			cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__).increment_instance_ref(__instance_id__)
 		object.__setattr__(self, '__instance_id__', __instance_id__)
 		proxy_tracker.__active_instances__[self.__twin_id__, id(self)] = self
 		return self
@@ -71,22 +72,22 @@ class TwinProxy(object):
 		return '<%s.%s twin proxy object at %x>' % (self.__class__.__module__, self.__class__.__name__, id(self))
 
 	def __getattr__(self, name):
-		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+		kernel = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
 		return kernel.get_attribute(self.__instance_id__, name)
 
 	def __setattr__(self, name, value):
-		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+		kernel = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
 		return kernel.set_attribute(self.__instance_id__, name, value)
 
 	def __delattr__(self, name):
-		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+		kernel = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
 		return kernel.del_attribute(self.__instance_id__, name)
 
 	def __del__(self):
 		if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
 			# decrement the twin reference count
 			try:
-				kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+				kernel = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
 				kernel.decrement_instance_ref(self.__instance_id__)
 			except TwinterpeterUnavailable:
 				# __del__ during shutdown, twin already dead

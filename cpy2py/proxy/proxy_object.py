@@ -12,6 +12,7 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import cpy2py.twinterpreter.kernel
+import cpy2py.twinterpreter.kernel_state
 import proxy_tracker
 
 from proxy_meta import TwinMeta
@@ -33,7 +34,7 @@ class TwinObject(object):
 
 	def __new__(cls, *args, **kwargs):
 		# if we are in the appropriate interpeter, proceed as normal
-		if cpy2py.twinterpreter.kernel.is_twinterpreter(cls.__twin_id__):
+		if cpy2py.twinterpreter.kernel_state.is_twinterpreter(cls.__twin_id__):
 			self = object.__new__(cls)
 			# register our reference for lookup
 			proxy_tracker.__active_instances__[self.__twin_id__, id(self)] = self
