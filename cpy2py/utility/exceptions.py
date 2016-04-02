@@ -85,7 +85,7 @@ def format_exception(logger, variable_depth=float('inf')):
 
 		def format_line(line_no):
 			"""Get source file line, formatted for printing"""
-			linecache.getline(current_file, line_no).rstrip().replace('\t', '  ')
+			return linecache.getline(current_file, line_no).rstrip().replace('\t', '  ')
 		# log position and code
 		logger.critical('-+-%02d/%02d "%s" (%s[%d])', trace_depth, len(tracebacks), current_call, current_file, current_line)
 		logger.critical(' \>%s', format_line(current_line))
