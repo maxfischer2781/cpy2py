@@ -222,12 +222,12 @@ class SingleThreadKernel(object):
 			request_id, result_type, result_body = self.ipc.receive()
 		except cpy2py.ipyc.IPyCTerminated:
 			raise TwinterpeterTerminated(twin_id=self.peer_id)
-		if result_type == __E_EXCEPTION__:
+		if result_type == __E_SUCCESS__:
+			return result_body
+		elif result_type == __E_EXCEPTION__:
 			raise result_body
 		elif result_type == __E_SHUTDOWN__:
 			return True
-		elif result_type == __E_SUCCESS__:
-			return result_body
 		raise RuntimeError
 
 	def dispatch_call(self, call, *call_args, **call_kwargs):
