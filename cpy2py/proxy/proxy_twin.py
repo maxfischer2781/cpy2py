@@ -86,6 +86,3 @@ class TwinProxy(object):
 			except TwinterpeterUnavailable:
 				# __del__ during shutdown, twin already dead
 				return
-
-	def __setstate__(self, state):
-		object.__setattr__(self, '__instance_id__', state['__instance_id__'])
