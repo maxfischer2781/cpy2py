@@ -50,6 +50,8 @@ class TestObjectPrimitives(unittest.TestCase):
 		self.assertEqual(instance.instance_attribute, 3)
 		self.assertEqual(instance.get_instance_attribute(), 3)
 		del instance.instance_attribute
+		self.assertRaises(AttributeError, getattr, instance, 'instance_attribute')
+		self.assertRaises(AttributeError, instance.get_instance_attribute)
 
 	def test_method_call(self):
 		instance = PrimitiveObject()
