@@ -17,6 +17,29 @@ from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
 import proxy_tracker
 
 
+class ProxyMethod(object):
+	"""
+	Proxy for Methods
+
+	:param real_method: the method object to be proxied
+	"""
+	def __init__(self, real_method):
+		self.__wrapped__ = real_method
+		for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
+			try:
+				setattr(self, attribute, getattr(real_method, attribute))
+			except AttributeError:
+				pass
+		assert hasattr(self, '__name__'), "%s must be able to extract method __name__" % self.__class__.__name__
+
+	def __get__(self, instance, owner):
+		assert instance is not None, "%s %s must be accessed from an instance, not class" % (self.__class__.__name__, self.__name__)
+		__twin_id__ = instance.__twin_id__
+		__instance_id__ = instance.__instance_id__
+		kernel = cpy2py.twinterpreter.kernel.get_kernel(__twin_id__)
+		return lambda *args, **kwargs: kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
+
+
 class TwinProxy(object):
 	"""
 	Proxy for instances existing in the twinterpreter
@@ -66,26 +89,3 @@ class TwinProxy(object):
 
 	def __setstate__(self, state):
 		object.__setattr__(self, '__instance_id__', state['__instance_id__'])
-
-
-class ProxyMethod(object):
-	"""
-	Proxy for Methods
-
-	:param real_method: the method object to be proxied
-	"""
-	def __init__(self, real_method):
-		self.__wrapped__ = real_method
-		for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
-			try:
-				setattr(self, attribute, getattr(real_method, attribute))
-			except AttributeError:
-				pass
-		assert hasattr(self, '__name__'), "%s must be able to extract method __name__" % self.__class__.__name__
-
-	def __get__(self, instance, owner):
-		assert instance is not None, "%s %s must be accessed from an instance, not class" % (self.__class__.__name__, self.__name__)
-		__twin_id__ = instance.__twin_id__
-		__instance_id__ = instance.__instance_id__
-		kernel = cpy2py.twinterpreter.kernel.get_kernel(__twin_id__)
-		return lambda *args, **kwargs: kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
