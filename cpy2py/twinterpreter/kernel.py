@@ -21,6 +21,7 @@ import os
 import time
 import random
 import logging
+import weakref
 
 from cpy2py.utility.enum import UniqueObj
 from cpy2py.utility.exceptions import format_exception
@@ -130,7 +131,10 @@ class SingleThreadKernel(object):
 		self.peer_id = peer_id
 		self.ipc = ipc
 		self._request_id = 0
-		self._instances = {}  # instance_id => [ref_count, instance]
+		# instance_id => [ref_count, instance]
+		self._instances_keepalive = {}
+		# instance_id => instance
+		self._instances_alive_ref = weakref.WeakValueDictionary()
 
 	def run(self):
 		"""
@@ -155,37 +159,41 @@ class SingleThreadKernel(object):
 					elif directive[0] == __E_CALL_METHOD__:
 						self._logger.warning('Directive __E_CALL_METHOD__')
 						inst_id, method_name, method_args, method_kwargs = directive[1]
-						response = getattr(self._instances[inst_id][1], method_name)(*method_args, **method_kwargs)
+						response = getattr(self._instances_alive_ref[inst_id], method_name)(*method_args, **method_kwargs)
 					elif directive[0] == __E_GET_ATTRIBUTE__:
 						self._logger.warning('Directive __E_GET_MEMBER__')
 						inst_id, attribute_name = directive[1]
-						response = getattr(self._instances[inst_id][1], attribute_name)
+						response = getattr(self._instances_alive_ref[inst_id], attribute_name)
 					elif directive[0] == __E_SET_ATTRIBUTE__:
 						self._logger.warning('Directive __E_SET_ATTRIBUTE__')
 						inst_id, attribute_name, new_value = directive[1]
-						response = setattr(self._instances[inst_id][1], attribute_name, new_value)
+						response = setattr(self._instances_alive_ref[inst_id], attribute_name, new_value)
 					elif directive[0] == __E_DEL_ATTRIBUTE__:
 						self._logger.warning('Directive __E_DEL_ATTRIBUTE__')
 						inst_id, attribute_name = directive[1]
-						response = delattr(self._instances[inst_id][1], attribute_name)
+						response = delattr(self._instances_alive_ref[inst_id], attribute_name)
 					elif directive[0] == __E_INSTANTIATE__:
 						self._logger.warning('Directive __E_INSTANTIATE__')
 						cls, cls_args, cls_kwargs = directive[1]
 						instance = cls(*cls_args, **cls_kwargs)
-						self._instances[id(instance)] = [1, instance]
+						self._instances_keepalive[id(instance)] = [1, instance]
+						self._instances_alive_ref[id(instance)] = instance
 						response = id(instance)
 					elif directive[0] == __E_REF_DECR__:
 						self._logger.warning('Directive __E_REF_DECR__')
 						inst_id = directive[1][0]
-						self._instances[inst_id][0] -= 1
-						response = self._instances[inst_id][0]
-						if self._instances[inst_id][0] <= 0:
-							del self._instances[inst_id]
+						self._instances_keepalive[inst_id][0] -= 1
+						response = self._instances_keepalive[inst_id][0]
+						if self._instances_keepalive[inst_id][0] <= 0:
+							del self._instances_keepalive[inst_id]
 					elif directive[0] == __E_REF_INCR__:
 						self._logger.warning('Directive __E_REF_INCR__')
 						inst_id = directive[1][0]
-						self._instances[inst_id][0] += 1
-						response = self._instances[inst_id][0]
+						try:
+							self._instances_keepalive[inst_id][0] += 1
+						except KeyError:
+							self._instances_keepalive[inst_id] = [1, self._instances_alive_ref[inst_id]]
+						response = self._instances_keepalive[inst_id][0]
 					elif directive[0] == __E_SHUTDOWN__:
 						self._logger.warning('Directive __E_SHUTDOWN__')
 						del __kernels__[self.peer_id]
@@ -208,7 +216,7 @@ class SingleThreadKernel(object):
 			format_exception(self._logger, 3)
 		finally:
 			# always free resources and exit when the kernel stops
-			del self._instances
+			del self._instances_keepalive
 			del self.ipc
 			return exit_code
 
