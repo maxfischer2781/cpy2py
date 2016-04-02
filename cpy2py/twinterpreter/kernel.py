@@ -182,6 +182,7 @@ class SingleThreadKernel(object):
 						self._instances[inst_id][0] += 1
 						response = self._instances[inst_id][0]
 					elif directive[0] == __E_SHUTDOWN__:
+						self._logger.warning('Directive __E_SHUTDOWN__')
 						del __kernels__[self.peer_id]
 						self.ipc.send((request_id, __E_SHUTDOWN__, True))
 						break
@@ -189,6 +190,8 @@ class SingleThreadKernel(object):
 						raise RuntimeError
 				except Exception as err:
 					self.ipc.send((request_id, __E_EXCEPTION__, err))
+					self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
+					format_exception(self._logger, 3)
 					if isinstance(err, KeyboardInterrupt):
 						break
 				else:
