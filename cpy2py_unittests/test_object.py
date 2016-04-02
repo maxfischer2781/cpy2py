@@ -1,10 +1,10 @@
 import unittest
 
 import cpy2py.twinterpreter.twin_master
-import cpy2py.proxy.object_proxy
+import cpy2py.proxy.proxy_object
 
 
-class PrimitiveObject(cpy2py.proxy.object_proxy.TwinObject):
+class PrimitiveObject(cpy2py.proxy.proxy_object.TwinObject):
 	__twin_id__ = 'pypy'
 
 	class_attribute = 1
@@ -34,7 +34,7 @@ class TestObjectPrimitives(unittest.TestCase):
 
 	def test_init(self):
 		instance = PrimitiveObject()
-		self.assertIsInstance(instance, cpy2py.proxy.object_proxy.TwinProxy)
+		self.assertIsInstance(instance, cpy2py.proxy.proxy_twin.TwinProxy)
 
 	def test_class_attribute(self):
 		self.assertEqual(PrimitiveObject().class_attribute, 1)

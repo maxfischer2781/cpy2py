@@ -1,10 +1,10 @@
 import unittest
 
 import cpy2py.twinterpreter.twin_master
-import cpy2py.proxy.object_proxy
+import cpy2py.proxy.proxy_object
 
 
-class MagicMethodObject(cpy2py.proxy.object_proxy.TwinObject):
+class MagicMethodObject(cpy2py.proxy.proxy_object.TwinObject):
 	__twin_id__ = 'pypy'
 
 	def __init__(self, numeric_value=0):

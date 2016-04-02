@@ -18,7 +18,7 @@ import errno
 import kernel
 import bootstrap
 import cpy2py.ipyc.stdstream
-from cpy2py.proxy import object_proxy
+from cpy2py import proxy
 
 
 class TwinMaster(object):
@@ -85,8 +85,8 @@ class TwinMaster(object):
 				ipc=cpy2py.ipyc.stdstream.StdIPC(
 					readstream=self._process.stdout,
 					writestream=self._process.stdin,
-					pickler_cls=object_proxy.twin_pickler,
-					unpickler_cls=object_proxy.twin_unpickler,
+					pickler_cls=proxy.twin_pickler,
+					unpickler_cls=proxy.twin_unpickler,
 				)
 			)
 		return self.is_alive

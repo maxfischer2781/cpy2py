@@ -17,7 +17,7 @@ import logging
 import sys
 
 import cpy2py.twinterpreter.kernel
-from cpy2py.proxy import object_proxy
+from cpy2py import proxy
 
 
 def bootstrap_kernel():
@@ -45,8 +45,8 @@ def bootstrap_kernel():
 	kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
 		peer_id=settings.peer_id,
 		ipc=cpy2py.ipyc.stdstream.StdIPC(
-			pickler_cls=object_proxy.twin_pickler,
-			unpickler_cls=object_proxy.twin_unpickler,
+			pickler_cls=proxy.twin_pickler,
+			unpickler_cls=proxy.twin_unpickler,
 		)
 	)
 	kernel.run()
