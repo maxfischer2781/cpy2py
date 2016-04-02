@@ -23,12 +23,17 @@ class TwinMeta(type):
 
 	This meta-class allows using regular class definitions. In the native
 	interpreter, the class is accessible directly. In any other, a proxy is
-	created with all class members transformed to appropriate calls to the
+	provided with all class members transformed to appropriate calls to the
 	twinterpeter master.
 
 	Using this metaclass allows setting `__twin_id__` in a class definition.
 	This specifies which interpeter the class natively resides in. The default
 	is always the main interpeter.
+
+	:warning: This metaclass should never be assigned manually. Classes should
+	          inherit from :py:class:`~.TwinObject`, which sets the metaclass
+	          automaticaly. You only ever need to set the metaclass if you
+	          derive a new metaclass from this one.
 	"""
 	#: proxy classes for regular classes
 	__proxy_store__ = {}
@@ -66,14 +71,21 @@ class TwinMeta(type):
 	@classmethod
 	def __new_proxy_class__(mcs, name, bases, class_dict):
 		"""Create the proxy twin"""
+		class_dict = class_dict.copy()
 		# change methods to method proxies
 		for aname in class_dict.keys():
-			# initialization should only ever happen on the real object
 			# TODO: figure out semantics when changing __twin_id__
+			# initialization should only ever happen on the real object
 			if aname in ('__init__', '__new__'):
 				del class_dict[aname]
+			# methods must be proxy'd
 			elif isinstance(class_dict[aname], types.FunctionType):
 				class_dict[aname] = ProxyMethod(class_dict[aname])
+			elif isinstance(class_dict[aname], (classmethod, staticmethod)):
+				class_dict[aname] = ProxyMethod(class_dict[aname].__func__)
+			# remove non-magic attributes so they don't shadow the real ones
+			elif aname not in ('__twin_id__', '__class__', '__module__', '__doc__', '__metaclass__'):
+				del class_dict[aname]
 		# inherit only from proxy
 		bases = (TwinProxy,)
 		return type.__new__(mcs, name, bases, class_dict)
@@ -93,3 +105,4 @@ class TwinMeta(type):
 	@classmethod
 	def __create_proxy_class__(mcs, baseclass):
 		"""Create a proxy twin for a regular class"""
+		pass

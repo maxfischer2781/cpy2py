@@ -37,7 +37,10 @@ class TestObjectPrimitives(unittest.TestCase):
 		self.assertIsInstance(instance, cpy2py.proxy.proxy_twin.TwinProxy)
 
 	def test_class_attribute(self):
-		self.assertEqual(PrimitiveObject().class_attribute, 1)
+		instance = PrimitiveObject()
+		self.assertEqual(instance.class_attribute, 1)
+		instance.class_attribute = 2
+		self.assertEqual(instance.class_attribute, 2)
 
 	def test_instance_attribute(self):
 		instance = PrimitiveObject()
