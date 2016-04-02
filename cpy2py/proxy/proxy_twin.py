@@ -78,8 +78,13 @@ class TwinProxy(object):
 		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
 		return kernel.set_attribute(self.__instance_id__, name, value)
 
+	def __delattr__(self, name):
+		kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
+		return kernel.del_attribute(self.__instance_id__, name)
+
 	def __del__(self):
 		if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
+			# decrement the twin reference count
 			try:
 				kernel = cpy2py.twinterpreter.kernel.get_kernel(self.__twin_id__)
 				kernel.decrement_instance_ref(self.__instance_id__)

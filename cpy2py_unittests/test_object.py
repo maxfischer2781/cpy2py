@@ -49,6 +49,7 @@ class TestObjectPrimitives(unittest.TestCase):
 		instance.instance_attribute = 3
 		self.assertEqual(instance.instance_attribute, 3)
 		self.assertEqual(instance.get_instance_attribute(), 3)
+		del instance.instance_attribute
 
 	def test_method_call(self):
 		instance = PrimitiveObject()

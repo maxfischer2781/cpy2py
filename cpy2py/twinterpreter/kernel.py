@@ -56,13 +56,14 @@ __twin_group_id__ = '%08X%08X%08X' % (
 # Message Enums
 # twin call type
 __E_SHUTDOWN__ = -1
-__E_CALL_FUNC__ = 1
-__E_CALL_METHOD__ = 2
-__E_GET_ATTRIBUTE__ = 3
-__E_SET_ATTRIBUTE__ = 4
-__E_INSTANTIATE__ = 5
-__E_REF_INCR__ = 6
-__E_REF_DECR__ = 7
+__E_CALL_FUNC__ = 11
+__E_CALL_METHOD__ = 12
+__E_GET_ATTRIBUTE__ = 21
+__E_SET_ATTRIBUTE__ = 22
+__E_DEL_ATTRIBUTE__ = 23
+__E_INSTANTIATE__ = 31
+__E_REF_INCR__ = 32
+__E_REF_DECR__ = 33
 # twin reply type
 __E_SUCCESS__ = 0
 __E_EXCEPTION__ = 1
@@ -163,6 +164,10 @@ class SingleThreadKernel(object):
 						self._logger.warning('Directive __E_SET_ATTRIBUTE__')
 						inst_id, attribute_name, new_value = directive[1]
 						response = setattr(self._instances[inst_id][1], attribute_name, new_value)
+					elif directive[0] == __E_DEL_ATTRIBUTE__:
+						self._logger.warning('Directive __E_DEL_ATTRIBUTE__')
+						inst_id, attribute_name = directive[1]
+						response = delattr(self._instances[inst_id][1], attribute_name)
 					elif directive[0] == __E_INSTANTIATE__:
 						self._logger.warning('Directive __E_INSTANTIATE__')
 						cls, cls_args, cls_kwargs = directive[1]
@@ -240,6 +245,10 @@ class SingleThreadKernel(object):
 	def set_attribute(self, instance_id, attribute_name, new_value):
 		"""Set an attribute of an instance"""
 		return self._dispatch_request(__E_SET_ATTRIBUTE__, instance_id, attribute_name, new_value)
+
+	def del_attribute(self, instance_id, attribute_name):
+		"""Delete an attribute of an instance"""
+		return self._dispatch_request(__E_DEL_ATTRIBUTE__, instance_id, attribute_name)
 
 	def instantiate_class(self, cls, *cls_args, **cls_kwargs):
 		"""Instantiate a class, increments its reference count, and return its id"""
