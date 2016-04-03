@@ -158,7 +158,7 @@ class SingleThreadKernel(object):
 			# always free resources and exit when the kernel stops
 			del self._instances_keepalive
 			del self.ipc
-			return exit_code
+		return exit_code
 
 	# dispatching: execute actions in other interpeter
 	def _dispatch_request(self, request_type, *args):

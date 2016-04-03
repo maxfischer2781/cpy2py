@@ -16,6 +16,7 @@ import cpy2py.twinterpreter.kernel_state
 import proxy_tracker
 
 from proxy_meta import TwinMeta
+from proxy_twin import TwinProxy
 
 
 class TwinObject(object):
@@ -29,7 +30,7 @@ class TwinObject(object):
 	:note: This class can be used in place of :py:class:`object` as a base class.
 	"""
 	__twin_id__ = None  # to be set by metaclass or manually
-	__proxy_class__ = None  # to be set by metaclass
+	__proxy_class__ = TwinProxy  # to be set by metaclass
 	__metaclass__ = TwinMeta
 
 	def __new__(cls, *args, **kwargs):

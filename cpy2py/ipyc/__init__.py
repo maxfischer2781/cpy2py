@@ -18,3 +18,5 @@ Communication between the interpreters slaved together.
 """
 from ipyc_exceptions import IPyCTerminated
 from stdstream import StdIPC
+
+__all__ = ['IPyCTerminated', 'StdIPC']
