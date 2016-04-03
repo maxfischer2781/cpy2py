@@ -114,14 +114,11 @@ class SingleThreadKernel(object):
         :returns: exit code indicating potential failure
         """
         exit_code, request_id = 1, None
-        self._logger.warning('run @ %s', time.asctime())
-        self._logger.warning('Starting')
+        self._logger.warning('Starting @ %s', time.asctime())
         try:
             while True:
                 self._logger.warning('Listening')
                 request_id, directive = self.ipc.receive()
-                self._logger.warning('Received: %d', request_id)
-                self._logger.warning(repr(directive))
                 try:
                     directive_type, directive_body = directive
                     directive_symbol = E_SYMBOL[directive_type]
@@ -140,23 +137,19 @@ class SingleThreadKernel(object):
                     self.ipc.send((request_id, __E_EXCEPTION__, err))
                     self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
                     format_exception(self._logger, 3)
-                    if isinstance(err, KeyboardInterrupt):
+                    if isinstance(err, (KeyboardInterrupt, SystemExit)):
                         break
                 else:
                     self.ipc.send((request_id, __E_SUCCESS__, response))
         except StopTwinterpeter:
-            # regular shutdown
             self.ipc.send((request_id, __E_SHUTDOWN__, exit_code))
         except cpy2py.ipyc.IPyCTerminated:
             exit_code = 0
         except Exception:  # pylint: disable=broad-except
-            self._logger.critical('TWIN KERNEL EXCEPTION')
+            self._logger.critical('TWIN KERNEL INTERNAL EXCEPTION')
             format_exception(self._logger, 3)
         finally:
             self._logger.critical('TWIN KERNEL SHUTDOWN: %d', exit_code)
-            # always free resources and exit when the kernel stops
-            del self._instances_keepalive
-            del self.ipc
             del __kernels__[self.peer_id]
         return exit_code
 
