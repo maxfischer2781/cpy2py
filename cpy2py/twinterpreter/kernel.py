@@ -95,47 +95,28 @@ class SingleThreadKernel(object):
                 try:
                     if directive[0] == __E_CALL_FUNC__:
                         self._logger.warning('Directive __E_CALL_FUNC__')
-                        func_obj, func_args, func_kwargs = directive[1]
-                        response = func_obj(*func_args, **func_kwargs)
+                        response = self._directive_call_func(directive[1])
                     elif directive[0] == __E_CALL_METHOD__:
                         self._logger.warning('Directive __E_CALL_METHOD__')
-                        inst_id, method_name, method_args, method_kwargs = directive[1]
-                        response = getattr(self._instances_alive_ref[inst_id], method_name)(*method_args,
-                                                                                            **method_kwargs)
+                        response = self._directive_call_method(directive[1])
                     elif directive[0] == __E_GET_ATTRIBUTE__:
-                        self._logger.warning('Directive __E_GET_MEMBER__')
-                        inst_id, attribute_name = directive[1]
-                        response = getattr(self._instances_alive_ref[inst_id], attribute_name)
+                        self._logger.warning('Directive __E_GET_ATTRIBUTE__')
+                        response = self._directive_get_attribute(directive[1])
                     elif directive[0] == __E_SET_ATTRIBUTE__:
                         self._logger.warning('Directive __E_SET_ATTRIBUTE__')
-                        inst_id, attribute_name, new_value = directive[1]
-                        response = setattr(self._instances_alive_ref[inst_id], attribute_name, new_value)
+                        response = self._directive_set_attribute(directive[1])
                     elif directive[0] == __E_DEL_ATTRIBUTE__:
                         self._logger.warning('Directive __E_DEL_ATTRIBUTE__')
-                        inst_id, attribute_name = directive[1]
-                        response = delattr(self._instances_alive_ref[inst_id], attribute_name)
+                        response = self._directive_del_attribute(directive[1])
                     elif directive[0] == __E_INSTANTIATE__:
                         self._logger.warning('Directive __E_INSTANTIATE__')
-                        cls, cls_args, cls_kwargs = directive[1]
-                        instance = cls(*cls_args, **cls_kwargs)
-                        self._instances_keepalive[id(instance)] = [1, instance]
-                        self._instances_alive_ref[id(instance)] = instance
-                        response = id(instance)
+                        response = self._directive_instantiate(directive[1])
                     elif directive[0] == __E_REF_DECR__:
                         self._logger.warning('Directive __E_REF_DECR__')
-                        inst_id = directive[1][0]
-                        self._instances_keepalive[inst_id][0] -= 1
-                        response = self._instances_keepalive[inst_id][0]
-                        if self._instances_keepalive[inst_id][0] <= 0:
-                            del self._instances_keepalive[inst_id]
+                        response = self._directive_ref_decr(directive[1])
                     elif directive[0] == __E_REF_INCR__:
                         self._logger.warning('Directive __E_REF_INCR__')
-                        inst_id = directive[1][0]
-                        try:
-                            self._instances_keepalive[inst_id][0] += 1
-                        except KeyError:
-                            self._instances_keepalive[inst_id] = [1, self._instances_alive_ref[inst_id]]
-                        response = self._instances_keepalive[inst_id][0]
+                        response = self._directive_ref_incr(directive[1])
                     elif directive[0] == __E_SHUTDOWN__:
                         self._logger.warning('Directive __E_SHUTDOWN__')
                         del __kernels__[self.peer_id]
@@ -190,33 +171,85 @@ class SingleThreadKernel(object):
         """Execute a function call and return the result"""
         return self._dispatch_request(__E_CALL_FUNC__, call, call_args, call_kwargs)
 
+    @staticmethod
+    def _directive_call_func(directive_body):
+        """Directive for :py:meth:`dispatch_call`"""
+        func_obj, func_args, func_kwargs = directive_body
+        return func_obj(*func_args, **func_kwargs)
+
     def dispatch_method_call(self, instance_id, method_name, *method_args, **methods_kwargs):
         """Execute a method call and return the result"""
         return self._dispatch_request(__E_CALL_METHOD__, instance_id, method_name, method_args, methods_kwargs)
+
+    def _directive_call_method(self, directive_body):
+        """Directive for :py:meth:`dispatch_method_call`"""
+        inst_id, method_name, method_args, method_kwargs = directive_body
+        return getattr(self._instances_alive_ref[inst_id], method_name)(*method_args, **method_kwargs)
 
     def get_attribute(self, instance_id, attribute_name):
         """Get an attribute of an instance"""
         return self._dispatch_request(__E_GET_ATTRIBUTE__, instance_id, attribute_name)
 
+    def _directive_get_attribute(self, directive_body):
+        """Directive for :py:meth:`get_attribute`"""
+        inst_id, attribute_name = directive_body
+        return getattr(self._instances_alive_ref[inst_id], attribute_name)
+
     def set_attribute(self, instance_id, attribute_name, new_value):
         """Set an attribute of an instance"""
         return self._dispatch_request(__E_SET_ATTRIBUTE__, instance_id, attribute_name, new_value)
+
+    def _directive_set_attribute(self, directive_body):
+        """Directive for :py:meth:`set_attribute`"""
+        inst_id, attribute_name, new_value = directive_body
+        return setattr(self._instances_alive_ref[inst_id], attribute_name, new_value)
 
     def del_attribute(self, instance_id, attribute_name):
         """Delete an attribute of an instance"""
         return self._dispatch_request(__E_DEL_ATTRIBUTE__, instance_id, attribute_name)
 
+    def _directive_del_attribute(self, directive_body):
+        """Directive for :py:meth:`del_attribute`"""
+        inst_id, attribute_name = directive_body
+        return delattr(self._instances_alive_ref[inst_id], attribute_name)
+
     def instantiate_class(self, cls, *cls_args, **cls_kwargs):
-        """Instantiate a class, increments its reference count, and return its id"""
+        """Instantiate a class, increment its reference count, and return its id"""
         return self._dispatch_request(__E_INSTANTIATE__, cls, cls_args, cls_kwargs)
+
+    def _directive_instantiate(self, directive_body):
+        """Directive for :py:meth:`instantiate_class`"""
+        cls, cls_args, cls_kwargs = directive_body
+        instance = cls(*cls_args, **cls_kwargs)
+        self._instances_keepalive[id(instance)] = [1, instance]
+        self._instances_alive_ref[id(instance)] = instance
+        return id(instance)
 
     def decrement_instance_ref(self, instance_id):
         """Decrement the reference count to an instance by one"""
         return self._dispatch_request(__E_REF_DECR__, instance_id)
 
+    def _directive_ref_decr(self, directive_body):
+        """Directive for :py:meth:`decrement_instance_ref`"""
+        inst_id = directive_body[0]
+        self._instances_keepalive[inst_id][0] -= 1
+        response = self._instances_keepalive[inst_id][0]
+        if self._instances_keepalive[inst_id][0] <= 0:
+            del self._instances_keepalive[inst_id]
+        return response
+
     def increment_instance_ref(self, instance_id):
         """Increment the reference count to an instance by one"""
         return self._dispatch_request(__E_REF_INCR__, instance_id)
+
+    def _directive_ref_incr(self, directive_body):
+        """Directive for :py:meth:`increment_instance_ref`"""
+        inst_id = directive_body[0]
+        try:
+            self._instances_keepalive[inst_id][0] += 1
+        except KeyError:
+            self._instances_keepalive[inst_id] = [1, self._instances_alive_ref[inst_id]]
+        return self._instances_keepalive[inst_id][0]
 
     def stop(self):
         """Shutdown the peer's server"""
