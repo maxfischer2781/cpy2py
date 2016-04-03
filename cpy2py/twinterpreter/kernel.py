@@ -269,7 +269,8 @@ class SingleThreadKernel(object):
             return True
         return False
 
-    def _directive_shutdown(self, directive_body):
+    @staticmethod
+    def _directive_shutdown(directive_body):
         """Directive for :py:meth:`stop`"""
         message = directive_body[0]
         raise StopTwinterpeter(message)
