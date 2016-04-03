@@ -29,5 +29,5 @@ class TwinterpeterUnavailable(TwinterpeterException, RuntimeError):  # pylint: d
 class TwinterpeterTerminated(TwinterpeterUnavailable):  # pylint: disable=too-many-ancestors
     """A requested Twinterpeter is not available, because it was terminated already"""
     def __init__(self, twin_id):
-        super(TwinterpeterTerminated, self).__init__("Twinterpeter '%s' already terminated" % twin_id)
+        super(TwinterpeterUnavailable, self).__init__("Twinterpeter '%s' already terminated" % twin_id)
         self.twin_id = twin_id

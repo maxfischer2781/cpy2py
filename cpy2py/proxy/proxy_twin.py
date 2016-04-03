@@ -45,7 +45,7 @@ class ProxyMethod(object):
 
 class TwinProxy(object):
     """
-    Proxy for instances existing in the twinterpreter
+    Proxy for instances existing in another twinterpreter
 
     :warning: This class should never be instantiated or subclassed manually. It
               will be subclassed automatically by :py:class:`~.TwinMeta`.
