@@ -44,17 +44,17 @@ __E_SUCCESS__ = 101
 __E_EXCEPTION__ = 102
 
 E_SYMBOL = {
-    __E_SHUTDOWN__ : '__E_SHUTDOWN__',
-    __E_CALL_FUNC__ : '__E_CALL_FUNC__',
-    __E_CALL_METHOD__ : '__E_CALL_METHOD__',
-    __E_GET_ATTRIBUTE__ : '__E_GET_ATTRIBUTE__',
-    __E_SET_ATTRIBUTE__ : '__E_SET_ATTRIBUTE__',
-    __E_DEL_ATTRIBUTE__ : '__E_DEL_ATTRIBUTE__',
-    __E_INSTANTIATE__ : '__E_INSTANTIATE__',
-    __E_REF_INCR__ : '__E_REF_INCR__',
-    __E_REF_DECR__ : '__E_REF_DECR__',
-    __E_SUCCESS__ : '__E_SUCCESS__',
-    __E_EXCEPTION__ : '__E_EXCEPTION__',
+    __E_SHUTDOWN__: '__E_SHUTDOWN__',
+    __E_CALL_FUNC__: '__E_CALL_FUNC__',
+    __E_CALL_METHOD__: '__E_CALL_METHOD__',
+    __E_GET_ATTRIBUTE__: '__E_GET_ATTRIBUTE__',
+    __E_SET_ATTRIBUTE__: '__E_SET_ATTRIBUTE__',
+    __E_DEL_ATTRIBUTE__: '__E_DEL_ATTRIBUTE__',
+    __E_INSTANTIATE__: '__E_INSTANTIATE__',
+    __E_REF_INCR__: '__E_REF_INCR__',
+    __E_REF_DECR__: '__E_REF_DECR__',
+    __E_SUCCESS__: '__E_SUCCESS__',
+    __E_EXCEPTION__: '__E_EXCEPTION__',
 }
 
 
@@ -96,15 +96,15 @@ class SingleThreadKernel(object):
         # instance_id => instance
         self._instances_alive_ref = weakref.WeakValueDictionary()
         self._directive_method = {
-            __E_SHUTDOWN__ : self._directive_shutdown,
-            __E_CALL_FUNC__ : self._directive_call_func,
-            __E_CALL_METHOD__ : self._directive_call_method,
-            __E_GET_ATTRIBUTE__ : self._directive_get_attribute,
-            __E_SET_ATTRIBUTE__ : self._directive_set_attribute,
-            __E_DEL_ATTRIBUTE__ : self._directive_del_attribute,
-            __E_INSTANTIATE__ : self._directive_instantiate,
-            __E_REF_INCR__ : self._directive_ref_incr,
-            __E_REF_DECR__ : self._directive_ref_decr,
+            __E_SHUTDOWN__: self._directive_shutdown,
+            __E_CALL_FUNC__: self._directive_call_func,
+            __E_CALL_METHOD__: self._directive_call_method,
+            __E_GET_ATTRIBUTE__: self._directive_get_attribute,
+            __E_SET_ATTRIBUTE__: self._directive_set_attribute,
+            __E_DEL_ATTRIBUTE__: self._directive_del_attribute,
+            __E_INSTANTIATE__: self._directive_instantiate,
+            __E_REF_INCR__: self._directive_ref_incr,
+            __E_REF_DECR__: self._directive_ref_decr,
         }
 
     def run(self):
