@@ -62,7 +62,7 @@ class TwinMeta(type):
                 else:
                     break
             else:
-                twin_id = cpy2py.twinterpreter.kernel_state.TWIN_MASTER
+                twin_id = cpy2py.twinterpreter.kernel_state.TwinMaster
             class_dict['__twin_id__'] = twin_id
         # enable persistent dump/load without pickle
         class_dict['__import_mod_name__'] = (class_dict['__module__'], name)

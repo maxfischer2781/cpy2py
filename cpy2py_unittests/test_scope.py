@@ -34,12 +34,12 @@ class TestCallScope(unittest.TestCase):
 
     def test_function_native(self):
         self.assertTrue(test_kernel(cpy2py.twinterpreter.kernel_state.__twin_id__))
-        self.assertTrue(test_kernel(cpy2py.twinterpreter.kernel_state.TWIN_MASTER))
-        self.assertFalse(test_kernel(cpy2py.twinterpreter.kernel_state.TWIN_ONLY_SLAVE))
+        self.assertTrue(test_kernel(cpy2py.twinterpreter.kernel_state.TwinMaster))
+        self.assertFalse(test_kernel(cpy2py.twinterpreter.kernel_state.TwinOnlySlave))
         self.assertFalse(test_kernel('foobar'))
 
     def test_function_twin(self):
         self.assertTrue(self.twinterpreter.execute(test_kernel, self.twinterpreter.twinterpreter_id))
         self.assertTrue(self.twinterpreter.execute(test_kernel, 'pypy'))
-        self.assertTrue(self.twinterpreter.execute(test_kernel, cpy2py.twinterpreter.kernel_state.TWIN_ONLY_SLAVE))
+        self.assertTrue(self.twinterpreter.execute(test_kernel, cpy2py.twinterpreter.kernel_state.TwinOnlySlave))
         self.assertFalse(self.twinterpreter.execute(test_kernel, 'foobar'))
