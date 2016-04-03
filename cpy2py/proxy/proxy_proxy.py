@@ -25,7 +25,7 @@ class ProxyProxy(TwinObject):
     __twin_id__ = kernel_state.__twin_id__
 
     def __init__(self, real_object):
-        self._real_object = real_object
+        TwinObject.__setattr__(self, '_real_object', real_object)
 
     def __getattr__(self, name):
         return getattr(self._real_object, name)
