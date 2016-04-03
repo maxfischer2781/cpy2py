@@ -255,7 +255,12 @@ class SingleThreadKernel(object):
 
     def _directive_ref_incr(self, directive_body):
         """Directive for :py:meth:`increment_instance_ref`"""
-        raise StopTwinterpeter
+        inst_id = directive_body[0]
+        try:
+            self._instances_keepalive[inst_id][0] += 1
+        except KeyError:
+            self._instances_keepalive[inst_id] = [1, self._instances_alive_ref[inst_id]]
+        return self._instances_keepalive[inst_id][0]
 
     def stop(self):
         """Shutdown the peer's server"""
