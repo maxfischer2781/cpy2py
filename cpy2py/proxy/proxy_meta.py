@@ -40,6 +40,15 @@ class TwinMeta(type):
     __proxy_store__ = {
         object: TwinProxy
     }
+    #: attributes which are stored on the proxy as well
+    __proxy_inherits_attributes__ = [
+        '__twin_id__',
+        '__class__',
+        '__module__',
+        '__doc__',
+        '__metaclass__',
+        '__import_mod_name__'
+    ]
 
     def __new__(mcs, name, bases, class_dict):
         """Create twin object and proxy"""
@@ -86,7 +95,7 @@ class TwinMeta(type):
             elif isinstance(class_dict[aname], (classmethod, staticmethod)):
                 class_dict[aname] = ProxyMethod(class_dict[aname].__func__)
             # remove non-magic attributes so they don't shadow the real ones
-            elif aname not in ('__twin_id__', '__class__', '__module__', '__doc__', '__metaclass__', '__import_mod_name__'):
+            elif aname not in mcs.__proxy_inherits_attributes__:
                 del class_dict[aname]
         # convert bases to proxies as well
         bases = tuple(mcs.__get_proxy_class__(base) for base in bases)
