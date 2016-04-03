@@ -38,11 +38,11 @@ def persistent_twin_id(obj):
     else:
         # twin object, only send reference
         return '%s\t%s\t%s\t%s' % (
-                obj.__instance_id__,
-                obj.__twin_id__,
-                __import_mod_name__[0],
-                __import_mod_name__[1]
-            )
+            obj.__instance_id__,
+            obj.__twin_id__,
+            __import_mod_name__[0],
+            __import_mod_name__[1]
+        )
 
 
 def persistent_twin_load(persid):
