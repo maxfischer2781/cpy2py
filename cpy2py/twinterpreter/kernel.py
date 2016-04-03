@@ -24,7 +24,7 @@ import weakref
 
 from cpy2py.twinterpreter.kernel_state import __kernels__
 
-from cpy2py.utility.exceptions import format_exception
+from cpy2py.utility.exceptions import format_exception, CPy2PyException
 import cpy2py.ipyc
 from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterTerminated
 
@@ -143,7 +143,11 @@ class SingleThreadKernel(object):
                         break
                     else:
                         raise RuntimeError
-                except Exception as err:
+                # catch internal errors to reraise them
+                except CPy2PyException:
+                    raise
+                # send everything else back to calling scope
+                except Exception as err:  # pylint: disable=broad-except
                     self.ipc.send((request_id, __E_EXCEPTION__, err))
                     self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
                     format_exception(self._logger, 3)
