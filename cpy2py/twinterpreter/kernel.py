@@ -58,9 +58,11 @@ E_SYMBOL = {
 }
 
 
-class StopTwinterpeter(CPy2PyException):
+class StopTwinterpreter(CPy2PyException):
     """Signal to stop the twinterpeter"""
-    pass
+    def __init__(self, message="Twinterpreter Shutdown", exit_code=1):
+        CPy2PyException.__init__(self, message)
+        self.exit_code = exit_code
 
 
 class SingleThreadKernel(object):
@@ -119,30 +121,9 @@ class SingleThreadKernel(object):
             while True:
                 self._logger.warning('Listening')
                 request_id, directive = self.ipc.receive()
-                try:
-                    directive_type, directive_body = directive
-                    directive_symbol = E_SYMBOL[directive_type]
-                    directive_method = self._directive_method[directive_type]
-                except (KeyError, ValueError) as err:
-                    # error in lookup or unpacking
-                    raise CPy2PyException(err)
-                try:
-                    self._logger.warning('Directive %s', directive_symbol)
-                    response = directive_method(directive_body)
-                # catch internal errors to reraise them
-                except CPy2PyException:
-                    raise
-                # send everything else back to calling scope
-                except Exception as err:  # pylint: disable=broad-except
-                    self.ipc.send((request_id, __E_EXCEPTION__, err))
-                    self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
-                    format_exception(self._logger, 3)
-                    if isinstance(err, (KeyboardInterrupt, SystemExit)):
-                        break
-                else:
-                    self.ipc.send((request_id, __E_SUCCESS__, response))
-        except StopTwinterpeter:
-            self.ipc.send((request_id, __E_SHUTDOWN__, exit_code))
+                self._serve_request(request_id, directive)
+        except StopTwinterpreter as err:
+            self.ipc.send((request_id, __E_SHUTDOWN__, err.exit_code))
         except cpy2py.ipyc.IPyCTerminated:
             exit_code = 0
         except Exception:  # pylint: disable=broad-except
@@ -152,6 +133,31 @@ class SingleThreadKernel(object):
             self._logger.critical('TWIN KERNEL SHUTDOWN: %d', exit_code)
             del __kernels__[self.peer_id]
         return exit_code
+
+    def _serve_request(self, request_id, directive):
+        """Serve a request from :py:meth:`_dispatch_request`"""
+        try:
+            directive_type, directive_body = directive
+            directive_symbol = E_SYMBOL[directive_type]
+            directive_method = self._directive_method[directive_type]
+        except (KeyError, ValueError) as err:
+            # error in lookup or unpacking
+            raise CPy2PyException(err)
+        try:
+            self._logger.warning('Directive %s', directive_symbol)
+            response = directive_method(directive_body)
+        # catch internal errors to reraise them
+        except CPy2PyException:
+            raise
+        # send everything else back to calling scope
+        except Exception as err:  # pylint: disable=broad-except
+            self.ipc.send((request_id, __E_EXCEPTION__, err))
+            self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
+            format_exception(self._logger, 3)
+            if isinstance(err, (KeyboardInterrupt, SystemExit)):
+                raise StopTwinterpreter(message=err.__class__.__name__, exit_code=1)
+        else:
+            self.ipc.send((request_id, __E_SUCCESS__, response))
 
     # dispatching: execute actions in other interpeter
     def _dispatch_request(self, request_type, *args):
@@ -267,7 +273,7 @@ class SingleThreadKernel(object):
     def _directive_shutdown(directive_body):
         """Directive for :py:meth:`stop`"""
         message = directive_body[0]
-        raise StopTwinterpeter(message)
+        raise StopTwinterpreter(message=message, exit_code=0)
 
     def __repr__(self):
         return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())
