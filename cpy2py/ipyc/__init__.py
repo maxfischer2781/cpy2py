@@ -16,7 +16,7 @@ Inter Python Communication
 
 Communication between the interpreters slaved together.
 """
-from ipyc_exceptions import IPyCTerminated
-from stdstream import StdIPC
+from cpy2py.ipyc.ipyc_exceptions import IPyCTerminated
+from cpy2py.ipyc.stdstream import StdIPC
 
 __all__ = ['IPyCTerminated', 'StdIPC']

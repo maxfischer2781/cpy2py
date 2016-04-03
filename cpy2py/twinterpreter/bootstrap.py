@@ -16,8 +16,8 @@ import os
 import logging
 import sys
 
+from cpy2py import proxy, ipyc
 import cpy2py.twinterpreter.kernel
-from cpy2py import proxy
 import cpy2py.twinterpreter.kernel_state
 
 
@@ -46,12 +46,12 @@ def bootstrap_kernel():
     cpy2py.twinterpreter.kernel_state.__twin_group_id__ = settings.twin_group_id
     kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
         peer_id=settings.peer_id,
-        ipc=cpy2py.ipyc.stdstream.StdIPC(
+        ipc=ipyc.stdstream.StdIPC(
             pickler_cls=proxy.twin_pickler,
             unpickler_cls=proxy.twin_unpickler,
         )
     )
-    kernel.run()
+    sys.exit(kernel.run())
 
 
 if __name__ == "__main__":

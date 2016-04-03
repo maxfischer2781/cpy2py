@@ -16,8 +16,8 @@ import os
 import errno
 import cpy2py.twinterpreter.kernel_state
 
-import kernel
-import bootstrap
+import cpy2py.twinterpreter.kernel
+import cpy2py.twinterpreter.bootstrap
 import cpy2py.ipyc.stdstream
 from cpy2py import proxy
 
@@ -73,7 +73,7 @@ class TwinMaster(object):
         if not self.is_alive:
             self._process = subprocess.Popen(
                 [
-                    self.executable, '-m', bootstrap.__name__,
+                    self.executable, '-m', cpy2py.twinterpreter.bootstrap.__name__,
                     '--peer-id', cpy2py.twinterpreter.kernel_state.__twin_id__,
                     '--twin-id', self.twinterpreter_id,
                     '--twin-group-id',
@@ -82,7 +82,7 @@ class TwinMaster(object):
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
             )
-            self._kernel = kernel.SingleThreadKernel(
+            self._kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
                 self.twinterpreter_id,
                 ipc=cpy2py.ipyc.stdstream.StdIPC(
                     readstream=self._process.stdout,

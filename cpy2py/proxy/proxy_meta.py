@@ -15,7 +15,7 @@ import types
 import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.kernel_state
 
-from proxy_twin import TwinProxy, ProxyMethod
+from cpy2py.proxy.proxy_twin import TwinProxy, ProxyMethod
 
 
 class TwinMeta(type):

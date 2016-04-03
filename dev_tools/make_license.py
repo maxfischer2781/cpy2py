@@ -25,26 +25,26 @@ import os
 import hashlib
 import urllib2
 
-from license_data import notice_template, license_header_template, primary_author_list
+from dev_tools.license_data import notice_template, license_header_template, primary_author_list
 
 # symbol sequence at the start of each license line, per file extension
-license_start_symbols = {
+LICENSE_START_SYMBOLS = {
     None: "# - # ",  # default
     ".py": "# - # ",
     ".rst": ".. # - #",
 }
-preserve_lines = [
-    "^#!",  # shebang
-    "coding[:=]\s*([-\w.]+)",  # python encoding line
+PRESERVE_LINES = [
+    r"^#!",  # shebang
+    r"coding[:=]\s*([-\w.]+)",  # python encoding line
 ]
 
 # extension for temporary files
-temp_ext = ".lsc.tmp"
+TEMP_EXTENSION = ".lsc.tmp"
 
-repo_base = os.path.realpath(
+REPO_BASE = os.path.realpath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 )
-source_file_re = ".*.py$|.*.sh$|.*.rst$"
+SOURCE_FILE_RE = ".*.py$|.*.sh$|.*.rst$"
 
 CLI = argparse.ArgumentParser(
     "Update licensing information of the project",
@@ -53,7 +53,7 @@ CLI.add_argument(
     "-r",
     "--repo-base",
     help="Basedir of repository. [default: %(default)s]",
-    default=repo_base,
+    default=REPO_BASE,
 )
 CLI.add_argument(
     "-d",
@@ -64,13 +64,13 @@ CLI.add_argument(
         repo_dir
         for repo_dir in
         os.listdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-        if os.path.isdir(os.path.join(repo_base, repo_dir)) and
+        if os.path.isdir(os.path.join(REPO_BASE, repo_dir)) and
         not any(
             re.search(exclude_repo_dir_re, repo_dir)
             for exclude_repo_dir_re in
             ['unittests', '^dev_tools$', '^[.]']
         )
-        ],
+    ],
 )
 CLI.add_argument(
     "-f",
@@ -82,14 +82,14 @@ CLI.add_argument(
         for repo_file in
         os.listdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
         if
-        os.path.isfile(os.path.join(repo_base, repo_file)) and
-        re.search(source_file_re, os.path.join(repo_base, repo_file)) and
+        os.path.isfile(os.path.join(REPO_BASE, repo_file)) and
+        re.search(SOURCE_FILE_RE, os.path.join(REPO_BASE, repo_file)) and
         not any(
             re.search(exclude_repo_file_re, repo_file)
             for exclude_repo_file_re in
             ['^[.]', '^NOTICE$', '^README$']
         )
-        ],
+    ],
 )
 CLI.add_argument(
     "-l",
@@ -152,7 +152,7 @@ def get_format_data(source_file=None):
             continue
         contributors_list.append(contributor)
     return {
-        "package_name": os.path.dirname(repo_base),
+        "package_name": os.path.dirname(REPO_BASE),
         "dev_years": dev_years,
         "primary_authors": ', '.join(primary_author_list),
         "contributors": ', '.join(contributor.name for contributor in contributors_list),
@@ -222,7 +222,7 @@ def write_license(license_url, license_file):
     except urllib2.URLError:
         print("Failed fetching LICENSE")
         return False
-    license_tmp = license_file + temp_ext
+    license_tmp = license_file + TEMP_EXTENSION
     with open(license_tmp, 'wb') as output_file:
         output_file.write(license_data.read())
     return update_file(license_file, license_tmp)
@@ -236,12 +236,12 @@ def get_license_target_files(
     """
     # folders which include files subject to licensing
     for folder in source_dirs:
-        for dirpath, dirnames, filenames in os.walk(os.path.join(repo_base, folder)):
+        for dirpath, _dirnames, filenames in os.walk(os.path.join(REPO_BASE, folder)):
             for filename in filenames:
-                if re.search(source_file_re, filename):
+                if re.search(SOURCE_FILE_RE, filename):
                     yield os.path.join(dirpath, filename)
     for filename in source_files:
-        yield os.path.join(repo_base, filename)
+        yield os.path.join(REPO_BASE, filename)
 
 
 def update_license_header(filepath):
@@ -255,9 +255,9 @@ def update_license_header(filepath):
     license_header = license_header_template % get_format_data(source_file=filepath)
     # insert license if applicable
     _, file_type = os.path.splitext(filepath)
-    license_seq = license_start_symbols.get(file_type, license_start_symbols[None])
+    license_seq = LICENSE_START_SYMBOLS.get(file_type, LICENSE_START_SYMBOLS[None])
     done_insert = False
-    filepath_tmp = filepath + temp_ext
+    filepath_tmp = filepath + TEMP_EXTENSION
     with open(filepath_tmp, 'w') as output_file, open(filepath) as input_file:
         # iterate lines, adding header directly AFTER shebang and encoding
         for source_line in input_file:
@@ -266,7 +266,7 @@ def update_license_header(filepath):
                 if source_line.startswith(license_seq.strip()):
                     continue
                 # always preserve leading content
-                elif any(re.search(preserve_re, source_line) for preserve_re in preserve_lines):
+                elif any(re.search(preserve_re, source_line) for preserve_re in PRESERVE_LINES):
                     output_file.write(source_line)
                     continue
                 # write header, continue with source
@@ -364,7 +364,7 @@ def get_contributors(aliases=None, source_file=None):
     try:
         changes = subprocess.check_output(
             ['git', 'log', '--format="%H|%aN|%aE"', '--no-merges', '-w', '--numstat'] + (
-            ['--follow', source_file] if source_file is not None else [])
+                ['--follow', source_file] if source_file is not None else [])
         ).splitlines()
     except subprocess.CalledProcessError as err:
         if err.returncode != 128:
@@ -376,7 +376,7 @@ def get_contributors(aliases=None, source_file=None):
         if not change_line:
             continue
         if '|' in change_line and '@' in change_line:
-            commit, author, email = change_line.split('|')
+            _commit, author, email = change_line.split('|')
             contributor = Contributor(aliases.get(author, author))
             contributor.add_commit(email)
             total.add_commit(email)
@@ -394,20 +394,20 @@ def get_contributors(aliases=None, source_file=None):
 
 def write_notice(notice_file):
     notice_data = notice_template % get_format_data()
-    notice_tmp = notice_file + temp_ext
+    notice_tmp = notice_file + TEMP_EXTENSION
     with open(notice_tmp, 'wb') as output_file:
         output_file.write(notice_data)
     return update_file(notice_file, notice_tmp)
 
 
-if __name__ == "__main__":
+def main():
     options = CLI.parse_args()
-    if write_notice(notice_file=os.path.join(repo_base, "NOTICE")):
+    if write_notice(notice_file=os.path.join(REPO_BASE, "NOTICE")):
         print("Added NOTICE")
     else:
         print("Skipped NOTICE")
     if options.fetch_license and write_license(license_url=options.fetch_license,
-                                               license_file=os.path.join(repo_base, "LICENSE")):
+                                               license_file=os.path.join(REPO_BASE, "LICENSE")):
         print("Added LICENSE")
     else:
         print("Skipped LICENSE")
@@ -415,3 +415,7 @@ if __name__ == "__main__":
     for file_path in get_license_target_files(source_files=options.source_files, source_dirs=options.source_dirs):
         print(file_path)
         update_license_header(file_path)
+
+
+if __name__ == "__main__":
+    main()

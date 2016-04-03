@@ -1,4 +1,5 @@
 strictness: high
 max-line-length: 120
 autodetect: true
-
+ignore-paths:
+    - cpy2py_sphinx

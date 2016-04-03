@@ -26,7 +26,7 @@ from cpy2py.twinterpreter.kernel_state import __kernels__
 
 from cpy2py.utility.exceptions import format_exception
 import cpy2py.ipyc
-from kernel_exceptions import TwinterpeterTerminated
+from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterTerminated
 
 # Message Enums
 # twin call type
@@ -62,7 +62,7 @@ class SingleThreadKernel(object):
     :type ipc: :py:class:`~StdIPC`
     """
 
-    def __new__(cls, peer_id, *args, **kwargs):
+    def __new__(cls, peer_id, *args, **kwargs):  # pylint: disable=unused-argument
         assert peer_id not in __kernels__, 'Twinterpreters must have unique IDs'
         __kernels__[peer_id] = object.__new__(cls)
         return __kernels__[peer_id]
@@ -153,13 +153,14 @@ class SingleThreadKernel(object):
                     self.ipc.send((request_id, __E_SUCCESS__, response))
         except cpy2py.ipyc.IPyCTerminated:
             exit_code = 0
-        except Exception:
+        except Exception:  # pylint: disable=bread-except
             self._logger.critical('TWIN KERNEL EXCEPTION')
             format_exception(self._logger, 3)
         finally:
             # always free resources and exit when the kernel stops
             del self._instances_keepalive
             del self.ipc
+        self._logger.critical('TWIN KERNEL SHUTDOWN: %d', exit_code)
         return exit_code
 
     # dispatching: execute actions in other interpeter
@@ -172,6 +173,7 @@ class SingleThreadKernel(object):
             request_id, result_type, result_body = self.ipc.receive()
         except cpy2py.ipyc.IPyCTerminated:
             raise TwinterpeterTerminated(twin_id=self.peer_id)
+        assert request_id == my_id, 'kernel messages out of order'
         if result_type == __E_SUCCESS__:
             return result_body
         elif result_type == __E_EXCEPTION__:

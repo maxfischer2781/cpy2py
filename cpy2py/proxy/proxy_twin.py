@@ -15,7 +15,7 @@ import cpy2py.twinterpreter.kernel
 from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
 import cpy2py.twinterpreter.kernel_state
 
-import proxy_tracker
+from cpy2py.proxy import proxy_tracker
 
 
 class ProxyMethod(object):
@@ -36,7 +36,7 @@ class ProxyMethod(object):
 
     def __get__(self, instance, owner):
         assert instance is not None, "%s %s must be accessed from an instance, not class" % (
-        self.__class__.__name__, self.__name__)
+            self.__class__.__name__, self.__name__)
         __twin_id__ = instance.__twin_id__
         __instance_id__ = instance.__instance_id__
         kernel = cpy2py.twinterpreter.kernel_state.get_kernel(__twin_id__)

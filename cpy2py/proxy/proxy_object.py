@@ -13,10 +13,10 @@
 # - # limitations under the License.
 import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.kernel_state
-import proxy_tracker
 
-from proxy_meta import TwinMeta
-from proxy_twin import TwinProxy
+from cpy2py.proxy import proxy_tracker
+from cpy2py.proxy.proxy_meta import TwinMeta
+from cpy2py.proxy.proxy_twin import TwinProxy
 
 
 class TwinObject(object):
