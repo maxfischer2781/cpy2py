@@ -15,19 +15,21 @@ import cpy2py.utility.exceptions
 
 
 class TwinterpeterException(cpy2py.utility.exceptions.CPy2PyException):
-	"""Exception in Twinterpeter internals"""
-	pass
+    """Exception in Twinterpeter internals"""
+    pass
 
 
 class TwinterpeterUnavailable(TwinterpeterException, RuntimeError):
-	"""A requested Twinterpeter is not available, e.g. because it has not bee started"""
-	def __init__(self, twin_id):
-		super(TwinterpeterUnavailable, self).__init__("Twinterpeter '%s' not available" % twin_id)
-		self.twin_id = twin_id
+    """A requested Twinterpeter is not available, e.g. because it has not bee started"""
+
+    def __init__(self, twin_id):
+        super(TwinterpeterUnavailable, self).__init__("Twinterpeter '%s' not available" % twin_id)
+        self.twin_id = twin_id
 
 
 class TwinterpeterTerminated(TwinterpeterUnavailable):
-	"""A requested Twinterpeter is not available, because it was terminated already"""
-	def __init__(self, twin_id):
-		super(TwinterpeterUnavailable, self).__init__("Twinterpeter '%s' already terminated" % twin_id)
-		self.twin_id = twin_id
+    """A requested Twinterpeter is not available, because it was terminated already"""
+
+    def __init__(self, twin_id):
+        super(TwinterpeterUnavailable, self).__init__("Twinterpeter '%s' already terminated" % twin_id)
+        self.twin_id = twin_id

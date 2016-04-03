@@ -19,15 +19,15 @@ import example_module
 import time
 
 if __name__ == "__main__":
-	twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
-	twinterpreter.start()
-	print cpy2py.twinterpreter.kernel_state.__kernels__
-	instance = example_module.TwinTest()
-	print instance
-	print instance.foo()
-	print instance.foo()
-	print instance.bar
-	print instance.bar
-	del instance
-	twinterpreter.stop()
+    twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
+    twinterpreter.start()
+    print cpy2py.twinterpreter.kernel_state.__kernels__
+    instance = example_module.TwinTest()
+    print instance
+    print instance.foo()
+    print instance.foo()
+    print instance.bar
+    print instance.bar
+    del instance
+    twinterpreter.stop()
 time.sleep(0.1)

@@ -27,7 +27,7 @@ limitations under the License.
 """.strip()
 
 primary_author_list = [
-	"Max Fischer"
+    "Max Fischer"
 ]
 
 contributor_aliases = {  # map git-name => real-name

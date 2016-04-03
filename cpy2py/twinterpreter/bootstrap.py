@@ -22,35 +22,37 @@ import cpy2py.twinterpreter.kernel_state
 
 
 def bootstrap_kernel():
-	"""
-	Deploy a kernel to make this interpreter a twinterpreter
-	"""
-	parser = argparse.ArgumentParser("Python Twinterpreter Kernel")
-	parser.add_argument(
-		'--peer-id',
-		help="unique identifier for our owner",
-	)
-	parser.add_argument(
-		'--twin-id',
-		help="unique identifier for this twinterpreter",
-	)
-	parser.add_argument(
-		'--twin-group-id',
-		help="unique identifier for our owner",
-	)
-	settings = parser.parse_args()
-	logging.getLogger().addHandler(logging.FileHandler(filename='%s.%s' % (os.path.basename(sys.executable), settings.peer_id)))
-	cpy2py.twinterpreter.kernel_state.__twin_id__ = settings.twin_id
-	cpy2py.twinterpreter.kernel_state.__is_master__ = False
-	cpy2py.twinterpreter.kernel_state.__twin_group_id__ = settings.twin_group_id
-	kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
-		peer_id=settings.peer_id,
-		ipc=cpy2py.ipyc.stdstream.StdIPC(
-			pickler_cls=proxy.twin_pickler,
-			unpickler_cls=proxy.twin_unpickler,
-		)
-	)
-	kernel.run()
+    """
+    Deploy a kernel to make this interpreter a twinterpreter
+    """
+    parser = argparse.ArgumentParser("Python Twinterpreter Kernel")
+    parser.add_argument(
+        '--peer-id',
+        help="unique identifier for our owner",
+    )
+    parser.add_argument(
+        '--twin-id',
+        help="unique identifier for this twinterpreter",
+    )
+    parser.add_argument(
+        '--twin-group-id',
+        help="unique identifier for our owner",
+    )
+    settings = parser.parse_args()
+    logging.getLogger().addHandler(
+        logging.FileHandler(filename='%s.%s' % (os.path.basename(sys.executable), settings.peer_id)))
+    cpy2py.twinterpreter.kernel_state.__twin_id__ = settings.twin_id
+    cpy2py.twinterpreter.kernel_state.__is_master__ = False
+    cpy2py.twinterpreter.kernel_state.__twin_group_id__ = settings.twin_group_id
+    kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
+        peer_id=settings.peer_id,
+        ipc=cpy2py.ipyc.stdstream.StdIPC(
+            pickler_cls=proxy.twin_pickler,
+            unpickler_cls=proxy.twin_unpickler,
+        )
+    )
+    kernel.run()
+
 
 if __name__ == "__main__":
-	bootstrap_kernel()
+    bootstrap_kernel()

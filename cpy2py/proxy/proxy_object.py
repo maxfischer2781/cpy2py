@@ -20,25 +20,25 @@ from proxy_twin import TwinProxy
 
 
 class TwinObject(object):
-	"""
-	Objects for instances accessible from twinterpreters
+    """
+    Objects for instances accessible from twinterpreters
 
-	To define which twinterpeter the class is native to, set the class attribute
-	`__twin_id__`. It must be a :py:class:`str` identifying the native
-	twinterpeter.
+    To define which twinterpeter the class is native to, set the class attribute
+    `__twin_id__`. It must be a :py:class:`str` identifying the native
+    twinterpeter.
 
-	:note: This class can be used in place of :py:class:`object` as a base class.
-	"""
-	__twin_id__ = None  # to be set by metaclass or manually
-	__proxy_class__ = TwinProxy  # to be set by metaclass
-	__metaclass__ = TwinMeta
+    :note: This class can be used in place of :py:class:`object` as a base class.
+    """
+    __twin_id__ = None  # to be set by metaclass or manually
+    __proxy_class__ = TwinProxy  # to be set by metaclass
+    __metaclass__ = TwinMeta
 
-	def __new__(cls, *args, **kwargs):
-		# if we are in the appropriate interpeter, proceed as normal
-		if cpy2py.twinterpreter.kernel_state.is_twinterpreter(cls.__twin_id__):
-			self = object.__new__(cls)
-			# register our reference for lookup
-			proxy_tracker.__active_instances__[self.__twin_id__, id(self)] = self
-			return self
-		# return a proxy to the real object otherwise
-		return cls.__proxy_class__(*args, **kwargs)
+    def __new__(cls, *args, **kwargs):
+        # if we are in the appropriate interpeter, proceed as normal
+        if cpy2py.twinterpreter.kernel_state.is_twinterpreter(cls.__twin_id__):
+            self = object.__new__(cls)
+            # register our reference for lookup
+            proxy_tracker.__active_instances__[self.__twin_id__, id(self)] = self
+            return self
+        # return a proxy to the real object otherwise
+        return cls.__proxy_class__(*args, **kwargs)
