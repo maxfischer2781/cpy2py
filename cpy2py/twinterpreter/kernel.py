@@ -40,8 +40,27 @@ __E_INSTANTIATE__ = 31
 __E_REF_INCR__ = 32
 __E_REF_DECR__ = 33
 # twin reply type
-__E_SUCCESS__ = 0
-__E_EXCEPTION__ = 1
+__E_SUCCESS__ = 101
+__E_EXCEPTION__ = 102
+
+E_SYMBOL = {
+    __E_SHUTDOWN__ : '__E_SHUTDOWN__',
+    __E_CALL_FUNC__ : '__E_CALL_FUNC__',
+    __E_CALL_METHOD__ : '__E_CALL_METHOD__',
+    __E_GET_ATTRIBUTE__ : '__E_GET_ATTRIBUTE__',
+    __E_SET_ATTRIBUTE__ : '__E_SET_ATTRIBUTE__',
+    __E_DEL_ATTRIBUTE__ : '__E_DEL_ATTRIBUTE__',
+    __E_INSTANTIATE__ : '__E_INSTANTIATE__',
+    __E_REF_INCR__ : '__E_REF_INCR__',
+    __E_REF_DECR__ : '__E_REF_DECR__',
+    __E_SUCCESS__ : '__E_SUCCESS__',
+    __E_EXCEPTION__ : '__E_EXCEPTION__',
+}
+
+
+class StopTwinterpeter(CPy2PyException):
+    """Signal to stop the twinterpeter"""
+    pass
 
 
 class SingleThreadKernel(object):
@@ -76,6 +95,17 @@ class SingleThreadKernel(object):
         self._instances_keepalive = {}
         # instance_id => instance
         self._instances_alive_ref = weakref.WeakValueDictionary()
+        self._directive_method = {
+            __E_SHUTDOWN__ : self._directive_shutdown,
+            __E_CALL_FUNC__ : self._directive_call_func,
+            __E_CALL_METHOD__ : self._directive_call_method,
+            __E_GET_ATTRIBUTE__ : self._directive_get_attribute,
+            __E_SET_ATTRIBUTE__ : self._directive_set_attribute,
+            __E_DEL_ATTRIBUTE__ : self._directive_del_attribute,
+            __E_INSTANTIATE__ : self._directive_instantiate,
+            __E_REF_INCR__ : self._directive_ref_incr,
+            __E_REF_DECR__ : self._directive_ref_decr,
+        }
 
     def run(self):
         """
@@ -83,7 +113,7 @@ class SingleThreadKernel(object):
 
         :returns: exit code indicating potential failure
         """
-        exit_code = 1
+        exit_code, request_id = 1, None
         self._logger.warning('run @ %s', time.asctime())
         self._logger.warning('Starting')
         try:
@@ -93,37 +123,14 @@ class SingleThreadKernel(object):
                 self._logger.warning('Received: %d', request_id)
                 self._logger.warning(repr(directive))
                 try:
-                    if directive[0] == __E_CALL_FUNC__:
-                        self._logger.warning('Directive __E_CALL_FUNC__')
-                        response = self._directive_call_func(directive[1])
-                    elif directive[0] == __E_CALL_METHOD__:
-                        self._logger.warning('Directive __E_CALL_METHOD__')
-                        response = self._directive_call_method(directive[1])
-                    elif directive[0] == __E_GET_ATTRIBUTE__:
-                        self._logger.warning('Directive __E_GET_ATTRIBUTE__')
-                        response = self._directive_get_attribute(directive[1])
-                    elif directive[0] == __E_SET_ATTRIBUTE__:
-                        self._logger.warning('Directive __E_SET_ATTRIBUTE__')
-                        response = self._directive_set_attribute(directive[1])
-                    elif directive[0] == __E_DEL_ATTRIBUTE__:
-                        self._logger.warning('Directive __E_DEL_ATTRIBUTE__')
-                        response = self._directive_del_attribute(directive[1])
-                    elif directive[0] == __E_INSTANTIATE__:
-                        self._logger.warning('Directive __E_INSTANTIATE__')
-                        response = self._directive_instantiate(directive[1])
-                    elif directive[0] == __E_REF_DECR__:
-                        self._logger.warning('Directive __E_REF_DECR__')
-                        response = self._directive_ref_decr(directive[1])
-                    elif directive[0] == __E_REF_INCR__:
-                        self._logger.warning('Directive __E_REF_INCR__')
-                        response = self._directive_ref_incr(directive[1])
-                    elif directive[0] == __E_SHUTDOWN__:
-                        self._logger.warning('Directive __E_SHUTDOWN__')
-                        del __kernels__[self.peer_id]
-                        self.ipc.send((request_id, __E_SHUTDOWN__, True))
-                        break
-                    else:
-                        raise RuntimeError
+                    directive_type, directive_body = directive
+                    directive_symbol, directive_method = E_SYMBOL[directive[0]], self._directive_method[directive[0]]
+                except (KeyError, ValueError) as err:
+                    # error in lookup or unpacking
+                    raise CPy2PyException(err)
+                try:
+                    self._logger.warning('Directive %s', directive_symbol)
+                    response = directive_method(directive_body)
                 # catch internal errors to reraise them
                 except CPy2PyException:
                     raise
@@ -136,16 +143,20 @@ class SingleThreadKernel(object):
                         break
                 else:
                     self.ipc.send((request_id, __E_SUCCESS__, response))
+        except StopTwinterpeter:
+            # regular shutdown
+            self.ipc.send((request_id, __E_SHUTDOWN__, exit_code))
         except cpy2py.ipyc.IPyCTerminated:
             exit_code = 0
         except Exception:  # pylint: disable=broad-except
             self._logger.critical('TWIN KERNEL EXCEPTION')
             format_exception(self._logger, 3)
         finally:
+            self._logger.critical('TWIN KERNEL SHUTDOWN: %d', exit_code)
             # always free resources and exit when the kernel stops
             del self._instances_keepalive
             del self.ipc
-        self._logger.critical('TWIN KERNEL SHUTDOWN: %d', exit_code)
+            del __kernels__[self.peer_id]
         return exit_code
 
     # dispatching: execute actions in other interpeter
@@ -158,7 +169,7 @@ class SingleThreadKernel(object):
             request_id, result_type, result_body = self.ipc.receive()
         except cpy2py.ipyc.IPyCTerminated:
             raise TwinterpeterTerminated(twin_id=self.peer_id)
-        assert request_id == my_id, 'kernel messages out of order'
+        assert request_id == my_id, 'kernel messages order'
         if result_type == __E_SUCCESS__:
             return result_body
         elif result_type == __E_EXCEPTION__:
@@ -244,19 +255,19 @@ class SingleThreadKernel(object):
 
     def _directive_ref_incr(self, directive_body):
         """Directive for :py:meth:`increment_instance_ref`"""
-        inst_id = directive_body[0]
-        try:
-            self._instances_keepalive[inst_id][0] += 1
-        except KeyError:
-            self._instances_keepalive[inst_id] = [1, self._instances_alive_ref[inst_id]]
-        return self._instances_keepalive[inst_id][0]
+        raise StopTwinterpeter
 
     def stop(self):
         """Shutdown the peer's server"""
-        if self._dispatch_request(__E_SHUTDOWN__):
+        if self._dispatch_request(__E_SHUTDOWN__, 'stop'):
             del __kernels__[self.peer_id]
             return True
         return False
+
+    def _directive_shutdown(self, directive_body):
+        """Directive for :py:meth:`stop`"""
+        message = directive_body[0]
+        raise StopTwinterpeter(message)
 
     def __repr__(self):
         return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())
