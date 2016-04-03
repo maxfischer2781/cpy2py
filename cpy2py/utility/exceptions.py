@@ -89,9 +89,9 @@ def format_exception(logger, variable_depth=float('inf')):
         # log position and code
         logger.critical('%02d/%02d "%s" (%s[%d])', trace_depth, len(tracebacks), current_call, current_file,
                         current_line)
-        logger.critical('    %s', format_line(current_line-1, current_file))
+        logger.critical('    %s', format_line(current_line - 1, current_file))
         logger.critical('--> %s', format_line(current_line, current_file))
-        logger.critical('    %s', format_line(current_line+1, current_file))
+        logger.critical('    %s', format_line(current_line + 1, current_file))
         # log current variables
         if trace_depth <= variable_depth:
             local_vars = dict(traceback.tb_frame.f_locals)
