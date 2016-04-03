@@ -124,7 +124,8 @@ class SingleThreadKernel(object):
                 self._logger.warning(repr(directive))
                 try:
                     directive_type, directive_body = directive
-                    directive_symbol, directive_method = E_SYMBOL[directive_type], self._directive_method[directive_type]
+                    directive_symbol = E_SYMBOL[directive_type]
+                    directive_method = self._directive_method[directive_type]
                 except (KeyError, ValueError) as err:
                     # error in lookup or unpacking
                     raise CPy2PyException(err)
