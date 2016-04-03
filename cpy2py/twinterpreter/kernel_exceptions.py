@@ -11,6 +11,7 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
+# pylint: disable=too-many-ancestors,non-parent-init-called,super-init-not-called
 import cpy2py.utility.exceptions
 
 
@@ -19,14 +20,14 @@ class TwinterpeterException(cpy2py.utility.exceptions.CPy2PyException):
     pass
 
 
-class TwinterpeterUnavailable(TwinterpeterException, RuntimeError):  # pylint: disable=too-many-ancestors
+class TwinterpeterUnavailable(TwinterpeterException, RuntimeError):
     """A requested Twinterpeter is not available, e.g. because it has not bee started"""
     def __init__(self, twin_id):
         TwinterpeterException.__init__(self, "Twinterpeter '%s' not available" % twin_id)
         self.twin_id = twin_id
 
 
-class TwinterpeterTerminated(TwinterpeterUnavailable):  # pylint: disable=too-many-ancestors
+class TwinterpeterTerminated(TwinterpeterUnavailable):
     """A requested Twinterpeter is not available, because it was terminated already"""
     def __init__(self, twin_id):
         TwinterpeterException.__init__(self, "Twinterpeter '%s' already terminated" % twin_id)
