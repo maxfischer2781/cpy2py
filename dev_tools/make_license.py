@@ -16,6 +16,8 @@
 """
 Add license information to repository
 """
+from __future__ import print_function
+
 import subprocess
 import argparse
 import collections
@@ -25,7 +27,7 @@ import os
 import hashlib
 import urllib2
 
-from dev_tools.license_data import notice_template, license_header_template, primary_author_list
+from dev_tools.license_data import NOTICE_TEMPLATE, LICENSE_HEADER_TEMPLATE, PRIMARY_AUTHOR_LIST
 
 # symbol sequence at the start of each license line, per file extension
 LICENSE_START_SYMBOLS = {
@@ -103,7 +105,7 @@ CLI.add_argument(
     "--primary-author",
     nargs="*",
     help="Names of primary authors. [default: %(default)s]",
-    default=primary_author_list,
+    default=PRIMARY_AUTHOR_LIST,
 )
 CLI.add_argument(
     "-n",
@@ -154,7 +156,7 @@ def get_format_data(source_file=None):
     return {
         "package_name": os.path.dirname(REPO_BASE),
         "dev_years": dev_years,
-        "primary_authors": ', '.join(primary_author_list),
+        "primary_authors": ', '.join(PRIMARY_AUTHOR_LIST),
         "contributors": ', '.join(contributor.name for contributor in contributors_list),
         "contributor_listing": '\n'.join(contributor.contact for contributor in contributors_list),
         "repo_url": repo_url,
@@ -236,7 +238,7 @@ def get_license_target_files(
     """
     # folders which include files subject to licensing
     for folder in source_dirs:
-        for dirpath, _dirnames, filenames in os.walk(os.path.join(REPO_BASE, folder)):
+        for dirpath, _, filenames in os.walk(os.path.join(REPO_BASE, folder)):
             for filename in filenames:
                 if re.search(SOURCE_FILE_RE, filename):
                     yield os.path.join(dirpath, filename)
@@ -252,7 +254,7 @@ def update_license_header(filepath):
     :type filepath: str
     :return: whether the file has changed
     """
-    license_header = license_header_template % get_format_data(source_file=filepath)
+    license_header = LICENSE_HEADER_TEMPLATE % get_format_data(source_file=filepath)
     # insert license if applicable
     _, file_type = os.path.splitext(filepath)
     license_seq = LICENSE_START_SYMBOLS.get(file_type, LICENSE_START_SYMBOLS[None])
@@ -282,7 +284,7 @@ def update_license_header(filepath):
     return update_file(
         filepath,
         filepath_tmp,
-        comparebytes=max(len(license_header), len(license_header_template)) * 2
+        comparebytes=max(len(license_header), len(LICENSE_HEADER_TEMPLATE)) * 2
     )
 
 
@@ -376,7 +378,7 @@ def get_contributors(aliases=None, source_file=None):
         if not change_line:
             continue
         if '|' in change_line and '@' in change_line:
-            _commit, author, email = change_line.split('|')
+            _, author, email = change_line.split('|')
             contributor = Contributor(aliases.get(author, author))
             contributor.add_commit(email)
             total.add_commit(email)
@@ -393,7 +395,7 @@ def get_contributors(aliases=None, source_file=None):
 
 
 def write_notice(notice_file):
-    notice_data = notice_template % get_format_data()
+    notice_data = NOTICE_TEMPLATE % get_format_data()
     notice_tmp = notice_file + TEMP_EXTENSION
     with open(notice_tmp, 'wb') as output_file:
         output_file.write(notice_data)
