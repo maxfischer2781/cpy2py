@@ -41,8 +41,9 @@ class TwinObject(object):
         # if we are in the appropriate interpeter, proceed as normal
         if cpy2py.twinterpreter.kernel_state.is_twinterpreter(cls.__twin_id__):
             self = object.__new__(cls)
+            self.__instance_id__ = id(self)
             # register our reference for lookup
-            proxy_tracker.__active_instances__[self.__twin_id__, id(self)] = self
+            proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
             return self
         # return a proxy to the real object otherwise
         return cls.__proxy_class__(*args, **kwargs)
