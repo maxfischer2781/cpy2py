@@ -12,6 +12,7 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
+from __future__ import print_function
 import cpy2py.twinterpreter.twin_master
 import time
 import math
@@ -81,7 +82,7 @@ def get_callable(callable_string):
 def get_time(call_result):
     """Extract timing information from nested timing call"""
     tot_tme, call_result = call_result
-    call_tme, _result = call_result
+    call_tme, _ = call_result
     return tot_tme, call_tme, tot_tme - call_tme
 
 
@@ -96,11 +97,69 @@ FMT_HEADER = "TOTAL__ CALL___ DELTA__"
 TIMING = {}  # {func => size => interpreter => tme => [rep]}
 
 
-def main():
-    print "starting"
+def start_twinterpeter():
+    """Initialize and start a twinterpeter"""
+    print("starting twinterpeter")
     twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
     twinterpreter.start()
     time.sleep(1)
+    return twinterpreter
+
+
+def time_callable(twinterpreter, func, scale):
+    """Measure execution time natively and in twinterpeter"""
+    master_result = example_module.time_call(
+        example_module.time_call,
+        func,
+        scale
+    )
+    twin_result = example_module.time_call(
+        twinterpreter.execute,
+        example_module.time_call,
+        func,
+        scale
+    )
+    return master_result, twin_result
+
+
+def store_results(master_result, twin_result, scale, func_name):
+    """Store results of execution time measurement"""
+    if scale not in TIMING[func_name]:
+        TIMING[func_name][scale] = {}
+        for interpreter in ('master', 'twin'):
+            TIMING[func_name][scale][interpreter] = {
+                header: []
+                for header in TME_HEADER
+                }
+    tme_result = get_time(master_result)
+    for idx, header in enumerate(TME_HEADER):
+        TIMING[func_name][scale]['master'][header].append(tme_result[idx])
+    tme_result = get_time(twin_result)
+    for idx, header in enumerate(TME_HEADER):
+        TIMING[func_name][scale]['twin'][header].append(tme_result[idx])
+
+
+def print_results(master_result, twin_result, reps, power, func_name):
+    """Print the current timing results"""
+    print("\r" + ' ' * 120, end='')
+    print("\r", func_name, '(%03d/%03d @ %02d**%02d)' % (
+        reps, OPTIONS.repetitions, OPTIONS.base, power), end='')
+    print("norm", fmt_time(master_result), end='')
+    print("twin", fmt_time(twin_result), end='')
+
+
+def dump_json():
+    """Write results as json"""
+    if OPTIONS.json is not None:
+        json_fmt = {'callable_name': '_'.join(TIMING)}
+        json_path = OPTIONS.json % json_fmt
+        print("Writing benchmark to", json_path)
+        with open(json_path, "w") as json_file:
+            json.dump(TIMING, json_file)
+
+
+def main():
+    twinterpreter = start_twinterpeter()
     callables = (get_callable(OPTIONS.callable),)
     try:
         for rep in xrange(OPTIONS.repetitions):
@@ -108,35 +167,9 @@ def main():
                 TIMING.setdefault(func.__name__, {})
                 for power in xrange(OPTIONS.power):
                     scale = 1 * pow(OPTIONS.base, power)
-                    if scale not in TIMING[func.__name__]:
-                        TIMING[func.__name__][scale] = {}
-                        for interpreter in ('master', 'twin'):
-                            TIMING[func.__name__][scale][interpreter] = {
-                                header: []
-                                for header in TME_HEADER
-                                }
-                    master_result = example_module.time_call(
-                        example_module.time_call,
-                        func,
-                        scale
-                    )
-                    tme_result = get_time(master_result)
-                    for idx, header in enumerate(TME_HEADER):
-                        TIMING[func.__name__][scale]['master'][header].append(tme_result[idx])
-                    twin_result = example_module.time_call(
-                        twinterpreter.execute,
-                        example_module.time_call,
-                        func,
-                        scale
-                    )
-                    print "\r" + ' ' * 120,
-                    print "\r", func.__name__, '(%03d/%03d @ %02d**%02d)' % (
-                    rep, OPTIONS.repetitions, OPTIONS.base, power),
-                    print "norm", fmt_time(master_result),
-                    print "twin", fmt_time(twin_result),
-                    tme_result = get_time(twin_result)
-                    for idx, header in enumerate(TME_HEADER):
-                        TIMING[func.__name__][scale]['twin'][header].append(tme_result[idx])
+                    master_result, twin_result = time_callable(twinterpreter, func, scale)
+                    print_results(master_result, twin_result, rep, power, func.__name__)
+                    store_results(master_result, twin_result, scale, func.__name__)
     except KeyboardInterrupt:
         if not TIMING:
             raise
@@ -146,15 +179,10 @@ def main():
     print("benchmarking done")
 
     # json
-    if OPTIONS.json is not None:
-        json_fmt = {'callable_name': '_'.join(call.__name__ for call in callables)}
-        json_path = OPTIONS.json % json_fmt
-        print("Writing benchmark to", json_path)
-        with open(json_path, "w") as json_file:
-            json.dump(TIMING, json_file)
+    dump_json()
 
     # plotting
-    fig, axes = plt.subplots(
+    _, axes = plt.subplots(
         nrows=len(TIMING) * 3,
         ncols=len(TME_HEADER),
         figsize=(8, 6),
