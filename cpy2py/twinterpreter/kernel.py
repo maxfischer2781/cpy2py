@@ -153,7 +153,7 @@ class SingleThreadKernel(object):
                     self.ipc.send((request_id, __E_SUCCESS__, response))
         except cpy2py.ipyc.IPyCTerminated:
             exit_code = 0
-        except Exception:  # pylint: disable=bread-except
+        except Exception:  # pylint: disable=broad-except
             self._logger.critical('TWIN KERNEL EXCEPTION')
             format_exception(self._logger, 3)
         finally:
