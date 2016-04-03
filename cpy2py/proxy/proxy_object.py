@@ -29,8 +29,12 @@ class TwinObject(object):
 
     :note: This class can be used in place of :py:class:`object` as a base class.
     """
+    #: id of interpeter where real instances exist
     __twin_id__ = None  # to be set by metaclass or manually
+    #: class of proxy for real class instances
     __proxy_class__ = TwinProxy  # to be set by metaclass
+    #: tuple for twin import, of the form (<module name>, <object name>)
+    __import_mod_name__ = (None, None)  # to be set by metaclass
     __metaclass__ = TwinMeta
 
     def __new__(cls, *args, **kwargs):
@@ -42,3 +46,7 @@ class TwinObject(object):
             return self
         # return a proxy to the real object otherwise
         return cls.__proxy_class__(*args, **kwargs)
+
+# TwinObject and TwinProxy are not created by metaclass, initialize manually
+TwinObject.__import_mod_name__ = (TwinObject.__module__, TwinObject.__name__)
+TwinProxy.__import_mod_name__ = TwinObject.__import_mod_name__

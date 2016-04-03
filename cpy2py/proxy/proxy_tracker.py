@@ -11,12 +11,16 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
-
+"""
+Registration, tracking and lookup tools matching instances of the same logical
+object in separate twinterpeters with each other.
+"""
 import weakref
 import cPickle as pickle
 
 #: instances of twin objects or proxies currently alive in this twinterpeter
 __active_instances__ = weakref.WeakValueDictionary()
+__active_classes__ = weakref.WeakValueDictionary()
 
 
 # pickling for inter-twinterpeter communication
@@ -24,7 +28,7 @@ def persistent_twin_id(obj):
     """Twin Pickler for inter-twinterpeter communication"""
     try:
         # twin object or proxy
-        __twin_id__ = obj.__twin_id__
+        __import_mod_name__ = obj.__import_mod_name__
         # twin meta class
         if isinstance(obj, type):
             raise AttributeError
@@ -35,21 +39,27 @@ def persistent_twin_id(obj):
         # twin object, only send reference
         try:
             # twin proxy
-            return '%s\t%s\t%s' % (obj.__instance_id__, __twin_id__, pickle.dumps(obj.__real_class__))
+            return '%s\t%s\t%s\t%s' % (obj.__instance_id__, obj.__twin_id__, __import_mod_name__[0], __import_mod_name__[1])
         except AttributeError:
             # twin object
-            return '%s\t%s\t%s' % (id(obj), __twin_id__, pickle.dumps(type(obj)))
+            return '%s\t%s\t%s\t%s' % (id(obj), obj.__twin_id__, __import_mod_name__[0], __import_mod_name__[1])
 
 
 def persistent_twin_load(persid):
     """Twin Loader for inter-twinterpeter communication"""
-    instance_id, twin_id, class_pkl = persid.split('\t')
+    instance_id, twin_id, module_name, class_name = persid.split('\t')
     instance_id, twin_id = int(instance_id), str(twin_id)
     try:
         return __active_instances__[twin_id, instance_id]
     except KeyError:
-        # twin object always exists - persid is enough for new proxies
-        return pickle.loads(class_pkl)(__twin_id__=twin_id, __instance_id__=instance_id)
+        # twin object always exists - persid is enough for creating new proxies
+        try:
+            return __active_classes__[module_name, class_name](__twin_id__=twin_id, __instance_id__=instance_id)
+        except KeyError:
+            module = __import__(module_name)
+            klass = getattr(module, class_name)
+            __active_classes__[module_name, class_name] = klass
+            return klass(__twin_id__=twin_id, __instance_id__=instance_id)
 
 
 def twin_pickler(*args, **kwargs):

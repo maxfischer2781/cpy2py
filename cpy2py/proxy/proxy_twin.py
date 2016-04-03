@@ -47,11 +47,14 @@ class TwinProxy(object):
     """
     Proxy for instances existing in another twinterpreter
 
+    :see: Real object :py:class:`~.TwinObject` for magic parameters.
+
     :warning: This class should never be instantiated or subclassed manually. It
               will be subclassed automatically by :py:class:`~.TwinMeta`.
     """
     __twin_id__ = None  # to be set by metaclass
     __real_class__ = None  # to be set by metaclass
+    __import_mod_name__ = (None, None)  # to be set by metaclass
 
     def __new__(cls, *args, **kwargs):
         self = object.__new__(cls)

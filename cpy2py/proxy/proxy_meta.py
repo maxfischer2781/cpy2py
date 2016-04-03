@@ -55,6 +55,8 @@ class TwinMeta(type):
             else:
                 twin_id = cpy2py.twinterpreter.kernel_state.TWIN_MASTER
             class_dict['__twin_id__'] = twin_id
+        # enable persistent dump/load without pickle
+        class_dict['__import_mod_name__'] = (class_dict['__module__'], name)
         # make both real and proxy class available
         real_class = mcs.__new_real_class__(name, bases, class_dict)
         proxy_class = mcs.__get_proxy_class__(real_class=real_class)
@@ -84,7 +86,7 @@ class TwinMeta(type):
             elif isinstance(class_dict[aname], (classmethod, staticmethod)):
                 class_dict[aname] = ProxyMethod(class_dict[aname].__func__)
             # remove non-magic attributes so they don't shadow the real ones
-            elif aname not in ('__twin_id__', '__class__', '__module__', '__doc__', '__metaclass__'):
+            elif aname not in ('__twin_id__', '__class__', '__module__', '__doc__', '__metaclass__', '__import_mod_name__'):
                 del class_dict[aname]
         # convert bases to proxies as well
         bases = tuple(mcs.__get_proxy_class__(base) for base in bases)
