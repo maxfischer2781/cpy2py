@@ -40,7 +40,7 @@ def bootstrap_kernel():
     )
     parser.add_argument(
         '--twin-group-id',
-        help="unique identifier for our owner",
+        help="unique identifier for the active group of twinterpeters",
     )
     settings = parser.parse_args()
     logging.getLogger().addHandler(
