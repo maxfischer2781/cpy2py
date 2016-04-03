@@ -35,6 +35,10 @@ def bootstrap_kernel():
         help="unique identifier for this twinterpreter",
     )
     parser.add_argument(
+        '--master-id',
+        help="unique identifier for the master twinterpreter",
+    )
+    parser.add_argument(
         '--twin-group-id',
         help="unique identifier for our owner",
     )
@@ -42,7 +46,7 @@ def bootstrap_kernel():
     logging.getLogger().addHandler(
         logging.FileHandler(filename='%s.%s' % (os.path.basename(sys.executable), settings.peer_id)))
     cpy2py.twinterpreter.kernel_state.__twin_id__ = settings.twin_id
-    cpy2py.twinterpreter.kernel_state.__is_master__ = False
+    cpy2py.twinterpreter.kernel_state.__master_id__ = settings.master_id
     cpy2py.twinterpreter.kernel_state.__twin_group_id__ = settings.twin_group_id
     kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
         peer_id=settings.peer_id,

@@ -14,6 +14,7 @@
 import os
 import random
 import time
+import sys
 
 from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
 from cpy2py.utility.enum import UniqueObj
@@ -34,9 +35,9 @@ class TWIN_ONLY_SLAVE(UniqueObj):
 #: the kernel(s) running in this interpeter
 __kernels__ = {}
 #: id of this interpreter/process
-__twin_id__ = 'main'
-#: whether this is the parent process
-__is_master__ = True
+__twin_id__ = os.path.basename(sys.executable)
+#: id of the main interpeter
+__master_id__ = __twin_id__
 #: id of the active group of twinterpeters
 __twin_group_id__ = '%08X%08X%08X' % (
     time.time() * 16,
@@ -48,12 +49,12 @@ __twin_group_id__ = '%08X%08X%08X' % (
 def is_twinterpreter(kernel_id=TWIN_ONLY_SLAVE):
     """Check whether this interpreter is running a specific kernel"""
     if kernel_id is TWIN_MASTER:
-        return __is_master__
+        return __twin_id__ == __master_id__
     if kernel_id is TWIN_ONLY_SLAVE:
         if len(__kernels__) != 1:
             raise RuntimeError(
                 "Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TWIN_ONLY_SLAVE)
-        return not __is_master__
+        return __twin_id__ != __master_id__
     return __twin_id__ == kernel_id
 
 
@@ -70,7 +71,7 @@ def get_kernel(kernel_id):
     assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
     try:
         if kernel_id is TWIN_MASTER:
-            return __kernels__['main']
+            return __kernels__[__master_id__]
         if kernel_id is TWIN_ONLY_SLAVE:
             if len(__kernels__) != 1:
                 raise RuntimeError(

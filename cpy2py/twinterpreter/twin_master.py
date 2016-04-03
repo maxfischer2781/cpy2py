@@ -76,6 +76,7 @@ class TwinMaster(object):
                     self.executable, '-m', cpy2py.twinterpreter.bootstrap.__name__,
                     '--peer-id', cpy2py.twinterpreter.kernel_state.__twin_id__,
                     '--twin-id', self.twinterpreter_id,
+                    '--master-id', cpy2py.twinterpreter.kernel_state.__master_id__,
                     '--twin-group-id',
                     cpy2py.twinterpreter.kernel_state.__twin_group_id__,
                 ],
