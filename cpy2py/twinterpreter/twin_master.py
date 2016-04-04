@@ -112,11 +112,3 @@ class TwinMaster(object):
         """
         assert self._kernel is not None
         return self._kernel.dispatch_call(call, *call_args, **call_kwargs)
-
-
-class TwinPyPy(TwinMaster):
-    """
-    PyPy twinterpreter
-    """
-    executable = 'pypy'
-    twinterpreter_id = 'pypy'

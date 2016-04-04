@@ -13,7 +13,6 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 from __future__ import print_function
-import cpy2py.twinterpreter.twin_master
 import time
 import math
 import matplotlib.pyplot as plt
@@ -21,6 +20,7 @@ import argparse
 import sys
 import json
 
+from cpy2py import TwinMaster
 import example_module
 
 CLI = argparse.ArgumentParser()
@@ -100,7 +100,7 @@ TIMING = {}  # {func => size => interpreter => tme => [rep]}
 def start_twinterpeter():
     """Initialize and start a twinterpeter"""
     print("starting twinterpeter")
-    twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
+    twinterpreter = TwinMaster('pypy')
     twinterpreter.start()
     time.sleep(1)
     return twinterpreter
