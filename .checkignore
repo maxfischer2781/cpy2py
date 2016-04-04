@@ -1,3 +1,4 @@
 docs/*
 dev_tools/*
 cpy2py_sphinx/*
+cpy2py_unittests/*
