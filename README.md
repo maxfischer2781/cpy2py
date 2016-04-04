@@ -23,10 +23,8 @@ Any pickle'able objects may be used as parameters.
 
 ### Current Limitations ###
 
-   * Dispatched class may not write to `sys.stdout`, e.g. via `print`.
+   * Dispatched calls may not write to `sys.stdout`, e.g. via `print`, and cannot read from `sys.stdin`.
 
    * Dispatching calls is a blocking action and not threadsafe.
 
-   * Proxy Objects used inline may be garbage collected pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`
-
-   * The native Twintepeter may not be changed when inheriting.
+   * Proxy Objects used inline may be garbage collected pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`.
