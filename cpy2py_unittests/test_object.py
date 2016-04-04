@@ -1,10 +1,10 @@
 import unittest
 
-import cpy2py.twinterpreter.twin_master
-import cpy2py.proxy.proxy_object
+from cpy2py import TwinMaster, TwinObject
+import cpy2py.proxy.proxy_twin  # proxy type check
 
 
-class PrimitiveObject(cpy2py.proxy.proxy_object.TwinObject):
+class PrimitiveObject(TwinObject):
     __twin_id__ = 'pypy'
 
     class_attribute = 1
@@ -26,7 +26,7 @@ class PrimitiveObject(cpy2py.proxy.proxy_object.TwinObject):
 
 class TestObjectPrimitives(unittest.TestCase):
     def setUp(self):
-        self.twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
+        self.twinterpreter = TwinMaster('pypy')
         self.twinterpreter.start()
 
     def tearDown(self):

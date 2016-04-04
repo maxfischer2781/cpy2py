@@ -1,10 +1,9 @@
 import unittest
 
-import cpy2py.twinterpreter.twin_master
-import cpy2py.proxy.proxy_object
+from cpy2py import kernel_state, TwinMaster, TwinObject
 
 
-class MagicMethodObject(cpy2py.proxy.proxy_object.TwinObject):
+class MagicMethodObject(TwinObject):
     __twin_id__ = 'pypy'
 
     def __init__(self, numeric_value=0):
@@ -25,7 +24,7 @@ class TestObjectMagic(unittest.TestCase):
     """Test for object magic methods"""
 
     def setUp(self):
-        self.twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
+        self.twinterpreter = TwinMaster('pypy')
         self.twinterpreter.start()
 
     def tearDown(self):

@@ -1,13 +1,10 @@
 import unittest
 import random
-import cpy2py.twinterpreter.kernel_state
 
-import cpy2py.twinterpreter.twin_master
-import cpy2py.twinterpreter.kernel
-import cpy2py.proxy.proxy_object
+from cpy2py import kernel_state, TwinMaster, TwinObject
 
 
-class PyPyBaseA1(cpy2py.proxy.proxy_object.TwinObject):
+class PyPyBaseA1(TwinObject):
     __twin_id__ = 'pypy'
 
     def __init__(self, numeric_value=0):
@@ -15,7 +12,7 @@ class PyPyBaseA1(cpy2py.proxy.proxy_object.TwinObject):
 
     def test_kernel(self, kernel_id=None):
         kernel_id = kernel_id if kernel_id is not None else self.__twin_id__
-        return cpy2py.twinterpreter.kernel_state.is_twinterpreter(kernel_id=kernel_id)
+        return kernel_state.is_twinterpreter(kernel_id=kernel_id)
 
     def get_instance_attribute(self):
         return self.numeric_value
@@ -41,7 +38,7 @@ class PyPyDiamondA3(PyPySquareA2, PyPySquareA1):
 
 class TestInheritance(unittest.TestCase):
     def setUp(self):
-        self.twinterpreter = cpy2py.twinterpreter.twin_master.TwinPyPy()
+        self.twinterpreter = TwinMaster('pypy')
         self.twinterpreter.start()
 
     def tearDown(self):

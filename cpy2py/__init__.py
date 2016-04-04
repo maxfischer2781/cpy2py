@@ -18,3 +18,9 @@ Multi-intepreter execution environment
 the main interpreter, another interpreter is run to execute parts of the
 application.
 """
+
+from cpy2py.proxy.proxy_object import TwinObject
+from cpy2py.twinterpreter.twin_master import TwinMaster
+from cpy2py.twinterpreter import kernel_state
+
+__all__ = ['TwinObject', 'TwinMaster', 'kernel_state']
