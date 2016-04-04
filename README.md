@@ -19,7 +19,7 @@ The package abstracts the mechanisms of this, allowing for an almost seamless in
 The module currently allows dispatching arbitrary function calls.
 Objects may be created and persist inside the twinterpeter.
 Object attributes and methods can be accessed and used.
-Any pickle'able objects may be used as parameters.
+Any pickle'able objects, including primitives and functions, as well as objects created with the CPy2Py framework may be used as parameters.
 
 ### Current Limitations ###
 
