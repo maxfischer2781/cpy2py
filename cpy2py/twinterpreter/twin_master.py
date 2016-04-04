@@ -19,7 +19,7 @@ import cpy2py.twinterpreter.kernel_state
 import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.bootstrap
 import cpy2py.ipyc.stdstream
-from cpy2py import proxy
+from cpy2py.proxy import proxy_tracker
 
 
 class TwinMaster(object):
@@ -88,8 +88,8 @@ class TwinMaster(object):
                 ipc=cpy2py.ipyc.stdstream.StdIPC(
                     readstream=self._process.stdout,
                     writestream=self._process.stdin,
-                    pickler_cls=proxy.twin_pickler,
-                    unpickler_cls=proxy.twin_unpickler,
+                    pickler_cls=proxy_tracker.twin_pickler,
+                    unpickler_cls=proxy_tracker.twin_unpickler,
                 )
             )
         return self.is_alive

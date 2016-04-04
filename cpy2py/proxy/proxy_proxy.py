@@ -11,7 +11,7 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
-from cpy2py.proxy import TwinObject
+from cpy2py.proxy.proxy_object import TwinObject
 from cpy2py.twinterpreter import kernel_state
 
 

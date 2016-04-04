@@ -17,8 +17,3 @@ Proxies to objects in a twinterpreter
 Proxies are the local interpreter's interface to objects living in a twin's
 domain.
 """
-
-from cpy2py.proxy.proxy_tracker import twin_pickler, twin_unpickler
-from cpy2py.proxy.proxy_object import TwinObject
-
-__all__ = ['twin_pickler', 'twin_unpickler', 'TwinObject']

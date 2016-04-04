@@ -25,7 +25,7 @@ import weakref
 from cpy2py.twinterpreter.kernel_state import __kernels__
 
 from cpy2py.utility.exceptions import format_exception, CPy2PyException
-import cpy2py.ipyc
+from cpy2py.ipyc import stdstream, ipyc_exceptions
 from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterTerminated
 
 # Message Enums
@@ -88,7 +88,7 @@ class SingleThreadKernel(object):
         __kernels__[peer_id] = object.__new__(cls)
         return __kernels__[peer_id]
 
-    def __init__(self, peer_id, ipc=cpy2py.ipyc.StdIPC()):
+    def __init__(self, peer_id, ipc=stdstream.StdIPC()):
         self._logger = logging.getLogger('__cpy2py__.%s.%s' % (os.path.basename(sys.executable), peer_id))
         self.peer_id = peer_id
         self.ipc = ipc
@@ -124,7 +124,7 @@ class SingleThreadKernel(object):
                 self._serve_request(request_id, directive)
         except StopTwinterpreter as err:
             self.ipc.send((request_id, __E_SHUTDOWN__, err.exit_code))
-        except cpy2py.ipyc.IPyCTerminated:
+        except ipyc_exceptions.IPyCTerminated:
             exit_code = 0
         except Exception:  # pylint: disable=broad-except
             self._logger.critical('TWIN KERNEL INTERNAL EXCEPTION')
@@ -167,7 +167,7 @@ class SingleThreadKernel(object):
         try:
             self.ipc.send((my_id, (request_type, args)))
             request_id, result_type, result_body = self.ipc.receive()
-        except cpy2py.ipyc.IPyCTerminated:
+        except ipyc_exceptions.IPyCTerminated:
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         assert request_id == my_id, 'kernel messages order'
         if result_type == __E_SUCCESS__:
