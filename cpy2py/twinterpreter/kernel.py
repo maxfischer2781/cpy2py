@@ -232,9 +232,9 @@ class SingleThreadKernel(object):
         """Directive for :py:meth:`instantiate_class`"""
         cls, cls_args, cls_kwargs = directive_body
         instance = cls(*cls_args, **cls_kwargs)
-        self._instances_keepalive[id(instance)] = [1, instance]
-        self._instances_alive_ref[id(instance)] = instance
-        return id(instance)
+        self._instances_keepalive[instance.__instance_id__] = [1, instance]
+        self._instances_alive_ref[instance.__instance_id__] = instance
+        return instance.__instance_id__
 
     def decrement_instance_ref(self, instance_id):
         """Decrement the reference count to an instance by one"""

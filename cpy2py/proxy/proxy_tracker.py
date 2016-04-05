@@ -48,7 +48,6 @@ def persistent_twin_id(obj):
 def persistent_twin_load(persid):
     """Twin Loader for inter-twinterpeter communication"""
     instance_id, twin_id, module_name, class_name = persid.split('\t')
-    instance_id, twin_id = int(instance_id), str(twin_id)
     try:
         return __active_instances__[twin_id, instance_id]
     except KeyError:
