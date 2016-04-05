@@ -23,8 +23,6 @@ Any pickle'able objects, including primitives and functions, as well as objects 
 
 ### Current Limitations ###
 
-    * Dispatched calls may not write to `sys.stdout`, e.g. via `print`, and cannot read from `sys.stdin`.
-
     * Dispatching calls is a blocking action and not threadsafe.
 
     * Proxy Objects used inline may be garbage collected pre-maturely. Use `instance = MyClass(); instance.do_stuff()` if there are problems with `MyClass().do_stuff()`.
