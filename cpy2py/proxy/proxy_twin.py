@@ -38,7 +38,12 @@ class ProxyMethod(object):
         assert instance is not None, "%s %s must be accessed from an instance, not class" % (
             self.__class__.__name__, self.__name__)
         __instance_id__ = instance.__instance_id__
-        return lambda *args, **kwargs: instance.__kernel__.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
+        return lambda *args, **kwargs: instance.__kernel__.dispatch_method_call(
+            __instance_id__,
+            self.__name__,
+            *args,
+            **kwargs
+        )
 
 
 class TwinProxy(object):
@@ -53,7 +58,7 @@ class TwinProxy(object):
     __twin_id__ = None  # to be set by metaclass
     __real_class__ = None  # to be set by metaclass
     __instance_id__ = None  # to be set on __new__
-    __kernel__ = None # to be set on __new__
+    __kernel__ = None  # to be set on __new__
     __import_mod_name__ = (None, None)  # to be set by metaclass
 
     def __new__(cls, *args, **kwargs):

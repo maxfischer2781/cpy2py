@@ -19,7 +19,6 @@ import cPickle as pickle
 import cpy2py.twinterpreter.kernel_state
 import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.bootstrap
-import cpy2py.ipyc.stdstream
 from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
 

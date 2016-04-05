@@ -22,7 +22,7 @@ from cpy2py.proxy.proxy_twin import TwinProxy
 
 def instance_id(instance):
     """Create an instance identifier"""
-    return '%X%X' % (id(instance), time.time()*1000)
+    return '%X%X' % (id(instance), time.time() * 1000)
 
 
 class TwinObject(object):
