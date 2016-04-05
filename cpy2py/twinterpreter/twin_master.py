@@ -91,7 +91,6 @@ class TwinMaster(object):
             executable = proc_tools.get_executable_path(twinterpreter_id)
         return executable, twinterpreter_id
 
-
     @property
     def is_alive(self):
         """Whether the twinterpeter process is alive"""
