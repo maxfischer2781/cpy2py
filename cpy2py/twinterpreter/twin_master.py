@@ -20,6 +20,7 @@ import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.bootstrap
 import cpy2py.ipyc.stdstream
 from cpy2py.proxy import proxy_tracker
+from cpy2py.utility import proc_tools
 
 
 class TwinMaster(object):
@@ -35,16 +36,53 @@ class TwinMaster(object):
     :param twinterpreter_id: identifier for the twin
     :type twinterpreter_id: str
 
+    :note: For simplicity, it is sufficient to supply either `executable` or
+           `twinterpreter_id`. In this case, `twinterpreter_id` is assumed to be
+           the basename of `executable`.
+
     :note: Only one kernel may use a specific `twinterpreter_id` at any time.
     """
     executable = None
     twinterpreter_id = None
+    #: singleton store `twinterpreter_id` => `master`
+    _master_store = {}
+
+    def __new__(cls, executable=None, twinterpreter_id=None):
+        executable, twinterpreter_id = cls.default_args(executable, twinterpreter_id)
+        try:
+            master = cls._master_store[twinterpreter_id]
+        except KeyError:
+            self = object.__new__(cls)
+            cls._master_store[twinterpreter_id] = self
+            return self
+        else:
+            assert master.executable == executable,\
+                "interpreter with same twinterpreter_id but different executable already exists"
+            return master
 
     def __init__(self, executable=None, twinterpreter_id=None):
-        self.executable = executable or self.__class__.executable
-        self.twinterpreter_id = twinterpreter_id or self.__class__.twinterpreter_id or self.executable
+        # avoid duplicate initialisation of singleton
+        if hasattr(self, '_init'):
+            return
+        self._init = True
+        self.executable, self.twinterpreter_id = self.default_args(executable, twinterpreter_id)
         self._process = None
         self._kernel = None
+
+    @classmethod
+    def default_args(cls, executable, twinterpreter_id):
+        if executable is not None and twinterpreter_id is not None:
+            return executable, twinterpreter_id
+        elif executable is None and twinterpreter_id is None:
+            return cls.executable, cls.twinterpreter_id
+        elif executable is not None:
+            twinterpreter_id = os.path.basename(executable)
+            executable = proc_tools.get_executable_path(executable)
+        else:
+            twinterpreter_id = twinterpreter_id
+            executable = proc_tools.get_executable_path(twinterpreter_id)
+        return executable, twinterpreter_id
+
 
     @property
     def is_alive(self):
@@ -60,6 +98,7 @@ class TwinMaster(object):
                 # no such process anymore, cleanup
                 self._process = None
                 self._kernel = None
+                return False
             else:
                 return True
         return False
@@ -97,7 +136,9 @@ class TwinMaster(object):
     def stop(self):
         """Terminate the twinterpreter"""
         if self._kernel is not None:
-            self._kernel.stop()
+            if self._kernel.stop():
+                self._kernel = None
+                self._process = None
         return self.is_alive
 
     def execute(self, call, *call_args, **call_kwargs):
