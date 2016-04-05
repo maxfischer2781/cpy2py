@@ -292,8 +292,7 @@ class SingleThreadKernel(object):
             if self._instances_keepalive[inst_id][0] <= 0:
                 del self._instances_keepalive[inst_id]
         except KeyError:
-            # TODO: ignoring this as the only cause seems to be a restart.
-            response = 0
+            raise InstanceLookupError(instance_id=inst_id)
         return response
 
     def stop(self):
