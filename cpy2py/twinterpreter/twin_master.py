@@ -14,12 +14,13 @@
 import subprocess
 import os
 import errno
-import cpy2py.twinterpreter.kernel_state
+import cPickle as pickle
 
+import cpy2py.twinterpreter.kernel_state
 import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.bootstrap
 import cpy2py.ipyc.stdstream
-from cpy2py.proxy import proxy_tracker
+from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
 
 
@@ -117,26 +118,21 @@ class TwinMaster(object):
         :returns: whether the twinterpeter is alive
         """
         if not self.is_alive:
+            ipyc = ipyc_fifo.DuplexFifoIPyC()
             self._process = subprocess.Popen(
                 [
                     self.executable, '-m', cpy2py.twinterpreter.bootstrap.__name__,
                     '--peer-id', cpy2py.twinterpreter.kernel_state.__twin_id__,
                     '--twin-id', self.twinterpreter_id,
                     '--master-id', cpy2py.twinterpreter.kernel_state.__master_id__,
+                    '--ipyc-connector', pickle.dumps(ipyc.connector),
                     '--twin-group-id',
                     cpy2py.twinterpreter.kernel_state.__twin_group_id__,
-                ],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
+                ]
             )
             self._kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
                 self.twinterpreter_id,
-                ipc=cpy2py.ipyc.stdstream.StdIPC(
-                    readstream=self._process.stdout,
-                    writestream=self._process.stdin,
-                    persistent_id=proxy_tracker.persistent_twin_id,
-                    persistent_load=proxy_tracker.persistent_twin_load,
-                )
+                ipyc=ipyc,
             )
         return self.is_alive
 

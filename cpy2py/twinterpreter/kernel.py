@@ -21,12 +21,14 @@ import os
 import time
 import logging
 import weakref
+import cPickle as pickle
 
 from cpy2py.twinterpreter.kernel_state import __kernels__
 
 from cpy2py.utility.exceptions import format_exception, CPy2PyException
-from cpy2py.ipyc import stdstream, ipyc_exceptions
+from cpy2py.ipyc import ipyc_exceptions
 from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterTerminated
+from cpy2py.proxy import proxy_tracker
 
 # Message Enums
 # twin call type
@@ -86,19 +88,26 @@ class SingleThreadKernel(object):
 
     :param peer_id: id of the kernel/twinterpreter this kernel is peered with
     :type peer_id: str
-    :param ipc: :py:mod:`~IPyC` connecting to other kernel
-    :type ipc: :py:class:`~StdIPC`
+    :param ipyc: :py:mod:`~IPyC` connecting to other kernel
+    :type ipyc: :py:class:`~DuplexFifoIPyC`
     """
-
     def __new__(cls, peer_id, *args, **kwargs):  # pylint: disable=unused-argument
         assert peer_id not in __kernels__, 'Twinterpreters must have unique IDs'
         __kernels__[peer_id] = object.__new__(cls)
         return __kernels__[peer_id]
 
-    def __init__(self, peer_id, ipc=stdstream.StdIPC()):
+    def __init__(self, peer_id, ipyc):
         self._logger = logging.getLogger('__cpy2py__.%s.%s' % (os.path.basename(sys.executable), peer_id))
         self.peer_id = peer_id
-        self.ipc = ipc
+        self.ipyc = ipyc
+        self.ipyc.open()
+        # communication
+        pickler = pickle.Pickler(self.ipyc, pickle.HIGHEST_PROTOCOL)
+        pickler.persistent_id = proxy_tracker.persistent_twin_id
+        self._send = pickler.dump
+        unpickler = pickle.Unpickler(self.ipyc)
+        unpickler.persistent_load = proxy_tracker.persistent_twin_load
+        self._recv = unpickler.load
         self._request_id = 0
         # instance_id => [ref_count, instance]
         self._instances_keepalive = {}
@@ -127,10 +136,10 @@ class SingleThreadKernel(object):
         try:
             while True:
                 self._logger.warning('Listening')
-                request_id, directive = self.ipc.receive()
+                request_id, directive = self._recv()
                 self._serve_request(request_id, directive)
         except StopTwinterpreter as err:
-            self.ipc.send((request_id, __E_SHUTDOWN__, err.exit_code))
+            self._send((request_id, __E_SHUTDOWN__, err.exit_code))
         except ipyc_exceptions.IPyCTerminated:
             exit_code = 0
         except Exception:  # pylint: disable=broad-except
@@ -158,13 +167,13 @@ class SingleThreadKernel(object):
             raise
         # send everything else back to calling scope
         except Exception as err:  # pylint: disable=broad-except
-            self.ipc.send((request_id, __E_EXCEPTION__, err))
+            self._send((request_id, __E_EXCEPTION__, err))
             self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
             format_exception(self._logger, 3)
             if isinstance(err, (KeyboardInterrupt, SystemExit)):
                 raise StopTwinterpreter(message=err.__class__.__name__, exit_code=1)
         else:
-            self.ipc.send((request_id, __E_SUCCESS__, response))
+            self._send((request_id, __E_SUCCESS__, response))
 
     # dispatching: execute actions in other interpeter
     def _dispatch_request(self, request_type, *args):
@@ -172,8 +181,8 @@ class SingleThreadKernel(object):
         self._request_id += 1
         my_id = self._request_id
         try:
-            self.ipc.send((my_id, (request_type, args)))
-            request_id, result_type, result_body = self.ipc.receive()
+            self._send((my_id, (request_type, args)))
+            request_id, result_type, result_body = self._recv()
         except ipyc_exceptions.IPyCTerminated:
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         assert request_id == my_id, 'kernel messages order'

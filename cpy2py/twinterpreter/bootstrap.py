@@ -15,9 +15,8 @@ import argparse
 import os
 import logging
 import sys
+import cPickle as pickle
 
-from cpy2py.ipyc import stdstream
-from cpy2py.proxy import proxy_tracker
 import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.kernel_state
 
@@ -43,18 +42,21 @@ def bootstrap_kernel():
         '--twin-group-id',
         help="unique identifier for the active group of twinterpeters",
     )
+    parser.add_argument(
+        '--ipyc-connector',
+        help="pickled client connection",
+    )
     settings = parser.parse_args()
     logging.getLogger().addHandler(
         logging.FileHandler(filename='%s.%s' % (os.path.basename(sys.executable), settings.peer_id)))
     cpy2py.twinterpreter.kernel_state.__twin_id__ = settings.twin_id
     cpy2py.twinterpreter.kernel_state.__master_id__ = settings.master_id
     cpy2py.twinterpreter.kernel_state.__twin_group_id__ = settings.twin_group_id
+    connector = pickle.loads(settings.ipyc_connector)
+    ipyc = connector[0](*connector[1], **connector[2])
     kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
         peer_id=settings.peer_id,
-        ipc=stdstream.StdIPC(
-            persistent_id=proxy_tracker.persistent_twin_id,
-            persistent_load=proxy_tracker.persistent_twin_load,
-        )
+        ipyc=ipyc
     )
     sys.exit(kernel.run())
 
