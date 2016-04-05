@@ -65,8 +65,8 @@ def get_kernel(kernel_id):
     :param kernel_id: id of the desired kernel
     :type kernel_id: str, TWIN_MASTER or TWIN_ONLY_SLAVE
 
-    :raises TwinterpeterUnavailable: if no active kernel matches `kernel_id`
-    :raise RuntimeError: if :py:class:`TWIN_ONLY_SLAVE` is requested but there are multiple kernels
+    :raises: :py:class:`~.TwinterpeterUnavailable` if no active kernel matches `kernel_id`
+    :raises: RuntimeError if :py:class:`TWIN_ONLY_SLAVE` is requested but there are multiple kernels
     """
     assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
     try:
