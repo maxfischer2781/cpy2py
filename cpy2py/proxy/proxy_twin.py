@@ -37,10 +37,8 @@ class ProxyMethod(object):
     def __get__(self, instance, owner):
         assert instance is not None, "%s %s must be accessed from an instance, not class" % (
             self.__class__.__name__, self.__name__)
-        __twin_id__ = instance.__twin_id__
         __instance_id__ = instance.__instance_id__
-        kernel = cpy2py.twinterpreter.kernel_state.get_kernel(__twin_id__)
-        return lambda *args, **kwargs: kernel.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
+        return lambda *args, **kwargs: instance.__kernel__.dispatch_method_call(__instance_id__, self.__name__, *args, **kwargs)
 
 
 class TwinProxy(object):
@@ -55,46 +53,46 @@ class TwinProxy(object):
     __twin_id__ = None  # to be set by metaclass
     __real_class__ = None  # to be set by metaclass
     __instance_id__ = None  # to be set on __new__
+    __kernel__ = None # to be set on __new__
     __import_mod_name__ = (None, None)  # to be set by metaclass
 
     def __new__(cls, *args, **kwargs):
         self = object.__new__(cls)
+        __kernel__ = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
         try:
             # native instance exists, but no proxy yet
             __instance_id__ = kwargs['__instance_id__']
         except KeyError:
             # native instance has not been created yet
-            __instance_id__ = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__).instantiate_class(
+            __instance_id__ = __kernel__.instantiate_class(
                 self.__real_class__,  # only real class can be pickled
                 *args, **kwargs
             )
         else:
-            cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__).increment_instance_ref(__instance_id__)
+            __kernel__.increment_instance_ref(__instance_id__)
+        # store for later use without requiring explicit lookup/converter calls
+        object.__setattr__(self, '__kernel__', __kernel__)
         object.__setattr__(self, '__instance_id__', __instance_id__)
         proxy_tracker.__active_instances__[self.__twin_id__, id(self)] = self
         return self
 
     def __repr__(self):
-        return '<%s.%s twin proxy object at %x>' % (self.__class__.__module__, self.__class__.__name__, id(self))
+        return '<%s.%s twin proxy object at %x>' % (self.__import_mod_name__[0], self.__import_mod_name__[1], id(self))
 
     def __getattr__(self, name):
-        kernel = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
-        return kernel.get_attribute(self.__instance_id__, name)
+        return self.__kernel__.get_attribute(self.__instance_id__, name)
 
     def __setattr__(self, name, value):
-        kernel = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
-        return kernel.set_attribute(self.__instance_id__, name, value)
+        return self.__kernel__.set_attribute(self.__instance_id__, name, value)
 
     def __delattr__(self, name):
-        kernel = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
-        return kernel.del_attribute(self.__instance_id__, name)
+        return self.__kernel__.del_attribute(self.__instance_id__, name)
 
     def __del__(self):
         if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
             # decrement the twin reference count
             try:
-                kernel = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
-                kernel.decrement_instance_ref(self.__instance_id__)
+                self.__kernel__.decrement_instance_ref(self.__instance_id__)
             except TwinterpeterUnavailable:
                 # __del__ during shutdown, twin already dead
                 return
