@@ -52,8 +52,8 @@ def bootstrap_kernel():
     kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
         peer_id=settings.peer_id,
         ipc=stdstream.StdIPC(
-            pickler_cls=proxy_tracker.twin_pickler,
-            unpickler_cls=proxy_tracker.twin_unpickler,
+            persistent_id=proxy_tracker.persistent_twin_id,
+            persistent_load=proxy_tracker.persistent_twin_load,
         )
     )
     sys.exit(kernel.run())

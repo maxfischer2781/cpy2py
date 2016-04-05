@@ -94,5 +94,5 @@ class TwinProxy(object):
             try:
                 self.__kernel__.decrement_instance_ref(self.__instance_id__)
             except TwinterpeterUnavailable:
-                # __del__ during shutdown, twin already dead
+                # twin already dead, doesn't care for use anymore
                 return
