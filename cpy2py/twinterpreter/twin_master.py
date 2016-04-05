@@ -40,15 +40,22 @@ class TwinMaster(object):
            `twinterpreter_id`. In this case, `twinterpreter_id` is assumed to be
            the basename of `executable`.
 
+    :note: The attributes :py:attr:`executable` and :py:attr:`twinterpreter_id`
+           act as defaults if *neither* `executable` nor `twinterpreter_id` is
+           provided at instantiation. They are meant for subclassing to provide
+           default Masters.
+
     :note: Only one kernel may use a specific `twinterpreter_id` at any time.
     """
+    #: default executable
     executable = None
+    #: default twin id
     twinterpreter_id = None
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
 
     def __new__(cls, executable=None, twinterpreter_id=None):
-        executable, twinterpreter_id = cls.default_args(executable, twinterpreter_id)
+        executable, twinterpreter_id = cls._default_args(executable, twinterpreter_id)
         try:
             master = cls._master_store[twinterpreter_id]
         except KeyError:
@@ -65,12 +72,13 @@ class TwinMaster(object):
         if hasattr(self, '_init'):
             return
         self._init = True
-        self.executable, self.twinterpreter_id = self.default_args(executable, twinterpreter_id)
+        self.executable, self.twinterpreter_id = self._default_args(executable, twinterpreter_id)
         self._process = None
         self._kernel = None
 
     @classmethod
-    def default_args(cls, executable, twinterpreter_id):
+    def _default_args(cls, executable, twinterpreter_id):
+        """Resolve incomplete argument list using defaults"""
         if executable is not None and twinterpreter_id is not None:
             return executable, twinterpreter_id
         elif executable is None and twinterpreter_id is None:
