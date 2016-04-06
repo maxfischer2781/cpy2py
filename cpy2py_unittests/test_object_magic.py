@@ -12,11 +12,9 @@ class TwinMagicObject(TwinObject):
 
     # numeric comparisons
     def __lt__(self, other):
-        print(self, '__lt__', other)
         return self.numeric_value < other
 
     def __gt__(self, other):
-        print(self, '__gt__', other)
         return self.numeric_value > other
 
 
@@ -46,4 +44,4 @@ class TestObjectMagic(unittest.TestCase):
         instance_10 = LocalMagicObject(10)
         self.assertTrue(instance_1 < 10)
         self.assertTrue(1 < instance_10)
-        #self.assertTrue(instance_1 < instance_10)
+        self.assertTrue(instance_1 < instance_10)
