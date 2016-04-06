@@ -53,8 +53,6 @@ def bootstrap_kernel():
         help="pickled client connection",
     )
     settings = parser.parse_args()
-    logging.getLogger().addHandler(
-        logging.FileHandler(filename='%s.%s' % (os.path.basename(sys.executable), settings.peer_id)))
     cpy2py.twinterpreter.kernel_state.twin_id = settings.twin_id
     cpy2py.twinterpreter.kernel_state.master_id = settings.master_id
     server_ipyc = load_connector(settings.server_ipyc)

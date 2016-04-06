@@ -18,9 +18,20 @@ Multi-intepreter execution environment
 the main interpreter, another interpreter is run to execute parts of the
 application.
 """
+import logging as _logging
+import os as _os
 
 from cpy2py.proxy.proxy_object import TwinObject
 from cpy2py.twinterpreter.twin_master import TwinMaster
 from cpy2py.twinterpreter import kernel_state
 
 __all__ = ['TwinObject', 'TwinMaster', 'kernel_state']
+
+# logging
+_base_logger = _logging.getLogger('__cpy2py__')
+_base_logger.propagate = False
+# debugging logger to stderr
+if _os.environ.get('CPY2PY_DEBUG'):
+    _base_logger.addHandler(_logging.StreamHandler())
+else:
+    _base_logger.addHandler(_logging.NullHandler())

@@ -99,8 +99,7 @@ class SingleThreadKernel(object):
         return kernel_state.kernels[peer_id]
 
     def __init__(self, peer_id, server_ipyc, client_ipyc):
-        logging.getLogger().addHandler(logging.StreamHandler())
-        self._logger = logging.getLogger('__cpy2py__.%s.%s' % (os.path.basename(sys.executable), peer_id))
+        self._logger = logging.getLogger('__cpy2py__.%s' % kernel_state.twin_id)
         self.peer_id = peer_id
         self._ipyc = (server_ipyc, client_ipyc)
         if kernel_state.is_twinterpreter(kernel_state.master_id):
