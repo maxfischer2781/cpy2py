@@ -22,26 +22,23 @@ State of this twinterpreter
        This must be done before any slaves are started.
 """
 import os
-import random
-import time
 import sys
 
 from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
-from cpy2py.utility.enum import UniqueObj
 
 
 # current twin state
 #: the kernel(s) running in this interpeter
-kernels = {}
+KERNELS = {}
 #: id of this interpreter/process
-twin_id = os.path.basename(sys.executable)
+TWIN_ID = os.path.basename(sys.executable)
 #: id of the main interpeter
-master_id = twin_id
+MASTER_ID = TWIN_ID
 
 
 def is_twinterpreter(kernel_id):
     """Check whether this interpreter is running a specific kernel"""
-    return twin_id == kernel_id
+    return TWIN_ID == kernel_id
 
 
 def get_kernel(kernel_id):
@@ -56,6 +53,6 @@ def get_kernel(kernel_id):
     """
     assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
     try:
-        return kernels[kernel_id]
+        return KERNELS[kernel_id]
     except KeyError:
         raise TwinterpeterUnavailable(twin_id=kernel_id)

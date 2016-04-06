@@ -11,7 +11,11 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
+# pylint: disable=invalid-name
 """
+CPy2Py
+======
+
 Multi-intepreter execution environment
 
 `cpy2py` allows multiple interpreters to act as one application In parallel

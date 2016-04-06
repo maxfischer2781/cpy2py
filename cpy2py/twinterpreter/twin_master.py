@@ -123,10 +123,10 @@ class TwinMaster(object):
             my_client_ipyc = ipyc_fifo.DuplexFifoIPyC()
             self._process = subprocess.Popen(
                 [
-                    self.executable, '-m', cpy2py.twinterpreter.bootstrap.__name__,
-                    '--peer-id', cpy2py.twinterpreter.kernel_state.twin_id,
+                    self.executable, '-m', 'cpy2py.twinterpreter.bootstrap',
+                    '--peer-id', cpy2py.twinterpreter.kernel_state.TWIN_ID,
                     '--twin-id', self.twinterpreter_id,
-                    '--master-id', cpy2py.twinterpreter.kernel_state.master_id,
+                    '--master-id', cpy2py.twinterpreter.kernel_state.MASTER_ID,
                     '--server-ipyc', pickle.dumps(my_client_ipyc.connector),
                     '--client-ipyc', pickle.dumps(my_server_ipyc.connector),
                 ]

@@ -33,7 +33,7 @@ from dev_tools.license_data import NOTICE_TEMPLATE, LICENSE_HEADER_TEMPLATE, PRI
 LICENSE_START_SYMBOLS = {
     None: "# - # ",  # default
     ".py": "# - # ",
-    ".rst": ".. # - #",
+    ".rst": ".. # - # ",
 }
 PRESERVE_LINES = [
     r"^#!",  # shebang

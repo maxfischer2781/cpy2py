@@ -16,6 +16,7 @@ Registration, tracking and lookup tools matching instances of the same logical
 object in separate twinterpeters with each other.
 """
 import weakref
+import sys
 import cPickle as pickle
 
 #: instances of twin objects or proxies currently alive in this twinterpeter
@@ -55,7 +56,9 @@ def persistent_twin_load(persid):
         try:
             return __active_classes__[module_name, class_name](__twin_id__=twin_id, __instance_id__=instance_id)
         except KeyError:
-            module = __import__(module_name)
+            # __import__('foo.bar.baz') will only return 'foo'!
+            __import__(module_name)
+            module = sys.modules[module_name]
             klass = getattr(module, class_name)
             __active_classes__[module_name, class_name] = klass
             return klass(__twin_id__=twin_id, __instance_id__=instance_id)

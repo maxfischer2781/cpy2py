@@ -12,8 +12,6 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import argparse
-import os
-import logging
 import sys
 import cPickle as pickle
 
@@ -53,8 +51,8 @@ def bootstrap_kernel():
         help="pickled client connection",
     )
     settings = parser.parse_args()
-    cpy2py.twinterpreter.kernel_state.twin_id = settings.twin_id
-    cpy2py.twinterpreter.kernel_state.master_id = settings.master_id
+    cpy2py.twinterpreter.kernel_state.TWIN_ID = settings.twin_id
+    cpy2py.twinterpreter.kernel_state.MASTER_ID = settings.master_id
     server_ipyc = load_connector(settings.server_ipyc)
     client_ipyc = load_connector(settings.client_ipyc)
     kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(

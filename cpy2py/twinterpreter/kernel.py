@@ -94,15 +94,15 @@ class SingleThreadKernel(object):
     :type client_ipyc: :py:class:`~DuplexFifoIPyC`
     """
     def __new__(cls, peer_id, *args, **kwargs):  # pylint: disable=unused-argument
-        assert peer_id not in kernel_state.kernels, 'Twinterpreters must have unique IDs'
-        kernel_state.kernels[peer_id] = object.__new__(cls)
-        return kernel_state.kernels[peer_id]
+        assert peer_id not in kernel_state.KERNELS, 'Twinterpreters must have unique IDs'
+        kernel_state.KERNELS[peer_id] = object.__new__(cls)
+        return kernel_state.KERNELS[peer_id]
 
     def __init__(self, peer_id, server_ipyc, client_ipyc):
-        self._logger = logging.getLogger('__cpy2py__.%s' % kernel_state.twin_id)
+        self._logger = logging.getLogger('__cpy2py__.%s' % kernel_state.TWIN_ID)
         self.peer_id = peer_id
         self._ipyc = (server_ipyc, client_ipyc)
-        if kernel_state.is_twinterpreter(kernel_state.master_id):
+        if kernel_state.is_twinterpreter(kernel_state.MASTER_ID):
             server_ipyc.open()
             client_ipyc.open()
         else:
@@ -146,10 +146,10 @@ class SingleThreadKernel(object):
         :returns: exit code indicating potential failure
         """
         exit_code, request_id = 1, None
-        self._logger.warning('Starting kernel %s @ %s', kernel_state.twin_id, time.asctime())
+        self._logger.warning('Starting kernel %s @ %s', kernel_state.TWIN_ID, time.asctime())
         try:
             while True:
-                self._logger.warning('Listening [%s]', kernel_state.twin_id)
+                self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
                 request_id, directive = self._server_recv()
                 self._serve_request(request_id, directive)
         except StopTwinterpreter as err:
@@ -162,10 +162,10 @@ class SingleThreadKernel(object):
             self._logger.critical('TWIN KERNEL INTERNAL EXCEPTION')
             format_exception(self._logger, 3)
         finally:
-            self._logger.critical('TWIN KERNEL SHUTDOWN: %s => %d', kernel_state.twin_id, exit_code)
+            self._logger.critical('TWIN KERNEL SHUTDOWN: %s => %d', kernel_state.TWIN_ID, exit_code)
             for ipyc in self._ipyc:
                 ipyc.close()
-            del kernel_state.kernels[self.peer_id]
+            del kernel_state.KERNELS[self.peer_id]
         return exit_code
 
     def _serve_request(self, request_id, directive):
@@ -303,7 +303,7 @@ class SingleThreadKernel(object):
             except KeyError:
                 # fetch objects not created by kernel, but directly
                 try:
-                    instance = proxy_tracker.__active_instances__[kernel_state.twin_id, inst_id]
+                    instance = proxy_tracker.__active_instances__[kernel_state.TWIN_ID, inst_id]
                 except KeyError:
                     raise InstanceLookupError(instance_id=inst_id)
                 else:

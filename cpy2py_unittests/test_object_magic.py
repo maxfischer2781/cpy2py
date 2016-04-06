@@ -19,7 +19,7 @@ class TwinMagicObject(TwinObject):
 
 
 class LocalMagicObject(TwinMagicObject):
-    __twin_id__ = kernel_state.master_id
+    __twin_id__ = kernel_state.MASTER_ID
 
 
 class TestObjectMagic(unittest.TestCase):
