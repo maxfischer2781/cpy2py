@@ -14,6 +14,7 @@
 import subprocess
 import os
 import errno
+import threading
 import cPickle as pickle
 
 import cpy2py.twinterpreter.kernel_state
@@ -75,6 +76,7 @@ class TwinMaster(object):
         self.executable, self.twinterpreter_id = self._default_args(executable, twinterpreter_id)
         self._process = None
         self._kernel = None
+        self._server_thread = None
 
     @classmethod
     def _default_args(cls, executable, twinterpreter_id):
@@ -117,22 +119,25 @@ class TwinMaster(object):
         :returns: whether the twinterpeter is alive
         """
         if not self.is_alive:
-            ipyc = ipyc_fifo.DuplexFifoIPyC()
+            my_server_ipyc = ipyc_fifo.DuplexFifoIPyC()
+            my_client_ipyc = ipyc_fifo.DuplexFifoIPyC()
             self._process = subprocess.Popen(
                 [
                     self.executable, '-m', cpy2py.twinterpreter.bootstrap.__name__,
-                    '--peer-id', cpy2py.twinterpreter.kernel_state.__twin_id__,
+                    '--peer-id', cpy2py.twinterpreter.kernel_state.twin_id,
                     '--twin-id', self.twinterpreter_id,
-                    '--master-id', cpy2py.twinterpreter.kernel_state.__master_id__,
-                    '--ipyc-connector', pickle.dumps(ipyc.connector),
-                    '--twin-group-id',
-                    cpy2py.twinterpreter.kernel_state.__twin_group_id__,
+                    '--master-id', cpy2py.twinterpreter.kernel_state.master_id,
+                    '--server-ipyc', pickle.dumps(my_client_ipyc.connector),
+                    '--client-ipyc', pickle.dumps(my_server_ipyc.connector),
                 ]
             )
             self._kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
                 self.twinterpreter_id,
-                ipyc=ipyc,
+                server_ipyc=my_server_ipyc,
+                client_ipyc=my_client_ipyc,
             )
+            #self._server_thread = threading.Thread(target=self._kernel.run)
+            #self._server_thread.start()
         return self.is_alive
 
     def stop(self):

@@ -11,6 +11,16 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
+"""
+State of this twinterpreter
+
+:note: This module is auto-initialized as part of the :py:mod:`cpy2py` import.
+       Slaved twinterpreters are initialized via
+       :py:func:`~cpy2py.twinterpreter.bootstrap.bootstrap_kernel` on startup.
+
+:note: The only attribute feasible to set manually is :py:data:`~.master_id`.
+       This must be done before any slaves are started.
+"""
 import os
 import random
 import time
@@ -20,32 +30,18 @@ from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
 from cpy2py.utility.enum import UniqueObj
 
 
-# shorthands for special kernels
-class TwinMaster(UniqueObj):
-    """The master twinterpeter"""
-    name = '<Master Kernel>'
-
-
 # current twin state
 #: the kernel(s) running in this interpeter
-__kernels__ = {}
+kernels = {}
 #: id of this interpreter/process
-__twin_id__ = os.path.basename(sys.executable)
+twin_id = os.path.basename(sys.executable)
 #: id of the main interpeter
-__master_id__ = __twin_id__
-#: id of the active group of twinterpeters
-__twin_group_id__ = '%08X%08X%08X' % (
-    time.time() * 16,
-    os.getpid(),
-    random.random() * pow(16, 8)
-)
+master_id = twin_id
 
 
 def is_twinterpreter(kernel_id):
     """Check whether this interpreter is running a specific kernel"""
-    if kernel_id is TwinMaster:
-        return __twin_id__ == __master_id__
-    return __twin_id__ == kernel_id
+    return twin_id == kernel_id
 
 
 def get_kernel(kernel_id):
@@ -60,8 +56,6 @@ def get_kernel(kernel_id):
     """
     assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
     try:
-        if kernel_id is TwinMaster:
-            return __kernels__[__master_id__]
-        return __kernels__[kernel_id]
+        return kernels[kernel_id]
     except KeyError:
         raise TwinterpeterUnavailable(twin_id=kernel_id)

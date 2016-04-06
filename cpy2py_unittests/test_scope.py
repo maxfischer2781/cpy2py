@@ -30,8 +30,8 @@ class TestCallScope(unittest.TestCase):
         self.assertFalse(pypy_instance.test_kernel('foobar'))
 
     def test_function_native(self):
-        self.assertTrue(test_kernel(kernel_state.__twin_id__))
-        self.assertTrue(test_kernel(kernel_state.TwinMaster))
+        self.assertTrue(test_kernel(kernel_state.twin_id))
+        self.assertTrue(test_kernel(kernel_state.master_id))
         self.assertFalse(test_kernel('pypy'))
         self.assertFalse(test_kernel('foobar'))
 

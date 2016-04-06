@@ -22,7 +22,7 @@ class ProxyProxy(TwinObject):
     :warning: This class is experimental at the moment.
     """
     # always stay in current twinterpeter
-    __twin_id__ = kernel_state.__twin_id__
+    __twin_id__ = kernel_state.twin_id
 
     def __init__(self, real_object):
         TwinObject.__setattr__(self, '_real_object', real_object)

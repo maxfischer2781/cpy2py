@@ -21,6 +21,12 @@ import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.kernel_state
 
 
+def load_connector(connector_pkl):
+    """Create an IPyC connection from a connector pickle"""
+    connector = pickle.loads(connector_pkl)
+    return connector[0](*connector[1], **connector[2])
+
+
 def bootstrap_kernel():
     """
     Deploy a kernel to make this interpreter a twinterpreter
@@ -39,24 +45,24 @@ def bootstrap_kernel():
         help="unique identifier for the master twinterpreter",
     )
     parser.add_argument(
-        '--twin-group-id',
-        help="unique identifier for the active group of twinterpeters",
+        '--server-ipyc',
+        help="pickled server connection",
     )
     parser.add_argument(
-        '--ipyc-connector',
+        '--client-ipyc',
         help="pickled client connection",
     )
     settings = parser.parse_args()
     logging.getLogger().addHandler(
         logging.FileHandler(filename='%s.%s' % (os.path.basename(sys.executable), settings.peer_id)))
-    cpy2py.twinterpreter.kernel_state.__twin_id__ = settings.twin_id
-    cpy2py.twinterpreter.kernel_state.__master_id__ = settings.master_id
-    cpy2py.twinterpreter.kernel_state.__twin_group_id__ = settings.twin_group_id
-    connector = pickle.loads(settings.ipyc_connector)
-    ipyc = connector[0](*connector[1], **connector[2])
+    cpy2py.twinterpreter.kernel_state.twin_id = settings.twin_id
+    cpy2py.twinterpreter.kernel_state.master_id = settings.master_id
+    server_ipyc = load_connector(settings.server_ipyc)
+    client_ipyc = load_connector(settings.client_ipyc)
     kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
         peer_id=settings.peer_id,
-        ipyc=ipyc
+        server_ipyc=server_ipyc,
+        client_ipyc=client_ipyc,
     )
     sys.exit(kernel.run())
 

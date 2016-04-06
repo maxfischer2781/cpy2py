@@ -23,7 +23,7 @@ import logging
 import weakref
 import cPickle as pickle
 
-from cpy2py.twinterpreter.kernel_state import __kernels__
+from cpy2py.twinterpreter import kernel_state
 
 from cpy2py.utility.exceptions import format_exception, CPy2PyException
 from cpy2py.ipyc import ipyc_exceptions
@@ -88,26 +88,29 @@ class SingleThreadKernel(object):
 
     :param peer_id: id of the kernel/twinterpreter this kernel is peered with
     :type peer_id: str
-    :param ipyc: :py:mod:`~IPyC` connecting to other kernel
-    :type ipyc: :py:class:`~DuplexFifoIPyC`
+    :param server_ipyc: :py:mod:`~IPyC` for incoming requests
+    :type server_ipyc: :py:class:`~DuplexFifoIPyC`
+    :param client_ipyc: :py:mod:`~IPyC` for outgoing requests
+    :type client_ipyc: :py:class:`~DuplexFifoIPyC`
     """
     def __new__(cls, peer_id, *args, **kwargs):  # pylint: disable=unused-argument
-        assert peer_id not in __kernels__, 'Twinterpreters must have unique IDs'
-        __kernels__[peer_id] = object.__new__(cls)
-        return __kernels__[peer_id]
+        assert peer_id not in kernel_state.kernels, 'Twinterpreters must have unique IDs'
+        kernel_state.kernels[peer_id] = object.__new__(cls)
+        return kernel_state.kernels[peer_id]
 
-    def __init__(self, peer_id, ipyc):
+    def __init__(self, peer_id, server_ipyc, client_ipyc):
+        logging.getLogger().addHandler(logging.StreamHandler())
         self._logger = logging.getLogger('__cpy2py__.%s.%s' % (os.path.basename(sys.executable), peer_id))
         self.peer_id = peer_id
-        self.ipyc = ipyc
-        self.ipyc.open()
+        if kernel_state.is_twinterpreter(kernel_state.master_id):
+            server_ipyc.open()
+            client_ipyc.open()
+        else:
+            client_ipyc.open()
+            server_ipyc.open()
         # communication
-        pickler = pickle.Pickler(self.ipyc, pickle.HIGHEST_PROTOCOL)
-        pickler.persistent_id = proxy_tracker.persistent_twin_id
-        self._send = pickler.dump
-        unpickler = pickle.Unpickler(self.ipyc)
-        unpickler.persistent_load = proxy_tracker.persistent_twin_load
-        self._recv = unpickler.load
+        self._server_send, self._server_recv = self._connect_ipyc(server_ipyc)
+        self._client_send, self._client_recv = self._connect_ipyc(client_ipyc)
         self._request_id = 0
         # instance_id => [ref_count, instance]
         self._instances_keepalive = {}
@@ -125,6 +128,17 @@ class SingleThreadKernel(object):
             __E_REF_DECR__: self._directive_ref_decr,
         }
 
+    @staticmethod
+    def _connect_ipyc(ipyc):
+        """Connect to an IPyC duplex"""
+        pickler = pickle.Pickler(ipyc, pickle.HIGHEST_PROTOCOL)
+        pickler.persistent_id = proxy_tracker.persistent_twin_id
+        send = pickler.dump
+        unpickler = pickle.Unpickler(ipyc)
+        unpickler.persistent_load = proxy_tracker.persistent_twin_load
+        recv = unpickler.load
+        return send, recv
+
     def run(self):
         """
         Run the kernel request server
@@ -136,10 +150,10 @@ class SingleThreadKernel(object):
         try:
             while True:
                 self._logger.warning('Listening')
-                request_id, directive = self._recv()
+                request_id, directive = self._server_recv()
                 self._serve_request(request_id, directive)
         except StopTwinterpreter as err:
-            self._send((request_id, __E_SHUTDOWN__, err.exit_code))
+            self._server_send((request_id, __E_SHUTDOWN__, err.exit_code))
         except ipyc_exceptions.IPyCTerminated:
             exit_code = 0
         except Exception:  # pylint: disable=broad-except
@@ -147,7 +161,7 @@ class SingleThreadKernel(object):
             format_exception(self._logger, 3)
         finally:
             self._logger.critical('TWIN KERNEL SHUTDOWN: %d', exit_code)
-            del __kernels__[self.peer_id]
+            del kernel_state.kernels[self.peer_id]
         return exit_code
 
     def _serve_request(self, request_id, directive):
@@ -167,13 +181,13 @@ class SingleThreadKernel(object):
             raise
         # send everything else back to calling scope
         except Exception as err:  # pylint: disable=broad-except
-            self._send((request_id, __E_EXCEPTION__, err))
+            self._server_send((request_id, __E_EXCEPTION__, err))
             self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
             format_exception(self._logger, 3)
             if isinstance(err, (KeyboardInterrupt, SystemExit)):
                 raise StopTwinterpreter(message=err.__class__.__name__, exit_code=1)
         else:
-            self._send((request_id, __E_SUCCESS__, response))
+            self._server_send((request_id, __E_SUCCESS__, response))
 
     # dispatching: execute actions in other interpeter
     def _dispatch_request(self, request_type, *args):
@@ -181,8 +195,8 @@ class SingleThreadKernel(object):
         self._request_id += 1
         my_id = self._request_id
         try:
-            self._send((my_id, (request_type, args)))
-            request_id, result_type, result_body = self._recv()
+            self._client_send((my_id, (request_type, args)))
+            request_id, result_type, result_body = self._client_recv()
         except ipyc_exceptions.IPyCTerminated:
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         assert request_id == my_id, 'kernel messages order'
@@ -283,9 +297,15 @@ class SingleThreadKernel(object):
             try:
                 instance = self._instances_alive_ref[inst_id]
             except KeyError:
-                raise InstanceLookupError(instance_id=inst_id)
-            else:
-                self._instances_keepalive[inst_id] = [1, instance]
+                try:
+                    twin_id = kernel_state.twin_id
+                    actives = dict(proxy_tracker.__active_instances__)
+                    instance = proxy_tracker.__active_instances__[kernel_state.twin_id, inst_id]
+                except KeyError:
+                    raise InstanceLookupError(instance_id=inst_id)
+                else:
+                    self._instances_alive_ref[inst_id] = instance
+            self._instances_keepalive[inst_id] = [1, instance]
         return self._instances_keepalive[inst_id][0]
 
     def decrement_instance_ref(self, instance_id):
@@ -307,7 +327,7 @@ class SingleThreadKernel(object):
     def stop(self):
         """Shutdown the peer's server"""
         if self._dispatch_request(__E_SHUTDOWN__, 'stop'):
-            del __kernels__[self.peer_id]
+            del kernel_state.kernels[self.peer_id]
             return True
         return False
 

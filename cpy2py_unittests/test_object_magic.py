@@ -1,23 +1,27 @@
+from __future__ import print_function
 import unittest
 
 from cpy2py import kernel_state, TwinMaster, TwinObject
 
 
-class MagicMethodObject(TwinObject):
+class TwinMagicObject(TwinObject):
     __twin_id__ = 'pypy'
 
     def __init__(self, numeric_value=0):
         self.numeric_value = numeric_value
 
-    def __str__(self):
-        return 'MagicMethodObject'
-
     # numeric comparisons
     def __lt__(self, other):
+        print(self, '__lt__', other)
         return self.numeric_value < other
 
     def __gt__(self, other):
+        print(self, '__gt__', other)
         return self.numeric_value > other
+
+
+class LocalMagicObject(TwinMagicObject):
+    __twin_id__ = kernel_state.master_id
 
 
 class TestObjectMagic(unittest.TestCase):
@@ -30,9 +34,16 @@ class TestObjectMagic(unittest.TestCase):
     def tearDown(self):
         self.twinterpreter.stop()
 
-    def test_numeric_comparison(self):
-        instance_1 = MagicMethodObject(1)
-        instance_10 = MagicMethodObject(10)
+    def test_remote_comparison(self):
+        instance_1 = TwinMagicObject(1)
+        instance_10 = TwinMagicObject(10)
         self.assertTrue(instance_1 < 10)
         self.assertTrue(1 < instance_10)
         self.assertTrue(instance_1 < instance_10)
+
+    def test_cross_comparison(self):
+        instance_1 = TwinMagicObject(1)
+        instance_10 = LocalMagicObject(10)
+        self.assertTrue(instance_1 < 10)
+        self.assertTrue(1 < instance_10)
+        #self.assertTrue(instance_1 < instance_10)
