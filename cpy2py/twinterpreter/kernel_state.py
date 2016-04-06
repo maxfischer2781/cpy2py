@@ -26,11 +26,6 @@ class TwinMaster(UniqueObj):
     name = '<Master Kernel>'
 
 
-class TwinOnlySlave(UniqueObj):
-    """The slave twinterpeter, if unambigous"""
-    name = '<Single Twin Kernel>'
-
-
 # current twin state
 #: the kernel(s) running in this interpeter
 __kernels__ = {}
@@ -46,15 +41,10 @@ __twin_group_id__ = '%08X%08X%08X' % (
 )
 
 
-def is_twinterpreter(kernel_id=TwinOnlySlave):
+def is_twinterpreter(kernel_id):
     """Check whether this interpreter is running a specific kernel"""
     if kernel_id is TwinMaster:
         return __twin_id__ == __master_id__
-    if kernel_id is TwinOnlySlave:
-        if len(__kernels__) != 1:
-            raise RuntimeError(
-                "Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TwinOnlySlave)
-        return __twin_id__ != __master_id__
     return __twin_id__ == kernel_id
 
 
@@ -72,11 +62,6 @@ def get_kernel(kernel_id):
     try:
         if kernel_id is TwinMaster:
             return __kernels__[__master_id__]
-        if kernel_id is TwinOnlySlave:
-            if len(__kernels__) != 1:
-                raise RuntimeError(
-                    "Twinterpeter kernel_id '%s' is ambigious if there isn't exactly one slave." % TwinOnlySlave)
-            return __kernels__.keys()[0]
         return __kernels__[kernel_id]
     except KeyError:
         raise TwinterpeterUnavailable(twin_id=kernel_id)
