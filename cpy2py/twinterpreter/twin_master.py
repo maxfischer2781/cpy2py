@@ -136,8 +136,8 @@ class TwinMaster(object):
                 server_ipyc=my_server_ipyc,
                 client_ipyc=my_client_ipyc,
             )
-            #self._server_thread = threading.Thread(target=self._kernel.run)
-            #self._server_thread.start()
+            self._server_thread = threading.Thread(target=self._kernel.run)
+            self._server_thread.start()
         return self.is_alive
 
     def stop(self):

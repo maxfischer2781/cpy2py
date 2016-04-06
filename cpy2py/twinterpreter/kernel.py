@@ -79,7 +79,7 @@ class SingleThreadKernel(object):
     Default kernel for handling requests between interpeters
 
     Any connection between twinterpreters is handled by two kernels, one in each
-    twinterpreter. In each twinterpreter, the local kernel provides as a client
+    twinterpreter. In each twinterpreter, the local kernel provides a client
     interface for dispatching calls. At the same time, it acts as a server that
     handles requests from its peer.
 
@@ -102,6 +102,7 @@ class SingleThreadKernel(object):
         logging.getLogger().addHandler(logging.StreamHandler())
         self._logger = logging.getLogger('__cpy2py__.%s.%s' % (os.path.basename(sys.executable), peer_id))
         self.peer_id = peer_id
+        self._ipyc = (server_ipyc, client_ipyc)
         if kernel_state.is_twinterpreter(kernel_state.master_id):
             server_ipyc.open()
             client_ipyc.open()
@@ -146,21 +147,25 @@ class SingleThreadKernel(object):
         :returns: exit code indicating potential failure
         """
         exit_code, request_id = 1, None
-        self._logger.warning('Starting @ %s', time.asctime())
+        self._logger.warning('Starting kernel %s @ %s', kernel_state.twin_id, time.asctime())
         try:
             while True:
-                self._logger.warning('Listening')
+                self._logger.warning('Listening [%s]', kernel_state.twin_id)
                 request_id, directive = self._server_recv()
                 self._serve_request(request_id, directive)
         except StopTwinterpreter as err:
             self._server_send((request_id, __E_SHUTDOWN__, err.exit_code))
-        except ipyc_exceptions.IPyCTerminated:
+            exit_code = err.exit_code
+        # cPickle may raise EOFError by itself
+        except (ipyc_exceptions.IPyCTerminated, EOFError):
             exit_code = 0
         except Exception:  # pylint: disable=broad-except
             self._logger.critical('TWIN KERNEL INTERNAL EXCEPTION')
             format_exception(self._logger, 3)
         finally:
-            self._logger.critical('TWIN KERNEL SHUTDOWN: %d', exit_code)
+            self._logger.critical('TWIN KERNEL SHUTDOWN: %s => %d', kernel_state.twin_id, exit_code)
+            for ipyc in self._ipyc:
+                ipyc.close()
             del kernel_state.kernels[self.peer_id]
         return exit_code
 
@@ -297,9 +302,8 @@ class SingleThreadKernel(object):
             try:
                 instance = self._instances_alive_ref[inst_id]
             except KeyError:
+                # fetch objects not created by kernel, but directly
                 try:
-                    twin_id = kernel_state.twin_id
-                    actives = dict(proxy_tracker.__active_instances__)
                     instance = proxy_tracker.__active_instances__[kernel_state.twin_id, inst_id]
                 except KeyError:
                     raise InstanceLookupError(instance_id=inst_id)
@@ -327,7 +331,6 @@ class SingleThreadKernel(object):
     def stop(self):
         """Shutdown the peer's server"""
         if self._dispatch_request(__E_SHUTDOWN__, 'stop'):
-            del kernel_state.kernels[self.peer_id]
             return True
         return False
 
