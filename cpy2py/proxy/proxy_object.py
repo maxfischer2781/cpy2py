@@ -25,36 +25,47 @@ def instance_id(instance):
     return '%X%X' % (id(instance), time.time() * 1000)
 
 
-class TwinObject(object):
-    """
-    Objects for instances accessible from twinterpreters
+docs = """
+Objects for instances accessible from twinterpreters
 
-    To define which twinterpeter the class is native to, set the class attribute
-    `__twin_id__`. It must be a :py:class:`str` identifying the native
-    twinterpeter.
+To define which twinterpeter the class is native to, set the class attribute
+`__twin_id__`. It must be a :py:class:`str` identifying the native
+twinterpeter.
 
-    :note: This class can be used in place of :py:class:`object` as a base class.
-    """
-    #: id of interpeter where real instances exist
-    __twin_id__ = None  # to be set by metaclass or manually
-    #: class of proxy for real class instances
-    __proxy_class__ = TwinProxy  # to be set by metaclass
-    #: id of the object in the twinterpreter
-    __instance_id__ = None  # to be set on __new__
-    #: tuple for twin import, of the form (<module name>, <object name>)
-    __import_mod_name__ = (None, None)  # to be set by metaclass
-    __metaclass__ = TwinMeta
+:note: This class can be used in place of :py:class:`object` as a base class.
+""".strip()
 
-    def __new__(cls, *args, **kwargs):
-        # if we are in the appropriate interpeter, proceed as normal
-        if cpy2py.twinterpreter.kernel_state.is_twinterpreter(cls.__twin_id__):
-            self = object.__new__(cls)
-            TwinObject.__setattr__(self, '__instance_id__', instance_id(self))
-            # register our reference for lookup
-            proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
-            return self
-        # return a proxy to the real object otherwise
-        return cls.__proxy_class__(*args, **kwargs)
+
+def __new__(cls, *args, **kwargs):
+    # if we are in the appropriate interpeter, proceed as normal
+    if cpy2py.twinterpreter.kernel_state.is_twinterpreter(cls.__twin_id__):
+        self = object.__new__(cls)
+        object.__setattr__(self, '__instance_id__', instance_id(self))
+        # register our reference for lookup
+        proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
+        return self
+    # return a proxy to the real object otherwise
+    return cls.__proxy_class__(*args, **kwargs)
+
+# calling TwinMeta to set metaclass explicitly works for py2 and py3
+TwinObject = TwinMeta(
+    'TwinObject',
+    (object,),
+    {
+        '__doc__': docs,
+        #: id of interpeter where real instances exist
+        '__twin_id__': None,  # to be set by metaclass or manually
+        #: class of proxy for real class instances
+        '__proxy_class__': TwinProxy,  # to be set by metaclass
+        #: id of the object in the twinterpreter
+        '__instance_id__': None,  # to be set on __new__
+        #: tuple for twin import, of the form (<module name>, <object name>)
+        '__import_mod_name__': (None, None),  # to be set by metaclass
+        '__new__': __new__,
+        '__module__': __name__,
+     }
+)
+del docs
 
 # TwinObject and TwinProxy are not created by metaclass, initialize manually
 TwinObject.__import_mod_name__ = (TwinObject.__module__, TwinObject.__name__)
