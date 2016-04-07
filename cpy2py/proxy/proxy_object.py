@@ -25,7 +25,7 @@ def instance_id(instance):
     return '%X%X' % (id(instance), time.time() * 1000)
 
 
-docs = """
+DOCS = """
 Objects for instances accessible from twinterpreters
 
 To define which twinterpeter the class is native to, set the class attribute
@@ -52,7 +52,7 @@ TwinObject = TwinMeta(
     'TwinObject',
     (object,),
     {
-        '__doc__': docs,
+        '__doc__': DOCS,
         #: id of interpeter where real instances exist
         '__twin_id__': None,  # to be set by metaclass or manually
         #: class of proxy for real class instances
@@ -63,9 +63,9 @@ TwinObject = TwinMeta(
         '__import_mod_name__': (None, None),  # to be set by metaclass
         '__new__': __new__,
         '__module__': __name__,
-     }
+    }
 )
-del docs
+del DOCS
 
 # TwinObject and TwinProxy are not created by metaclass, initialize manually
 TwinObject.__import_mod_name__ = (TwinObject.__module__, TwinObject.__name__)

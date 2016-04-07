@@ -11,4 +11,10 @@ if PY3:
 else:
     import cPickle as pickle
 
-__all__ = ['pickle']
+# range/xrange
+if PY3:
+    rangex = range
+else:
+    rangex = xrange
+
+__all__ = ['pickle', 'rangex']

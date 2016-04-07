@@ -13,6 +13,8 @@
 # - # limitations under the License.
 import time
 
+from cpy2py.utility.compat import rangex
+
 
 def time_call(call, *args, **kwargs):
     stime = time.time()
@@ -27,7 +29,7 @@ def square(arg):
 
 def compute(size):
     value = 1.5
-    for _ in xrange(size):
+    for _ in rangex(size):
         value *= value
         value %= 9999.9
     return value
@@ -35,21 +37,21 @@ def compute(size):
 
 def powerize(size):
     value = 1.1
-    for _ in xrange(size):
+    for _ in rangex(size):
         value *= value
     return value
 
 
 def adder(size):
     value = 1.1
-    for _ in xrange(size):
+    for _ in rangex(size):
         value += 1.1
     return value
 
 
 def lots(size):
     value = 1.1
-    for _ in xrange(size):
+    for _ in rangex(size):
         value *= value
         value += value
         value %= 10000
@@ -58,7 +60,7 @@ def lots(size):
 
 def lots_const(size):
     value = 1.1
-    for _ in xrange(size):
+    for _ in rangex(size):
         value *= 1.1
         value += 1.1
         value %= 10000

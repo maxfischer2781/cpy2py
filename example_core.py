@@ -21,6 +21,7 @@ import sys
 import json
 
 from cpy2py import TwinMaster
+from cpy2py.utility.compat import rangex
 import example_module
 
 CLI = argparse.ArgumentParser()
@@ -162,10 +163,10 @@ def main():
     twinterpreter = start_twinterpeter()
     callables = (get_callable(OPTIONS.callable),)
     try:
-        for rep in xrange(OPTIONS.repetitions):
+        for rep in rangex(OPTIONS.repetitions):
             for func in callables:
                 TIMING.setdefault(func.__name__, {})
-                for power in xrange(OPTIONS.power):
+                for power in rangex(OPTIONS.power):
                     scale = 1 * pow(OPTIONS.base, power)
                     master_result, twin_result = time_callable(twinterpreter, func, scale)
                     print_results(master_result, twin_result, rep, power, func.__name__)
@@ -273,13 +274,13 @@ def main():
             ratios = [
                 (y_twin[tidx] / y_master[tidx], x_all[tidx])
                 for tidx
-                in xrange(len(x_all))
+                in rangex(len(x_all))
                 if y_master[tidx] != 0
                 ]
             x_ratio_min_max = [
                 tidx
                 for tidx
-                in xrange(len(x_all))
+                in rangex(len(x_all))
                 if y_master_min[tidx] != 0 and y_master_max[tidx] != 0
                 ]
             ratios_min = [
