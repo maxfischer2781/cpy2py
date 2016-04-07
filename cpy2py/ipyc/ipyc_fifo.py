@@ -51,6 +51,7 @@ class DuplexFifoIPyC(object):
         self._fifo_read.close()
         self._fifo_write.close()
 
+    # file interface
     def read(self, size=None):
         """Read at most `size` bytes"""
         if size is None:
@@ -65,6 +66,15 @@ class DuplexFifoIPyC(object):
     def write(self, message):
         """Write a string"""
         return self._fifo_write.write(message)
+
+    # direct file access
+    @property
+    def writer(self):
+        return self._fifo_write
+
+    @property
+    def reader(self):
+        return self._fifo_read
 
     @property
     def connector(self):

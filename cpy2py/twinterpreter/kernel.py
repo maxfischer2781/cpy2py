@@ -129,10 +129,10 @@ class SingleThreadKernel(object):
     @staticmethod
     def _connect_ipyc(ipyc, pickle_protocol):
         """Connect to an IPyC duplex"""
-        pickler = pickle.Pickler(ipyc, pickle_protocol)
+        pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
         pickler.persistent_id = proxy_tracker.persistent_twin_id
         send = pickler.dump
-        unpickler = pickle.Unpickler(ipyc)
+        unpickler = pickle.Unpickler(ipyc.reader)
         unpickler.persistent_load = proxy_tracker.persistent_twin_load
         recv = unpickler.load
         return send, recv
