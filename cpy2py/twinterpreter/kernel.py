@@ -96,7 +96,7 @@ class SingleThreadKernel(object):
         kernel_state.KERNELS[peer_id] = object.__new__(cls)
         return kernel_state.KERNELS[peer_id]
 
-    def __init__(self, peer_id, server_ipyc, client_ipyc):
+    def __init__(self, peer_id, server_ipyc, client_ipyc, pickle_protocol=2):
         self._logger = logging.getLogger('__cpy2py__.%s' % kernel_state.TWIN_ID)
         self.peer_id = peer_id
         self._ipyc = (server_ipyc, client_ipyc)
@@ -107,8 +107,8 @@ class SingleThreadKernel(object):
             client_ipyc.open()
             server_ipyc.open()
         # communication
-        self._server_send, self._server_recv = self._connect_ipyc(server_ipyc)
-        self._client_send, self._client_recv = self._connect_ipyc(client_ipyc)
+        self._server_send, self._server_recv = self._connect_ipyc(server_ipyc, pickle_protocol)
+        self._client_send, self._client_recv = self._connect_ipyc(client_ipyc, pickle_protocol)
         self._request_id = 0
         # instance_id => [ref_count, instance]
         self._instances_keepalive = {}
@@ -127,9 +127,9 @@ class SingleThreadKernel(object):
         }
 
     @staticmethod
-    def _connect_ipyc(ipyc):
+    def _connect_ipyc(ipyc, pickle_protocol):
         """Connect to an IPyC duplex"""
-        pickler = pickle.Pickler(ipyc, pickle.HIGHEST_PROTOCOL)
+        pickler = pickle.Pickler(ipyc, pickle_protocol)
         pickler.persistent_id = proxy_tracker.persistent_twin_id
         send = pickler.dump
         unpickler = pickle.Unpickler(ipyc)
