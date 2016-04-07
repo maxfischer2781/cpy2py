@@ -1,4 +1,5 @@
 import unittest
+import time
 
 from cpy2py import TwinMaster, TwinObject
 import cpy2py.proxy.proxy_twin  # proxy type check
@@ -31,6 +32,7 @@ class TestObjectPrimitives(unittest.TestCase):
 
     def tearDown(self):
         self.twinterpreter.stop()
+        time.sleep(0.1)
 
     def test_init(self):
         instance = PrimitiveObject()

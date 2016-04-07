@@ -1,5 +1,6 @@
 from __future__ import print_function
 import unittest
+import time
 
 from cpy2py import kernel_state, TwinMaster, TwinObject
 
@@ -31,6 +32,7 @@ class TestObjectMagic(unittest.TestCase):
 
     def tearDown(self):
         self.twinterpreter.stop()
+        time.sleep(0.1)
 
     def test_remote_comparison(self):
         instance_1 = TwinMagicObject(1)

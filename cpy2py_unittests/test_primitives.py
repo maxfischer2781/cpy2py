@@ -1,5 +1,6 @@
 import random
 import unittest
+import time
 
 from cpy2py import TwinMaster
 
@@ -19,6 +20,7 @@ class TestFunctionCall(unittest.TestCase):
 
     def tearDown(self):
         self.twinterpreter.stop()
+        time.sleep(0.1)
 
     @staticmethod
     def _get_test_args():

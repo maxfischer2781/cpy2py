@@ -1,5 +1,6 @@
 import unittest
 import random
+import time
 
 from cpy2py import kernel_state, TwinMaster, TwinObject
 
@@ -43,6 +44,7 @@ class TestInheritance(unittest.TestCase):
 
     def tearDown(self):
         self.twinterpreter.stop()
+        time.sleep(0.1)
 
     @staticmethod
     def _get_test_args():

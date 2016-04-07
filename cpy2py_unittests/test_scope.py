@@ -1,4 +1,5 @@
 import unittest
+import time
 
 from cpy2py import kernel_state, TwinMaster, TwinObject
 
@@ -22,6 +23,7 @@ class TestCallScope(unittest.TestCase):
 
     def tearDown(self):
         self.twinterpreter.stop()
+        time.sleep(0.1)
 
     def test_method(self):
         pypy_instance = PyPyObject()
