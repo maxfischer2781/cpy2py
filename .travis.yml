@@ -12,4 +12,6 @@ os:
 #  - osx
 script:
   - echo $TRAVIS_PYTHON_VERSION
-  - $TRAVIS_PYTHON_VERSION -m unittest discover -s cpy2py_unittests  -t '.'
+  - which python
+  - python -c 'import os, sys; print(os.path.basename(sys.executable))'
+  - python -m unittest discover -s cpy2py_unittests  -t '.'
