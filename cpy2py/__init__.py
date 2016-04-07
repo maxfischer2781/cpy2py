@@ -96,6 +96,8 @@ Note that loggers are meant for development and only address the internal
 state. Your application should not depend on this information. Unless
 :py:mod:`cpy2py` misbehaves (or you suspect it to), ignore its logging.
 
+.. end_long_description
+
 Instant awesome, just add water
 ===============================
 
