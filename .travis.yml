@@ -14,7 +14,6 @@ addons:
     packages:
     - pypy
 script:
-  - echo $TRAVIS_PYTHON_VERSION
-  - which python
+  - echo $TRAVIS_PYTHON_VERSION && which python && which pypy
   - python -c 'import os, sys; print(os.path.basename(sys.executable))'
   - for file in $(ls cpy2py_unittests/test*.py); do python -m unittest cpy2py_unittests.$(basename ${file%.py}); done
