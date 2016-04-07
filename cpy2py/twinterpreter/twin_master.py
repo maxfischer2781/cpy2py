@@ -15,11 +15,12 @@ import subprocess
 import os
 import errno
 import threading
+import base64
 
 from cpy2py.utility.compat import pickle
 import cpy2py.twinterpreter.kernel_state
 import cpy2py.twinterpreter.kernel
-import cpy2py.twinterpreter.bootstrap
+from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
 
@@ -127,8 +128,8 @@ class TwinMaster(object):
                     '--peer-id', cpy2py.twinterpreter.kernel_state.TWIN_ID,
                     '--twin-id', self.twinterpreter_id,
                     '--master-id', cpy2py.twinterpreter.kernel_state.MASTER_ID,
-                    '--server-ipyc', pickle.dumps(my_client_ipyc.connector),
-                    '--client-ipyc', pickle.dumps(my_server_ipyc.connector),
+                    '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
+                    '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
                 ]
             )
             self._kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(

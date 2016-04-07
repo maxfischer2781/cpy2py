@@ -13,15 +13,21 @@
 # - # limitations under the License.
 import argparse
 import sys
+import base64
 
 from cpy2py.utility.compat import pickle
 import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.kernel_state
 
 
+def dump_connector(connector):
+    """Dump an IPyC connection connector"""
+    return base64.b64encode(pickle.dumps(connector, 2))  # prot2 is supported by all supported versions
+
+
 def load_connector(connector_pkl):
     """Create an IPyC connection from a connector pickle"""
-    connector = pickle.loads(connector_pkl)
+    connector = pickle.loads(base64.b64decode(connector_pkl))
     return connector[0](*connector[1], **connector[2])
 
 
@@ -44,11 +50,11 @@ def bootstrap_kernel():
     )
     parser.add_argument(
         '--server-ipyc',
-        help="pickled server connection",
+        help="base 64 encoded pickled server connection",
     )
     parser.add_argument(
         '--client-ipyc',
-        help="pickled client connection",
+        help="base 64 encoded pickled client connection",
     )
     settings = parser.parse_args()
     cpy2py.twinterpreter.kernel_state.TWIN_ID = settings.twin_id
