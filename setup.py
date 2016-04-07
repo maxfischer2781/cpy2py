@@ -63,7 +63,9 @@ setup(
 
     # content
     packages=find_packages(exclude=('cpy2py_*', 'dev_tools')),
-
+    extras_require={
+        'example': ['matplotlib'],
+    },
     # unit tests
-    test_suite='cpy2py_unittests'
+    test_suite='cpy2py_unittests',
 )

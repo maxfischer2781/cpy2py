@@ -1,6 +1,7 @@
 """
 Compatibility for different python versions/interpeters
 """
+# pylint: disable=invalid-name,undefined-variable
 import sys
 
 PY3 = sys.version_info[0] == 3
