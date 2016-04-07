@@ -1,5 +1,6 @@
 # CPy2Py #
 [![Code Health](https://landscape.io/github/maxfischer2781/cpy2py/master/landscape.svg?style=flat)](https://landscape.io/github/maxfischer2781/cpy2py/master)
+[![Build Status](https://travis-ci.org/maxfischer2781/cpy2py.svg?branch=master)](https://travis-ci.org/maxfischer2781/cpy2py)
 [![Code Issues](https://www.quantifiedcode.com/api/v1/project/fa44a076922a4047a736e29bb0a206f4/badge.svg)](https://www.quantifiedcode.com/app/project/fa44a076922a4047a736e29bb0a206f4)
 
 ## About ##
