@@ -56,6 +56,11 @@ def bootstrap_kernel():
         '--client-ipyc',
         help="base 64 encoded pickled client connection",
     )
+    parser.add_argument(
+        '--ipyc-pkl-protocol',
+        help="pickle protocol to use for IPyC",
+        type=int,
+    )
     settings = parser.parse_args()
     cpy2py.twinterpreter.kernel_state.TWIN_ID = settings.twin_id
     cpy2py.twinterpreter.kernel_state.MASTER_ID = settings.master_id
@@ -65,6 +70,7 @@ def bootstrap_kernel():
         peer_id=settings.peer_id,
         server_ipyc=server_ipyc,
         client_ipyc=client_ipyc,
+        pickle_protocol=settings.ipyc_pkl_protocol,
     )
     sys.exit(kernel.run())
 

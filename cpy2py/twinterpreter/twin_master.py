@@ -76,6 +76,7 @@ class TwinMaster(object):
         self._process = None
         self._kernel = None
         self._server_thread = None
+        self._pkl_protocol = proc_tools.get_best_pickle_protocol(self.executable)
 
     @classmethod
     def _default_args(cls, executable, twinterpreter_id):
@@ -128,12 +129,14 @@ class TwinMaster(object):
                     '--master-id', cpy2py.twinterpreter.kernel_state.MASTER_ID,
                     '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
                     '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
+                    '--ipyc-pkl-protocol', str(self._pkl_protocol),
                 ]
             )
             self._kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
                 self.twinterpreter_id,
                 server_ipyc=my_server_ipyc,
                 client_ipyc=my_client_ipyc,
+                pickle_protocol=self._pkl_protocol,
             )
             self._server_thread = threading.Thread(target=self._kernel.run)
             self._server_thread.start()

@@ -13,6 +13,10 @@
 # - # limitations under the License.
 import os
 import errno
+import subprocess
+import ast
+
+from cpy2py.utility.compat import pickle
 
 
 def is_executable(path):
@@ -48,4 +52,18 @@ def get_executable_path(command):
     raise OSError(errno.ENOENT, 'No such file or directory')
 
 
+def get_highest_pickle_protocol(python_executable):
+    """
+    Get highest pickle protocol supported by an interpreter
 
+    :param python_executable: name or path an interpeter
+    :type python_executable: str
+    :return: pickle protocol number
+    """
+    version_str = subprocess.check_output([python_executable, '-c', 'import pickle;print(pickle.HIGHEST_PROTOCOL)'])
+    return ast.literal_eval(version_str.decode())
+
+
+def get_best_pickle_protocol(python_executable):
+    """Get highest pickle protocol for interfacing to an interpreter"""
+    return min(pickle.HIGHEST_PROTOCOL, get_highest_pickle_protocol(python_executable))
