@@ -9,6 +9,7 @@ python:
   - "pypy"
 os:
   - linux
-  - osx
+#  - osx
 script:
+  - echo $TRAVIS_PYTHON_VERSION
   - $TRAVIS_PYTHON_VERSION -m unittest discover -s cpy2py_unittests  -t '.'
