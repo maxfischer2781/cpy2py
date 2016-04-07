@@ -40,11 +40,11 @@ class DuplexFifoIPyC(object):
         """Open connections"""
         # open opposites first to avoid deadlock
         if self.is_master:
-            self._fifo_read = open(self._fifo_read_path, 'r', 0)
-            self._fifo_write = open(self._fifo_write_path, 'w', 0)
+            self._fifo_read = open(self._fifo_read_path, 'rb', 0)
+            self._fifo_write = open(self._fifo_write_path, 'wb', 0)
         else:
-            self._fifo_write = open(self._fifo_write_path, 'w', 0)
-            self._fifo_read = open(self._fifo_read_path, 'r', 0)
+            self._fifo_write = open(self._fifo_write_path, 'wb', 0)
+            self._fifo_read = open(self._fifo_read_path, 'rb', 0)
 
     def close(self):
         """Close connections"""
