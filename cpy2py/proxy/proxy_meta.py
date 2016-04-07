@@ -82,24 +82,22 @@ class TwinMeta(type):
     @classmethod
     def __new_proxy_class__(mcs, name, bases, class_dict):
         """Create the proxy twin"""
-        class_dict = class_dict.copy()
+        proxy_dict = class_dict.copy()
         # change methods to method proxies
-        for aname in class_dict.keys():
-            # TODO: figure out semantics when changing __twin_id__
-            # initialization should only ever happen on the real object
+        for aname in class_dict:
             if aname in ('__init__', '__new__'):
-                del class_dict[aname]
+                del proxy_dict[aname]
             # methods must be proxy'd
-            elif isinstance(class_dict[aname], types.FunctionType):
-                class_dict[aname] = ProxyMethod(class_dict[aname])
-            elif isinstance(class_dict[aname], (classmethod, staticmethod)):
-                class_dict[aname] = ProxyMethod(class_dict[aname].__func__)
+            elif isinstance(proxy_dict[aname], types.FunctionType):
+                proxy_dict[aname] = ProxyMethod(proxy_dict[aname])
+            elif isinstance(proxy_dict[aname], (classmethod, staticmethod)):
+                proxy_dict[aname] = ProxyMethod(proxy_dict[aname].__func__)
             # remove non-magic attributes so they don't shadow the real ones
             elif aname not in mcs.__proxy_inherits_attributes__:
-                del class_dict[aname]
+                del proxy_dict[aname]
         # convert bases to proxies as well
         bases = tuple(mcs.__get_proxy_class__(base) for base in bases)
-        return type.__new__(mcs, name, bases, class_dict)
+        return type.__new__(mcs, name, bases, proxy_dict)
 
     @classmethod
     def __get_proxy_class__(mcs, real_class):

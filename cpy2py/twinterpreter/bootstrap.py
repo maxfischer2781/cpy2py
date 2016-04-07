@@ -13,8 +13,8 @@
 # - # limitations under the License.
 import argparse
 import sys
-import cPickle as pickle
 
+from cpy2py.utility.compat import pickle
 import cpy2py.twinterpreter.kernel
 import cpy2py.twinterpreter.kernel_state
 

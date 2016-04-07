@@ -17,7 +17,8 @@ object in separate twinterpeters with each other.
 """
 import weakref
 import sys
-import cPickle as pickle
+
+from cpy2py.utility.compat import pickle
 
 #: instances of twin objects or proxies currently alive in this twinterpeter
 __active_instances__ = weakref.WeakValueDictionary()

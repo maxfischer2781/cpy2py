@@ -14,15 +14,13 @@
 """
 The kernel is the main thread of execution running inside a twinterpreter.
 """
-from __future__ import print_function
-
 import sys
 import os
 import time
 import logging
 import weakref
-import cPickle as pickle
 
+from cpy2py.utility.compat import pickle
 from cpy2py.twinterpreter import kernel_state
 
 from cpy2py.utility.exceptions import format_exception, CPy2PyException
