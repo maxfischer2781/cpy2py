@@ -139,6 +139,7 @@ class TwinMaster(object):
                 pickle_protocol=self._pkl_protocol,
             )
             self._server_thread = threading.Thread(target=self._kernel.run)
+            self._server_thread.daemon = True
             self._server_thread.start()
         return self.is_alive
 
