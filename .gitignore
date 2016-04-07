@@ -5,3 +5,8 @@
 cpy2py_sphinx/build
 cpy2py_sphinx/source/api
 cpy2py_sphinx/source/.*
+
+# setuptools
+build/
+cpy2py.egg-info/
+dist/
