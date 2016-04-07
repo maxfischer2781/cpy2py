@@ -47,7 +47,7 @@ class TestInheritance(unittest.TestCase):
     @staticmethod
     def _get_test_args():
         return [-2500, -100, -50, -1, 0, 1, 50, 100, 2500] + \
-               [int(random.random() * 200 - 100) for _ in xrange(5)]
+               [int(random.random() * 200 - 100) for _ in range(5)]
 
     def test_direct_inheritance(self):
         for arg in self._get_test_args():

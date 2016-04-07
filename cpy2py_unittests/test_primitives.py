@@ -22,7 +22,7 @@ class TestFunctionCall(unittest.TestCase):
 
     @staticmethod
     def _get_test_args():
-        return [(1, 1), (50, 100), (500, 250)] + [(random.random(), random.random()) for _ in xrange(5)]
+        return [(1, 1), (50, 100), (500, 250)] + [(random.random(), random.random()) for _ in range(5)]
 
     def test_args(self):
         for arga, argb in self._get_test_args():
