@@ -9,7 +9,7 @@ PY3 = sys.version_info[0] == 3
 # pickle
 if PY3:
     import pickle
-if PY2:
+else:
     import cPickle as pickle
 
 __all__ = ['pickle']
