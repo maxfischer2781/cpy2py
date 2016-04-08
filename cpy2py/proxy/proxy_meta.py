@@ -50,7 +50,7 @@ class TwinMeta(type):
         '__import_mod_name__'
     ]
 
-    def __new__(cls, name, bases, class_dict):
+    def __new__(mcs, name, bases, class_dict):
         """Create twin object and proxy"""
         # find out which interpeter scope is appropriate for us
         if class_dict.get('__twin_id__') is None:
@@ -67,20 +67,20 @@ class TwinMeta(type):
         # enable persistent dump/load without pickle
         class_dict['__import_mod_name__'] = (class_dict['__module__'], name)
         # make both real and proxy class available
-        real_class = cls.__new_real_class__(name, bases, class_dict)
-        proxy_class = cls.__get_proxy_class__(real_class=real_class)
-        cls.__register_classes__(real_class=real_class, proxy_class=proxy_class)
+        real_class = mcs.__new_real_class__(name, bases, class_dict)
+        proxy_class = mcs.__get_proxy_class__(real_class=real_class)
+        mcs.__register_classes__(real_class=real_class, proxy_class=proxy_class)
         # always return real_class, let its __new__ sort out the rest
         return real_class
 
     # helper methods
     @classmethod
-    def __new_real_class__(cls, name, bases, class_dict):
+    def __new_real_class__(mcs, name, bases, class_dict):
         """Create the real twin"""
-        return type.__new__(cls, name, bases, class_dict)
+        return type.__new__(mcs, name, bases, class_dict)
 
     @classmethod
-    def __new_proxy_class__(cls, name, bases, class_dict):
+    def __new_proxy_class__(mcs, name, bases, class_dict):
         """Create the proxy twin"""
         proxy_dict = class_dict.copy()
         # change methods to method proxies
@@ -93,26 +93,26 @@ class TwinMeta(type):
             elif isinstance(proxy_dict[aname], (classmethod, staticmethod)):
                 proxy_dict[aname] = ProxyMethod(proxy_dict[aname].__func__)
             # remove non-magic attributes so they don't shadow the real ones
-            elif aname not in cls.__proxy_inherits_attributes__:
+            elif aname not in mcs.__proxy_inherits_attributes__:
                 del proxy_dict[aname]
         # convert bases to proxies as well
-        bases = tuple(cls.__get_proxy_class__(base) for base in bases)
-        return type.__new__(cls, name, bases, proxy_dict)
+        bases = tuple(mcs.__get_proxy_class__(base) for base in bases)
+        return type.__new__(mcs, name, bases, proxy_dict)
 
     @classmethod
-    def __get_proxy_class__(cls, real_class):
+    def __get_proxy_class__(mcs, real_class):
         """Provide a proxy twin for a class"""
         try:
             # look for already created proxy
-            return getattr(real_class, "__proxy_class__", cls.__proxy_store__[real_class])
+            return getattr(real_class, "__proxy_class__", mcs.__proxy_store__[real_class])
         except KeyError:
             # construct new proxy and register it
-            proxy_class = cls.__new_proxy_class__(real_class.__name__, real_class.__bases__, real_class.__dict__)
-            cls.__register_classes__(real_class=real_class, proxy_class=proxy_class)
+            proxy_class = mcs.__new_proxy_class__(real_class.__name__, real_class.__bases__, real_class.__dict__)
+            mcs.__register_classes__(real_class=real_class, proxy_class=proxy_class)
             return proxy_class
 
     @classmethod
-    def __register_classes__(cls, real_class, proxy_class):
+    def __register_classes__(mcs, real_class, proxy_class):
         # TODO: decide which gets weakref'd - MF@20160401
         # proxy_class.__real_class__ as weakref, as real_class is global anyway?
         proxy_class.__real_class__ = real_class
@@ -120,4 +120,4 @@ class TwinMeta(type):
             real_class.__proxy_class__ = proxy_class
         except TypeError:
             # builtins
-            cls.__proxy_store__[real_class] = proxy_class
+            mcs.__proxy_store__[real_class] = proxy_class
