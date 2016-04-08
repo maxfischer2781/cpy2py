@@ -16,6 +16,7 @@ Compatibility for different python versions/interpeters
 """
 # pylint: disable=invalid-name,undefined-variable
 import sys
+import logging as _logging
 
 PY3 = sys.version_info[0] == 3
 
@@ -31,4 +32,19 @@ try:
 except NameError:
     rangex = range
 
-__all__ = ['pickle', 'rangex']
+# NullHandler
+try:
+    NullHandler = _logging.NullHandler
+except AttributeError:
+    class NullHandler(_logging.Handler):
+        """Noop Handler, backported from py2.7"""
+        def handle(self, record):
+            pass
+
+        def emit(self, record):
+            pass
+
+        def createLock(self):
+            self.lock = None
+
+__all__ = ['pickle', 'rangex', 'NullHandler']
