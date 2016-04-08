@@ -12,15 +12,20 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import os
+import sys
 from setuptools import setup, find_packages
 
 repo_base = os.path.abspath(os.path.dirname(__file__))
+
+# grab meta without import package
+sys.path.insert(0, os.path.join(repo_base, 'cpy2py'))
+import meta as cpy2py_meta
 
 # Get package intro
 long_description = []
 with open(os.path.join(repo_base, 'cpy2py', '__init__.py')) as package_main:
     skip_header = True
-    for line in (ln.strip() for ln in package_main):
+    for line in (ln.rstrip() for ln in package_main):
         if line == '"""':  # start of docstring
             skip_header = False
             continue
@@ -34,7 +39,7 @@ setup(
     name='cpy2py',
 
     # meta data
-    version='0.9.0',
+    version=cpy2py_meta.__version__,
 
     description='Framework for combining different python interpeters',
     long_description=long_description,
