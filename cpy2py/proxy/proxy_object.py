@@ -36,7 +36,8 @@ twinterpeter.
 """.strip()
 
 
-def __new__(cls, *args, **kwargs):
+def new_twin_object(cls, *args, **kwargs):
+    """`__new__` for :py:class:`~.TwinObject` and derivatives"""
     # if we are in the appropriate interpeter, proceed as normal
     if cpy2py.twinterpreter.kernel_state.is_twinterpreter(cls.__twin_id__):
         self = object.__new__(cls)
@@ -61,7 +62,7 @@ TwinObject = TwinMeta(
         '__instance_id__': None,  # to be set on __new__
         #: tuple for twin import, of the form (<module name>, <object name>)
         '__import_mod_name__': (None, None),  # to be set by metaclass
-        '__new__': __new__,
+        '__new__': new_twin_object,
         '__module__': __name__,
     }
 )

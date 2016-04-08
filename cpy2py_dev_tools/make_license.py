@@ -122,31 +122,6 @@ def get_format_data(source_file=None):
     :param source_file: Optional file for which to extract information
     :return:
     """
-    # repo url
-    try:
-        repo_url = subprocess.check_output(['git', 'config', 'remote.origin.url']).splitlines()[0]
-    except subprocess.CalledProcessError as err:
-        if err.returncode != 128 and err.returncode != 1:
-            raise
-        repo_url = ""
-    # modification dates
-    try:
-        file_change_dates = subprocess.check_output(
-            ['git', 'log', '--format=%ai'] + (['--follow', source_file] if source_file is not None else [])
-        ).splitlines()
-    except subprocess.CalledProcessError as err:
-        if err.returncode != 128:
-            raise
-        file_change_dates = []
-    if file_change_dates:
-        first_year = file_change_dates[-1].split('-')[0]
-        last_year = file_change_dates[0].split('-')[0]
-        if first_year == last_year:
-            dev_years = first_year
-        else:
-            dev_years = first_year + '-' + last_year
-    else:
-        dev_years = datetime.date.today().year
     # repo contributors
     contributors_list = []
     for contributor in get_contributors(source_file=source_file):
@@ -155,11 +130,11 @@ def get_format_data(source_file=None):
         contributors_list.append(contributor)
     return {
         "package_name": os.path.dirname(REPO_BASE),
-        "dev_years": dev_years,
+        "dev_years": get_dev_years(source_file),
         "primary_authors": ', '.join(PRIMARY_AUTHOR_LIST),
         "contributors": ', '.join(contributor.name for contributor in contributors_list),
         "contributor_listing": '\n'.join(contributor.contact for contributor in contributors_list),
-        "repo_url": repo_url,
+        "repo_url": get_repo_url(),
     }
 
 
@@ -392,6 +367,39 @@ def get_contributors(aliases=None, source_file=None):
         if contributor == total:
             continue
         yield contributor
+
+
+def get_repo_url():
+    """Get the url of the current repository"""
+    try:
+        repo_url = subprocess.check_output(['git', 'config', 'remote.origin.url']).splitlines()[0]
+    except subprocess.CalledProcessError as err:
+        if err.returncode != 128 and err.returncode != 1:
+            raise
+        repo_url = ""
+    return repo_url
+
+
+def get_dev_years(source_file=None):
+    """Get the years the repository or a file has been worked on"""
+    try:
+        file_change_dates = subprocess.check_output(
+            ['git', 'log', '--format=%ai'] + (['--follow', source_file] if source_file is not None else [])
+        ).splitlines()
+    except subprocess.CalledProcessError as err:
+        if err.returncode != 128:
+            raise
+        file_change_dates = []
+    if file_change_dates:
+        first_year = file_change_dates[-1].split('-')[0]
+        last_year = file_change_dates[0].split('-')[0]
+        if first_year == last_year:
+            dev_years = first_year
+        else:
+            dev_years = first_year + '-' + last_year
+    else:
+        dev_years = datetime.date.today().year
+    return dev_years
 
 
 def write_notice(notice_file):

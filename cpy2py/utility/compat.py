@@ -26,9 +26,9 @@ else:
     import cPickle as pickle
 
 # range/xrange
-if PY3:
-    rangex = range
-else:
+try:
     rangex = xrange
+except NameError:
+    rangex = range
 
 __all__ = ['pickle', 'rangex']

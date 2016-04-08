@@ -76,7 +76,7 @@ def write_version(version_file, new_version):
     with open(version_file, 'r') as in_file, open(version_file_tmp, 'w') as out_file:
         for line in in_file:
             if re.match(VERSION_STR_RE, line):
-                version_str, line_remainder = re.match(VERSION_STR_RE, line).groups()
+                line_remainder = re.match(VERSION_STR_RE, line).group(2)
                 line = '__version__ = "%s"%s\n' % (format_version(new_version), line_remainder)
             out_file.write(line)
     # rename when done writing
