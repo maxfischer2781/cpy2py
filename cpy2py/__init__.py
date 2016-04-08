@@ -106,6 +106,7 @@ These should be all the objects you'll ever need:
 import logging as _logging
 import os as _os
 
+from cpy2py.meta import __version__
 from cpy2py.proxy.proxy_object import TwinObject
 from cpy2py.twinterpreter.twin_master import TwinMaster
 from cpy2py.twinterpreter import kernel_state
