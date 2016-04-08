@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# - # Copyright 2015 Karlsruhe Institute of Technology
+# - # Copyright 2016 Max Fischer
 # - #
 # - # Licensed under the Apache License, Version 2.0 (the "License");
 # - # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import os
 import hashlib
 import urllib2
 
-from dev_tools.license_data import NOTICE_TEMPLATE, LICENSE_HEADER_TEMPLATE, PRIMARY_AUTHOR_LIST
+from cpy2py_dev_tools.license_data import NOTICE_TEMPLATE, LICENSE_HEADER_TEMPLATE, PRIMARY_AUTHOR_LIST
 
 # symbol sequence at the start of each license line, per file extension
 LICENSE_START_SYMBOLS = {
@@ -70,7 +70,7 @@ CLI.add_argument(
         not any(
             re.search(exclude_repo_dir_re, repo_dir)
             for exclude_repo_dir_re in
-            ['unittests', '^dev_tools$', '^[.]']
+            ['unittests', '^[.]']
         )
     ],
 )
