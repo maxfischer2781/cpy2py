@@ -25,7 +25,6 @@ import os
 import sys
 
 from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
-from cpy2py.twinterpreter import twin_master
 
 
 # current twin state
@@ -35,8 +34,6 @@ KERNELS = {}
 TWIN_ID = os.path.basename(sys.executable)
 #: id of the main interpeter
 MASTER_ID = TWIN_ID
-#: autostart twinterpreters if requested
-TWIN_AUTOSTART = False
 
 
 def is_twinterpreter(kernel_id):
@@ -58,7 +55,4 @@ def get_kernel(kernel_id):
     try:
         return KERNELS[kernel_id]
     except KeyError:
-        if TWIN_AUTOSTART:
-            twin_master.TwinMaster(kernel_id)
-            return KERNELS[kernel_id]
         raise TwinterpeterUnavailable(twin_id=kernel_id)

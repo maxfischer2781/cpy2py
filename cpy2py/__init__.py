@@ -103,12 +103,22 @@ Instant awesome, just add water
 
 These should be all the objects you'll ever need:
 """
+import logging as _logging
+import os as _os
+
 from cpy2py.meta import __version__
+from cpy2py.utility.compat import NullHandler
 from cpy2py.proxy.proxy_object import TwinObject
 from cpy2py.twinterpreter.twin_master import TwinMaster
 from cpy2py.twinterpreter import kernel_state
 
-from cpy2py.config import configure as _configure
-_configure()
+
+_base_logger = _logging.getLogger('__cpy2py__')
+_base_logger.propagate = False
+# debugging logger to stderr
+if _os.environ.get('CPY2PY_DEBUG'):
+    _base_logger.addHandler(_logging.StreamHandler())
+else:
+    _base_logger.addHandler(NullHandler())
 
 __all__ = ['TwinObject', 'TwinMaster', 'kernel_state', '__version__']
