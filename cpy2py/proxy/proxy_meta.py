@@ -91,7 +91,11 @@ class TwinMeta(type):
             elif isinstance(proxy_dict[aname], types.FunctionType):
                 proxy_dict[aname] = ProxyMethod(proxy_dict[aname])
             elif isinstance(proxy_dict[aname], (classmethod, staticmethod)):
-                proxy_dict[aname] = ProxyMethod(proxy_dict[aname].__func__)
+                try:
+                    real_func = proxy_dict[aname].__func__
+                except AttributeError:  # py2.6
+                    real_func = proxy_dict[aname].__get__(object)
+                proxy_dict[aname] = ProxyMethod(real_func)
             # remove non-magic attributes so they don't shadow the real ones
             elif aname not in mcs.__proxy_inherits_attributes__:
                 del proxy_dict[aname]
