@@ -15,7 +15,10 @@
 from __future__ import print_function
 import time
 import math
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 import argparse
 import sys
 import json
@@ -128,10 +131,9 @@ def store_results(master_result, twin_result, scale, func_name):
     if scale not in TIMING[func_name]:
         TIMING[func_name][scale] = {}
         for interpreter in ('master', 'twin'):
-            TIMING[func_name][scale][interpreter] = {
-                header: []
-                for header in TME_HEADER
-                }
+            TIMING[func_name][scale][interpreter] = {}
+            for header in TME_HEADER:
+                TIMING[func_name][scale][interpreter][header] = []
     tme_result = get_time(master_result)
     for idx, header in enumerate(TME_HEADER):
         TIMING[func_name][scale]['master'][header].append(tme_result[idx])
@@ -182,6 +184,9 @@ def main():
     # json
     dump_json()
 
+    if plt is None:
+        print("No MPL, exiting")
+        return
     # plotting
     _, axes = plt.subplots(
         nrows=len(TIMING) * 3,
