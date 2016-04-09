@@ -21,6 +21,12 @@ repo_base = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(repo_base, 'cpy2py'))
 import meta as cpy2py_meta
 
+install_requires = []
+try:
+    import argparse
+except ImportError:
+    install_requires.append('argparse')
+
 # Get package intro
 long_description = []
 with open(os.path.join(repo_base, 'cpy2py', '__init__.py')) as package_main:
@@ -70,6 +76,7 @@ setup(
 
     # content
     packages=find_packages(exclude=('cpy2py_*', 'dev_tools')),
+    install_requires=install_requires,
     extras_require={
         'example': ['matplotlib'],
     },
