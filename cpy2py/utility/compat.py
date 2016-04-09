@@ -17,6 +17,7 @@ Compatibility for different python versions/interpeters
 # pylint: disable=invalid-name,undefined-variable
 import sys
 import logging as _logging
+import subprocess as _subprocess
 
 PY3 = sys.version_info[0] == 3
 
@@ -44,7 +45,24 @@ except AttributeError:
         def emit(self, record):
             pass
 
-        def createLock(self):
+        def createLock(self):  # nopep8
             self.lock = None
 
-__all__ = ['pickle', 'rangex', 'NullHandler']
+try:
+    check_output = _subprocess.check_output
+except AttributeError:
+    def check_output(*popenargs, **kwargs):
+        """Run a subprocess and return its output, backported from py2.7"""
+        if 'stdout' in kwargs:
+            raise ValueError('stdout argument not allowed, it will be overridden.')
+        process = _subprocess.Popen(stdout=_subprocess.PIPE, *popenargs, **kwargs)
+        output, unused_err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            cmd = kwargs.get("args")
+            if cmd is None:
+                cmd = popenargs[0]
+            raise _subprocess.CalledProcessError(retcode, cmd)
+        return output
+
+__all__ = ['pickle', 'rangex', 'NullHandler', 'check_output']
