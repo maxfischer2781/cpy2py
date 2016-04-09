@@ -32,11 +32,11 @@ class TestObjectPrimitives(unittest.TestCase):
     def test_init(self):
         real_instance = RealObject()
         proxy_instance = PrimitiveObject.get_proxyproxy()
-        self.assertIsNotNone(real_instance)
-        self.assertIsNotNone(proxy_instance)
-        self.assertIsInstance(real_instance, RealObject)
-        self.assertNotIsInstance(proxy_instance, RealObject)
-        self.assertIsInstance(proxy_instance, cpy2py.proxy.proxy_proxy.ProxyProxy)
+        self.assertTrue(real_instance is not None)
+        self.assertTrue(proxy_instance is not None)
+        self.assertTrue(isinstance(real_instance, RealObject))
+        self.assertFalse(isinstance(proxy_instance, RealObject))
+        self.assertTrue(isinstance(proxy_instance, cpy2py.proxy.proxy_proxy.ProxyProxy))
 
     def test_class_attribute(self):
         real_instance = RealObject()
