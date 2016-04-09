@@ -15,4 +15,4 @@ addons:
 script:
   - echo $TRAVIS_PYTHON_VERSION && which python && which pypy
   - python -c 'import os, sys; print(os.path.basename(sys.executable))'
-  - python -m unittest discover -s cpy2py_unittests  -t '.'
+  - python setup.py test
