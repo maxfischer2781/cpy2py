@@ -13,10 +13,9 @@
 # - # limitations under the License.
 import os
 import errno
-import subprocess
 import ast
 
-from cpy2py.utility.compat import pickle
+from cpy2py.utility.compat import pickle, check_output
 
 
 def is_executable(path):
@@ -60,7 +59,7 @@ def get_highest_pickle_protocol(python_executable):
     :type python_executable: str
     :return: pickle protocol number
     """
-    version_str = subprocess.check_output([python_executable, '-c', 'import pickle;print(pickle.HIGHEST_PROTOCOL)'])
+    version_str = check_output([python_executable, '-c', 'import pickle;print(pickle.HIGHEST_PROTOCOL)'])
     return ast.literal_eval(version_str.decode())
 
 
