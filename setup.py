@@ -13,6 +13,7 @@
 # - # limitations under the License.
 import os
 import sys
+import codecs
 from setuptools import setup, find_packages
 
 repo_base = os.path.abspath(os.path.dirname(__file__))
@@ -27,19 +28,9 @@ try:
 except ImportError:
     install_requires.append('argparse')
 
-# Get package intro
-long_description = []
-with open(os.path.join(repo_base, 'cpy2py', '__init__.py')) as package_main:
-    skip_header = True
-    for line in (ln.rstrip() for ln in package_main):
-        if line == '"""':  # start of docstring
-            skip_header = False
-            continue
-        if "end_long_description" in line:
-            break
-        if not skip_header:
-            long_description.append(line)
-long_description = '\n'.join(long_description)
+# use readme for long descripion
+with codecs.open(os.path.join(repo_base, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='cpy2py',
