@@ -220,56 +220,40 @@ class SingleThreadKernel(object):
         func_obj, func_args, func_kwargs = directive_body
         return func_obj(*func_args, **func_kwargs)
 
-    def dispatch_method_call(self, instance_id, method_name, *method_args, **methods_kwargs):
+    def dispatch_method_call(self, instance, method_name, *method_args, **methods_kwargs):
         """Execute a method call and return the result"""
-        return self._dispatch_request(__E_CALL_METHOD__, instance_id, method_name, method_args, methods_kwargs)
+        return self._dispatch_request(__E_CALL_METHOD__, instance, method_name, method_args, methods_kwargs)
 
     def _directive_call_method(self, directive_body):
         """Directive for :py:meth:`dispatch_method_call`"""
-        inst_id, method_name, method_args, method_kwargs = directive_body
-        try:
-            instance = self._instances_alive_ref[inst_id]
-        except KeyError:
-            raise InstanceLookupError(instance_id=inst_id)
+        instance, method_name, method_args, method_kwargs = directive_body
         return getattr(instance, method_name)(*method_args, **method_kwargs)
 
-    def get_attribute(self, instance_id, attribute_name):
+    def get_attribute(self, instance, attribute_name):
         """Get an attribute of an instance"""
-        return self._dispatch_request(__E_GET_ATTRIBUTE__, instance_id, attribute_name)
+        return self._dispatch_request(__E_GET_ATTRIBUTE__, instance, attribute_name)
 
     def _directive_get_attribute(self, directive_body):
         """Directive for :py:meth:`get_attribute`"""
-        inst_id, attribute_name = directive_body
-        try:
-            instance = self._instances_alive_ref[inst_id]
-        except KeyError:
-            raise InstanceLookupError(instance_id=inst_id)
+        instance, attribute_name = directive_body
         return getattr(instance, attribute_name)
 
-    def set_attribute(self, instance_id, attribute_name, new_value):
+    def set_attribute(self, instance, attribute_name, new_value):
         """Set an attribute of an instance"""
-        return self._dispatch_request(__E_SET_ATTRIBUTE__, instance_id, attribute_name, new_value)
+        return self._dispatch_request(__E_SET_ATTRIBUTE__, instance, attribute_name, new_value)
 
     def _directive_set_attribute(self, directive_body):
         """Directive for :py:meth:`set_attribute`"""
-        inst_id, attribute_name, new_value = directive_body
-        try:
-            instance = self._instances_alive_ref[inst_id]
-        except KeyError:
-            raise InstanceLookupError(instance_id=inst_id)
+        instance, attribute_name, new_value = directive_body
         return setattr(instance, attribute_name, new_value)
 
-    def del_attribute(self, instance_id, attribute_name):
+    def del_attribute(self, instance, attribute_name):
         """Delete an attribute of an instance"""
-        return self._dispatch_request(__E_DEL_ATTRIBUTE__, instance_id, attribute_name)
+        return self._dispatch_request(__E_DEL_ATTRIBUTE__, instance, attribute_name)
 
     def _directive_del_attribute(self, directive_body):
         """Directive for :py:meth:`del_attribute`"""
-        inst_id, attribute_name = directive_body
-        try:
-            instance = self._instances_alive_ref[inst_id]
-        except KeyError:
-            raise InstanceLookupError(instance_id=inst_id)
+        instance, attribute_name = directive_body
         return delattr(instance, attribute_name)
 
     def instantiate_class(self, cls, *cls_args, **cls_kwargs):

@@ -37,9 +37,8 @@ class ProxyMethod(object):
     def __get__(self, instance, owner):
         assert instance is not None, "%s %s must be accessed from an instance, not class" % (
             self.__class__.__name__, self.__name__)
-        __instance_id__ = instance.__instance_id__
         return lambda *args, **kwargs: instance.__kernel__.dispatch_method_call(
-            __instance_id__,
+            instance,
             self.__name__,
             *args,
             **kwargs
@@ -85,13 +84,13 @@ class TwinProxy(object):
         return '<%s.%s twin proxy object at %x>' % (self.__import_mod_name__[0], self.__import_mod_name__[1], id(self))
 
     def __getattr__(self, name):
-        return self.__kernel__.get_attribute(self.__instance_id__, name)
+        return self.__kernel__.get_attribute(self, name)
 
     def __setattr__(self, name, value):
-        return self.__kernel__.set_attribute(self.__instance_id__, name, value)
+        return self.__kernel__.set_attribute(self, name, value)
 
     def __delattr__(self, name):
-        return self.__kernel__.del_attribute(self.__instance_id__, name)
+        return self.__kernel__.del_attribute(self, name)
 
     def __del__(self):
         if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
