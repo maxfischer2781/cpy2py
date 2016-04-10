@@ -105,7 +105,7 @@ def make_commit(version_file, new_version, message=None):
     ])
     # make commit
     subprocess.check_call([
-        'git', 'commit', '-m', message
+        'git', 'commit', '-m', commit_message
     ])
 
 
