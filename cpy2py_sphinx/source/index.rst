@@ -21,7 +21,7 @@ Welcome to CPy2Py's documentation!
 
 The following overview pages are available:
 
-* The :py:mod:`~cpy2py` introduction
+* :doc:`docs/README`
 * :doc:`docs/objects`
 
 
