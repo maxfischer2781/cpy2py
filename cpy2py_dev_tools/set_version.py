@@ -15,6 +15,7 @@ from __future__ import print_function
 import argparse
 import os
 import re
+import subprocess
 
 REPO_BASE = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
@@ -32,6 +33,11 @@ CLI.add_argument(
     "--version-file",
     help="The file containing the __version__ field.",
     default=os.path.join(REPO_BASE, 'cpy2py', 'meta.py'),
+)
+CLI.add_argument(
+    "-t",
+    "--tag-message",
+    help="Message for an annotated git tag. Required for minor and major version bumps.",
 )
 
 VERSION_STR_RE = r'^__version__\s*=\s*"([0-9]+(?:[.][0-9]+(?:[.][0-9]+)))"(.*)$'
@@ -64,9 +70,9 @@ def bump_version(version, target):
     if target == 'patch':
         return version[:2] + [version[2] + 1]
     elif target == 'minor':
-        return version[:1] + [version[1] + 1] + version[-1:]
+        return [version[0], (version[1] + 1), 0]
     elif target == 'major':
-        return [version[0] + 1] + version[-2:]
+        return [(version[0] + 1), 0, 0]
     raise ValueError
 
 
@@ -86,6 +92,33 @@ def write_version(version_file, new_version):
     os.rename(version_file_tmp, version_file)
 
 
+def make_commit(version_file, new_version, message=None):
+    commit_message = 'v' + format_version(new_version)
+    if message:
+        commit_message += '\n' + message
+    # make sure version is committed
+    subprocess.check_call([
+        'git', 'reset', 'HEAD'
+    ])
+    subprocess.check_call([
+        'git', 'add', version_file
+    ])
+    # make commit
+    subprocess.check_call([
+        'git', 'commit', '-m', message
+    ])
+
+
+def make_version_tag_commit(new_version, message):
+    tag = 'v' + format_version(new_version)
+    subprocess.check_call([
+        'git', 'tag',
+        '-a', tag,
+        '-m', message
+    ])
+    return tag
+
+
 def main():
     """Run the main update loop"""
     options = CLI.parse_args()
@@ -93,9 +126,17 @@ def main():
     print('current version:', format_version(version))
     if options.target is None:
         return
+    if options.target in ('major', 'manior') and not options.tag_message:
+        raise ValueError("Must specify a tag message when bumping minor or major version.")
     new_version = bump_version(version, options.target)
-    print('updated version:', format_version(new_version))
     write_version(options.version_file, new_version)
+    print('updated version:', format_version(new_version))
+    make_commit(options.version_file, new_version, options.tag_message)
+    print('commited version')
+    if options.tag_message:
+        tag = make_version_tag_commit(new_version, options.tag_message)
+        print('added tag:', tag)
+
 
 if __name__ == "__main__":
     main()
