@@ -18,7 +18,6 @@ import sys
 import os
 import time
 import logging
-import weakref
 
 from cpy2py.utility.compat import pickle
 from cpy2py.twinterpreter import kernel_state
