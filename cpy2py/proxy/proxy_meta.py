@@ -65,6 +65,8 @@ class TwinMeta(type):
             class_dict['__twin_id__'] = twin_id
         # enable persistent dump/load without pickle
         class_dict['__import_mod_name__'] = (class_dict['__module__'], name)
+        # consistently supply bases as real base classes
+        bases = tuple(mcs.__get_real_class(base) for base in bases)
         # make both real and proxy class available
         real_class = mcs.__new_real_class__(name, bases, class_dict)
         proxy_class = mcs.__get_proxy_class__(real_class=real_class)
@@ -104,7 +106,7 @@ class TwinMeta(type):
 
     @classmethod
     def __get_proxy_class__(mcs, real_class):
-        """Provide a proxy twin for a class"""
+        """Provide a proxy twin for a real class"""
         try:
             # look for already created proxy
             return getattr(real_class, "__proxy_class__", mcs.__proxy_store__[real_class])
@@ -113,6 +115,15 @@ class TwinMeta(type):
             proxy_class = mcs.__new_proxy_class__(real_class.__name__, real_class.__bases__, real_class.__dict__)
             mcs.register_proxy(real_class=real_class, proxy_class=proxy_class)
             return proxy_class
+
+    @classmethod
+    def __get_real_class(mcs, unknown_class):
+        """Provide a real class for a proxy *or* real class"""
+        try:
+            return unknown_class.__real_class__
+        except AttributeError:
+            # it's a real class!
+            return unknown_class
 
     @classmethod
     def register_proxy(mcs, real_class, proxy_class):
