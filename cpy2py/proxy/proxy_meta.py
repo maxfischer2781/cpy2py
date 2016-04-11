@@ -38,7 +38,6 @@ class TwinMeta(type):
     """
     #: proxy classes for regular classes; real class => proxy class
     __proxy_store__ = {
-        object: TwinProxy
     }
     #: attributes which are stored on the proxy as well
     __proxy_inherits_attributes__ = [
@@ -69,7 +68,7 @@ class TwinMeta(type):
         # make both real and proxy class available
         real_class = mcs.__new_real_class__(name, bases, class_dict)
         proxy_class = mcs.__get_proxy_class__(real_class=real_class)
-        mcs.__register_classes__(real_class=real_class, proxy_class=proxy_class)
+        mcs.register_proxy(real_class=real_class, proxy_class=proxy_class)
         # always return real_class, let its __new__ sort out the rest
         return real_class
 
@@ -112,11 +111,19 @@ class TwinMeta(type):
         except KeyError:
             # construct new proxy and register it
             proxy_class = mcs.__new_proxy_class__(real_class.__name__, real_class.__bases__, real_class.__dict__)
-            mcs.__register_classes__(real_class=real_class, proxy_class=proxy_class)
+            mcs.register_proxy(real_class=real_class, proxy_class=proxy_class)
             return proxy_class
 
     @classmethod
-    def __register_classes__(mcs, real_class, proxy_class):
+    def register_proxy(mcs, real_class, proxy_class):
+        """
+        Register a class acting as :py:class:`~.TwinProxy` for a real class
+
+        :param real_class: a normal, non-cpy2py class
+        :type real_class: object or :py:class:`~.TwinObject`
+        :param proxy_class: a proxy class similar to :py:class:`~.TwinProxy`
+        :type proxy_class: object or :py:class:`~.TwinProxy`
+        """
         # TODO: decide which gets weakref'd - MF@20160401
         # proxy_class.__real_class__ as weakref, as real_class is global anyway?
         proxy_class.__real_class__ = real_class
@@ -125,3 +132,5 @@ class TwinMeta(type):
         except TypeError:
             # builtins
             mcs.__proxy_store__[real_class] = proxy_class
+
+TwinMeta.register_proxy(object, TwinProxy)
