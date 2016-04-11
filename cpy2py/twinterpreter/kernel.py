@@ -65,13 +65,6 @@ class StopTwinterpreter(CPy2PyException):
         self.exit_code = exit_code
 
 
-class InstanceLookupError(CPy2PyException):
-    """Lookup of an instance failed"""
-    def __init__(self, instance_id):
-        CPy2PyException.__init__(self, 'Lookup of instance %s failed' % instance_id)
-        self.instance_id = instance_id
-
-
 class SingleThreadKernel(object):
     """
     Default kernel for handling requests between interpeters
@@ -110,10 +103,8 @@ class SingleThreadKernel(object):
         self._server_send, self._server_recv = self._connect_ipyc(server_ipyc, pickle_protocol)
         self._client_send, self._client_recv = self._connect_ipyc(client_ipyc, pickle_protocol)
         self._request_id = 0
-        # instance_id => [ref_count, instance]
+        # instance => ref_count
         self._instances_keepalive = {}
-        # instance_id => instance
-        self._instances_alive_ref = weakref.WeakValueDictionary()
         self._directive_method = {
             __E_SHUTDOWN__: self._directive_shutdown,
             __E_CALL_FUNC__: self._directive_call_func,
@@ -264,49 +255,33 @@ class SingleThreadKernel(object):
         """Directive for :py:meth:`instantiate_class`"""
         cls, cls_args, cls_kwargs = directive_body
         instance = cls(*cls_args, **cls_kwargs)
-        if instance.__instance_id__ in self._instances_alive_ref:
-            raise InstanceLookupError(instance_id=instance.__instance_id__)
-        self._instances_keepalive[instance.__instance_id__] = [1, instance]
-        self._instances_alive_ref[instance.__instance_id__] = instance
+        self._instances_keepalive[instance] = 1
         return instance.__instance_id__
 
-    def increment_instance_ref(self, instance_id):
+    def increment_instance_ref(self, instance):
         """Increment the reference count to an instance by one"""
-        return self._dispatch_request(__E_REF_INCR__, instance_id)
+        return self._dispatch_request(__E_REF_INCR__, instance)
 
     def _directive_ref_incr(self, directive_body):
         """Directive for :py:meth:`increment_instance_ref`"""
-        inst_id = directive_body[0]
+        instance = directive_body[0]
         try:
-            self._instances_keepalive[inst_id][0] += 1
+            self._instances_keepalive[instance] += 1
         except KeyError:
-            try:
-                instance = self._instances_alive_ref[inst_id]
-            except KeyError:
-                # fetch objects not created by kernel, but directly
-                try:
-                    instance = proxy_tracker.__active_instances__[kernel_state.TWIN_ID, inst_id]
-                except KeyError:
-                    raise InstanceLookupError(instance_id=inst_id)
-                else:
-                    self._instances_alive_ref[inst_id] = instance
-            self._instances_keepalive[inst_id] = [1, instance]
-        return self._instances_keepalive[inst_id][0]
+            self._instances_keepalive[instance] = 1
+        return self._instances_keepalive[instance]
 
-    def decrement_instance_ref(self, instance_id):
+    def decrement_instance_ref(self, instance):
         """Decrement the reference count to an instance by one"""
-        return self._dispatch_request(__E_REF_DECR__, instance_id)
+        return self._dispatch_request(__E_REF_DECR__, instance)
 
     def _directive_ref_decr(self, directive_body):
         """Directive for :py:meth:`decrement_instance_ref`"""
-        inst_id = directive_body[0]
-        try:
-            self._instances_keepalive[inst_id][0] -= 1
-            response = self._instances_keepalive[inst_id][0]
-            if self._instances_keepalive[inst_id][0] <= 0:
-                del self._instances_keepalive[inst_id]
-        except KeyError:
-            raise InstanceLookupError(instance_id=inst_id)
+        instance = directive_body[0]
+        self._instances_keepalive[instance] -= 1
+        response = self._instances_keepalive[instance]
+        if self._instances_keepalive[instance] <= 0:
+            del self._instances_keepalive[instance]
         return response
 
     def stop(self):
