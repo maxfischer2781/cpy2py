@@ -12,8 +12,6 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import time
-import cpy2py.twinterpreter.kernel
-import cpy2py.twinterpreter.kernel_state
 
 from cpy2py.proxy import proxy_tracker
 from cpy2py.proxy.proxy_meta import TwinMeta
@@ -38,15 +36,11 @@ twinterpeter.
 
 def new_twin_object(cls, *args, **kwargs):
     """`__new__` for :py:class:`~.TwinObject` and derivatives"""
-    # if we are in the appropriate interpeter, proceed as normal
-    if cpy2py.twinterpreter.kernel_state.is_twinterpreter(cls.__twin_id__):
-        self = object.__new__(cls)
-        object.__setattr__(self, '__instance_id__', instance_id(self))
-        # register our reference for lookup
-        proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
-        return self
-    # return a proxy to the real object otherwise
-    return cls.__proxy_class__(*args, **kwargs)
+    self = object.__new__(cls)
+    object.__setattr__(self, '__instance_id__', instance_id(self))
+    # register our reference for lookup
+    proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
+    return self
 
 # calling TwinMeta to set metaclass explicitly works for py2 and py3
 TwinObject = TwinMeta(

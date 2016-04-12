@@ -57,27 +57,28 @@ class TwinProxy(object):
     __twin_id__ = None  # to be set by metaclass
     __real_class__ = None  # to be set by metaclass
     __instance_id__ = None  # to be set on __new__
-    __kernel__ = None  # to be set on __new__
+    __kernel__ = None  # to be set by metaclass
     __import_mod_name__ = (None, None)  # to be set by metaclass
 
     def __new__(cls, *args, **kwargs):
         self = object.__new__(cls)
         __kernel__ = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
+        object.__setattr__(self, '__kernel__', __kernel__)
         try:
             # native instance exists, but no proxy yet
-            __instance_id__ = kwargs['__instance_id__']
+            __instance_id__ = kwargs.pop('__instance_id__')
         except KeyError:
             # native instance has not been created yet
             __instance_id__ = __kernel__.instantiate_class(
-                self.__real_class__,  # only real class can be pickled
+                self.__class__,  # only real class can be pickled
                 *args, **kwargs
             )
+            object.__setattr__(self, '__instance_id__', __instance_id__)
         else:
-            __kernel__.increment_instance_ref(__instance_id__)
+            object.__setattr__(self, '__instance_id__', __instance_id__)
+            __kernel__.increment_instance_ref(self)
         # store for later use without requiring explicit lookup/converter calls
-        object.__setattr__(self, '__kernel__', __kernel__)
-        object.__setattr__(self, '__instance_id__', __instance_id__)
-        proxy_tracker.__active_instances__[self.__twin_id__, id(self)] = self
+        proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
         return self
 
     def __repr__(self):

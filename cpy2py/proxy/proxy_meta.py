@@ -71,8 +71,11 @@ class TwinMeta(type):
         real_class = mcs.__new_real_class__(name, bases, class_dict)
         proxy_class = mcs.__get_proxy_class__(real_class=real_class)
         mcs.register_proxy(real_class=real_class, proxy_class=proxy_class)
-        # always return real_class, let its __new__ sort out the rest
-        return real_class
+        # return the appropriate object or proxy for the current twin
+        if cpy2py.twinterpreter.kernel_state.is_twinterpreter(class_dict['__twin_id__']):
+            return real_class
+        else:
+            return proxy_class
 
     # helper methods
     @classmethod
