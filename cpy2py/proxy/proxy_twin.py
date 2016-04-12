@@ -35,10 +35,14 @@ class ProxyMethod(object):
         assert hasattr(self, '__name__'), "%s must be able to extract method __name__" % self.__class__.__name__
 
     def __get__(self, instance, owner):
-        assert instance is not None, "%s %s must be accessed from an instance, not class" % (
-            self.__class__.__name__, self.__name__)
-        return lambda *args, **kwargs: instance.__kernel__.dispatch_method_call(
-            instance,
+        if instance is None:
+            subject = owner
+            kernel = cpy2py.twinterpreter.kernel_state.get_kernel(subject.__twin_id__)
+        else:
+            subject = instance
+            kernel = subject.__kernel__
+        return lambda *args, **kwargs: kernel.dispatch_method_call(
+            subject,
             self.__name__,
             *args,
             **kwargs
