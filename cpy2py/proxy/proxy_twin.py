@@ -96,7 +96,7 @@ class TwinProxy(object):
         if hasattr(self, '__instance_id__') and hasattr(self, '__twin_id__'):
             # decrement the twin reference count
             try:
-                self.__kernel__.decrement_instance_ref(self.__instance_id__)
+                self.__kernel__.decrement_instance_ref(self)
             except TwinterpeterUnavailable:
                 # twin already dead, doesn't care for use anymore
                 return
