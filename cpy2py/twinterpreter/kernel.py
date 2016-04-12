@@ -146,9 +146,10 @@ class SingleThreadKernel(object):
         # cPickle may raise EOFError by itself
         except (ipyc_exceptions.IPyCTerminated, EOFError):
             exit_code = 0
-        except Exception:  # pylint: disable=broad-except
+        except Exception as err:  # pylint: disable=broad-except
             self._logger.critical('TWIN KERNEL INTERNAL EXCEPTION')
             format_exception(self._logger, 3)
+            self._server_send((request_id, __E_EXCEPTION__, err))
         finally:
             self._logger.critical('TWIN KERNEL SHUTDOWN: %s => %d', kernel_state.TWIN_ID, exit_code)
             for ipyc in self._ipyc:
