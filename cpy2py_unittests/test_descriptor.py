@@ -33,7 +33,7 @@ class TestDescriptor(unittest.TestCase):
 
     def tearDown(self):
         self.twinterpreter.stop()
-        time.sleep(0.2)
+        time.sleep(0.1)
 
     def test_get(self):
         instance = DescriptorObject(2)
