@@ -36,16 +36,17 @@ class TwinMaster(object):
     :param twinterpreter_id: identifier for the twin
     :type twinterpreter_id: str
 
-    :note: For simplicity, it is sufficient to supply either `executable` or
-           `twinterpreter_id`. In this case, `twinterpreter_id` is assumed to be
-           the basename of `executable`.
+    For simplicity, it is sufficient to supply either `executable` or
+    `twinterpreter_id`. In this case, `twinterpreter_id` is assumed to be the
+    basename of `executable`.
 
-    :note: The attributes :py:attr:`executable` and :py:attr:`twinterpreter_id`
-           act as defaults if *neither* `executable` nor `twinterpreter_id` is
-           provided at instantiation. They are meant for subclassing to provide
-           default Masters.
+    If given or derived, `executable` must point to a python interpreter. This
+    includes interpreters created by `virtualenv <https://virtualenv.pypa.io/>`_.
+    The interpreter can be specified as an absolute path, a relative path or a
+    name to lookup in :envvar:`PATH`.
 
-    :note: Only one kernel may use a specific `twinterpreter_id` at any time.
+    Only one kernel may use a specific `twinterpreter_id` at any time. However,
+    you can create the same :py:class:`~.TwinMaster` multiple times.
     """
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
