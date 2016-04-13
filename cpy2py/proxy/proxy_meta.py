@@ -12,8 +12,7 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import types
-import cpy2py.twinterpreter.kernel
-import cpy2py.twinterpreter.kernel_state
+from cpy2py.twinterpreter import kernel_state
 
 from cpy2py.proxy.proxy_twin import TwinProxy, ProxyMethod
 
@@ -62,7 +61,7 @@ class TwinMeta(type):
                 else:
                     break
             else:
-                twin_id = cpy2py.twinterpreter.kernel_state.MASTER_ID
+                twin_id = kernel_state.MASTER_ID
             class_dict['__twin_id__'] = twin_id
         # enable persistent dump/load without pickle
         class_dict['__import_mod_name__'] = (class_dict['__module__'], name)
@@ -73,7 +72,7 @@ class TwinMeta(type):
         proxy_class = mcs.__get_proxy_class__(real_class=real_class)
         mcs.register_proxy(real_class=real_class, proxy_class=proxy_class)
         # return the appropriate object or proxy for the current twin
-        if cpy2py.twinterpreter.kernel_state.is_twinterpreter(class_dict['__twin_id__']):
+        if kernel_state.is_twinterpreter(class_dict['__twin_id__']):
             return real_class
         else:
             return proxy_class
