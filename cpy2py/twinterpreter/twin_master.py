@@ -76,8 +76,8 @@ class TwinMaster(object):
         self._server_thread = None
         self._pkl_protocol = proc_tools.get_best_pickle_protocol(self.executable)
 
-    @classmethod
-    def _default_args(cls, executable, twinterpreter_id):
+    @staticmethod
+    def _default_args(executable, twinterpreter_id):
         """Resolve incomplete argument list using defaults"""
         assert executable is not None or twinterpreter_id is not None,\
             "Either 'executable' or 'twinterpreter_id' is required"
@@ -144,8 +144,7 @@ class TwinMaster(object):
 
     def stop(self):
         """Terminate the twinterpreter"""
-        if self._kernel_client is not None:
-            if self._kernel_client.stop():
+        if self._kernel_client is not None and self._kernel_client.stop():
                 self._kernel_server = None
                 self._process = None
         return self.is_alive
