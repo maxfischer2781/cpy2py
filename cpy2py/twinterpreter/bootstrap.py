@@ -80,7 +80,9 @@ def bootstrap_kernel():
         ipyc=client_ipyc,
         pickle_protocol=settings.ipyc_pkl_protocol,
     )
-    sys.exit(kernel_server.run())
+    exit_code = kernel_server.run()
+    kernel_client.stop()
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

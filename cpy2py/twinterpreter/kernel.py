@@ -227,14 +227,14 @@ class SingleThreadKernelServer(object):
 
 
 def _connect_ipyc(ipyc, pickle_protocol):
-        """Connect pickle/unpickle trackers to a duplyed IPyC"""
-        pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
-        pickler.persistent_id = proxy_tracker.persistent_twin_id
-        send = pickler.dump
-        unpickler = pickle.Unpickler(ipyc.reader)
-        unpickler.persistent_load = proxy_tracker.persistent_twin_load
-        recv = unpickler.load
-        return send, recv
+    """Connect pickle/unpickle trackers to a duplyed IPyC"""
+    pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
+    pickler.persistent_id = proxy_tracker.persistent_twin_id
+    send = pickler.dump
+    unpickler = pickle.Unpickler(ipyc.reader)
+    unpickler.persistent_load = proxy_tracker.persistent_twin_load
+    recv = unpickler.load
+    return send, recv
 
 
 class SingleThreadKernelClient(object):

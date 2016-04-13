@@ -8,3 +8,4 @@ ignore-paths:
 pep8:
   disable:
     - N804
+    - N805
