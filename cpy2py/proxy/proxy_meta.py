@@ -36,7 +36,10 @@ class TwinMeta(type):
               derive a new metaclass from this one.
     """
     #: proxy classes for regular classes; real class => proxy class
-    __proxy_store__ = {
+    __proxy_class_store__ = {
+    }
+    #: real classes for proxy classes; proxy class => real class
+    __real_class_store__ = {
     }
     #: attributes which are stored on the proxy as well
     __proxy_inherits_attributes__ = [
@@ -114,7 +117,7 @@ class TwinMeta(type):
         """Provide a proxy twin for a real class"""
         try:
             # look for already created proxy
-            return mcs.__proxy_store__[real_class]
+            return mcs.__proxy_class_store__[real_class]
         except KeyError:
             # construct new proxy and register it
             proxy_class = mcs.__new_proxy_class__(real_class.__name__, real_class.__bases__, real_class.__dict__)
@@ -125,8 +128,8 @@ class TwinMeta(type):
     def __get_real_class(mcs, unknown_class):
         """Provide a real class for a proxy *or* real class"""
         try:
-            return unknown_class.__real_class__
-        except AttributeError:
+            return mcs.__real_class_store__[unknown_class]
+        except KeyError:
             # it's a real class!
             return unknown_class
 
@@ -140,10 +143,9 @@ class TwinMeta(type):
         :param proxy_class: a proxy class similar to :py:class:`~.TwinProxy`
         :type proxy_class: object or :py:class:`~.TwinProxy`
         """
-        # TODO: decide which gets weakref'd - MF@20160401
-        # proxy_class.__real_class__ as weakref, as real_class is global anyway?
-        type.__setattr__(proxy_class, '__real_class__', real_class)
-        mcs.__proxy_store__[real_class] = proxy_class
+        # TODO: weakref any of these? - MF@20160401
+        mcs.__real_class_store__[proxy_class] = real_class
+        mcs.__proxy_class_store__[real_class] = proxy_class
 
 
 TwinMeta.register_proxy(object, TwinProxy)
