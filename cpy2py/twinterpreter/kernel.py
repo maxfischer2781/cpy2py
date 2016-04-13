@@ -215,7 +215,8 @@ class SingleThreadKernel(object):
         """Execute a method call and return the result"""
         return self._dispatch_request(__E_CALL_METHOD__, instance, method_name, method_args, methods_kwargs)
 
-    def _directive_call_method(self, directive_body):
+    @staticmethod
+    def _directive_call_method(directive_body):
         """Directive for :py:meth:`dispatch_method_call`"""
         instance, method_name, method_args, method_kwargs = directive_body
         return getattr(instance, method_name)(*method_args, **method_kwargs)
@@ -224,7 +225,8 @@ class SingleThreadKernel(object):
         """Get an attribute of an instance"""
         return self._dispatch_request(__E_GET_ATTRIBUTE__, instance, attribute_name)
 
-    def _directive_get_attribute(self, directive_body):
+    @staticmethod
+    def _directive_get_attribute(directive_body):
         """Directive for :py:meth:`get_attribute`"""
         instance, attribute_name = directive_body
         return getattr(instance, attribute_name)
@@ -233,7 +235,8 @@ class SingleThreadKernel(object):
         """Set an attribute of an instance"""
         return self._dispatch_request(__E_SET_ATTRIBUTE__, instance, attribute_name, new_value)
 
-    def _directive_set_attribute(self, directive_body):
+    @staticmethod
+    def _directive_set_attribute(directive_body):
         """Directive for :py:meth:`set_attribute`"""
         instance, attribute_name, new_value = directive_body
         return setattr(instance, attribute_name, new_value)
@@ -242,7 +245,8 @@ class SingleThreadKernel(object):
         """Delete an attribute of an instance"""
         return self._dispatch_request(__E_DEL_ATTRIBUTE__, instance, attribute_name)
 
-    def _directive_del_attribute(self, directive_body):
+    @staticmethod
+    def _directive_del_attribute(directive_body):
         """Directive for :py:meth:`del_attribute`"""
         instance, attribute_name = directive_body
         return delattr(instance, attribute_name)

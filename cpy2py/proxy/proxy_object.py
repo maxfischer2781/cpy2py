@@ -34,7 +34,7 @@ twinterpeter.
 """.strip()
 
 
-def new_twin_object(cls, *args, **kwargs):
+def new_twin_object(cls, *args, **kwargs):  # pylint: disable=unused-argument
     """`__new__` for :py:class:`~.TwinObject` and derivatives"""
     self = object.__new__(cls)
     object.__setattr__(self, '__instance_id__', instance_id(self))
