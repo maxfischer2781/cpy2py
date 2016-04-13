@@ -41,12 +41,13 @@ class TwinMeta(type):
     }
     #: attributes which are stored on the proxy as well
     __proxy_inherits_attributes__ = [
-        '__twin_id__',
-        '__class__',
-        '__module__',
-        '__doc__',
-        '__metaclass__',
-        '__import_mod_name__'
+        '__twin_id__',  # which twinterpreter is the native one
+        '__class__',  # meta-data
+        '__module__',  # same
+        '__doc__',  # same
+        '__metaclass__',  # internal
+        '__import_mod_name__',  # non-pickle loading
+        '__is_twin_proxy__',  # shortcut whether object is native or not
     ]
 
     def __new__(mcs, name, bases, class_dict):
@@ -81,12 +82,14 @@ class TwinMeta(type):
     @classmethod
     def __new_real_class__(mcs, name, bases, class_dict):
         """Create the real twin"""
+        class_dict['__is_twin_proxy__'] = False
         return type.__new__(mcs, name, bases, class_dict)
 
     @classmethod
     def __new_proxy_class__(mcs, name, bases, class_dict):
         """Create the proxy twin"""
         proxy_dict = class_dict.copy()
+        proxy_dict['__is_twin_proxy__'] = True
         # change methods to method proxies
         for aname in class_dict:
             if aname in ('__init__', '__new__'):
