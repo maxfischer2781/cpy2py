@@ -50,8 +50,6 @@ TwinObject = TwinMeta(
         '__doc__': DOCS,
         #: id of interpeter where real instances exist
         '__twin_id__': None,  # to be set by metaclass or manually
-        #: class of proxy for real class instances
-        '__proxy_class__': TwinProxy,  # to be set by metaclass
         #: id of the object in the twinterpreter
         '__instance_id__': None,  # to be set on __new__
         #: tuple for twin import, of the form (<module name>, <object name>)

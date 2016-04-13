@@ -114,7 +114,7 @@ class TwinMeta(type):
         """Provide a proxy twin for a real class"""
         try:
             # look for already created proxy
-            return getattr(real_class, "__proxy_class__", mcs.__proxy_store__[real_class])
+            return mcs.__proxy_store__[real_class]
         except KeyError:
             # construct new proxy and register it
             proxy_class = mcs.__new_proxy_class__(real_class.__name__, real_class.__bases__, real_class.__dict__)
@@ -142,11 +142,8 @@ class TwinMeta(type):
         """
         # TODO: decide which gets weakref'd - MF@20160401
         # proxy_class.__real_class__ as weakref, as real_class is global anyway?
-        proxy_class.__real_class__ = real_class
-        try:
-            real_class.__proxy_class__ = proxy_class
-        except TypeError:
-            # builtins
-            mcs.__proxy_store__[real_class] = proxy_class
+        type.__setattr__(proxy_class, '__real_class__', real_class)
+        mcs.__proxy_store__[real_class] = proxy_class
+
 
 TwinMeta.register_proxy(object, TwinProxy)
