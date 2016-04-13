@@ -11,6 +11,7 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
+from __future__ import print_function
 import types
 from cpy2py.twinterpreter import kernel_state
 
@@ -146,6 +147,28 @@ class TwinMeta(type):
         # TODO: weakref any of these? - MF@20160401
         mcs.__real_class_store__[proxy_class] = real_class
         mcs.__proxy_class_store__[real_class] = proxy_class
+
+    # class attributes
+    def __getattr__(cls, name):
+        if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
+            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            return kernel.get_attribute(cls, name)
+        else:
+            type.__getattribute__(cls, name)
+
+    def __setattr__(cls, name, value):
+        if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
+            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            return kernel.set_attribute(cls, name, value)
+        else:
+            type.__setattr__(cls, name, value)
+
+    def __delattr__(cls, name):
+        if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
+            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            return kernel.del_attribute(cls, name)
+        else:
+            type.__setattr__(cls, name)
 
 
 TwinMeta.register_proxy(object, TwinProxy)
