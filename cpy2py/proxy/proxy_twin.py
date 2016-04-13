@@ -63,6 +63,7 @@ class TwinProxy(object):
     __instance_id__ = None  # to be set on __new__
     __kernel__ = None  # to be set by metaclass
     __import_mod_name__ = (None, None)  # to be set by metaclass
+    __is_twin_proxy__ = True,  # recreated by metaclass
 
     def __new__(cls, *args, **kwargs):
         self = object.__new__(cls)
