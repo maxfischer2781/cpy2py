@@ -24,13 +24,15 @@ def instance_id(instance):
 
 
 DOCS = """
-Objects for instances accessible from twinterpreters
+Baseclass for objects accessible from twinterpreters
 
 To define which twinterpeter the class is native to, set the class attribute
-`__twin_id__`. It must be a :py:class:`str` identifying the native
+``__twin_id__``. It must be a :py:class:`str` identifying the native
 twinterpeter.
 
-:note: This class can be used in place of :py:class:`object` as a base class.
+:note: This class mainly serves to set the metaclass :py:class:`~.TwinMeta`.
+       It does so in a way compatible with both python 2.X and 3.X. See the
+       note on the metaclass for details.
 """.strip()
 
 

@@ -53,7 +53,7 @@ class TwinProxy(object):
     """
     Proxy for instances existing in another twinterpreter
 
-    :see: Real object :py:class:`~.TwinObject` for magic parameters.
+    :see: Real object :py:class:`~cpy2py.proxy.proxy_object.TwinObject` for magic attributes.
 
     :warning: This class should never be instantiated or subclassed manually. It
               will be subclassed automatically by :py:class:`~.TwinMeta`.

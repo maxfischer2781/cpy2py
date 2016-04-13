@@ -18,7 +18,7 @@ Any connection between twinterpreters is handled by two kernels. Each
 consists of client and server side residing in the different interpreters.
 
 The kernels assume that they have been setup properly. Use
-:py:class:`~.TwinMaster` start kernel pairs.
+:py:class:`~cpy2py.twinterpreter.twin_master.TwinMaster` start kernel pairs.
 """
 import sys
 import os

@@ -27,14 +27,14 @@ class TwinMeta(type):
     provided with all class members transformed to appropriate calls to the
     twinterpeter master.
 
-    Using this metaclass allows setting `__twin_id__` in a class definition.
+    Using this metaclass allows setting ``__twin_id__`` in a class definition.
     This specifies which interpeter the class natively resides in. The default
     is always the main interpeter.
 
-    :warning: This metaclass should never be assigned manually. Classes should
-              inherit from :py:class:`~.TwinObject`, which sets the metaclass
-              automaticaly. You only ever need to set the metaclass if you
-              derive a new metaclass from this one.
+    :warning: When running code in both python 2.X and 3.X, the syntax for
+              assigning metaclasses is not consistent. To circumvent this, classes
+              may inherit from :py:class:`~cpy2py.proxy.proxy_object.TwinObject`,
+              which sets the metaclass in a version independent way.
     """
     #: proxy classes for regular classes; real class => proxy class
     __proxy_class_store__ = {
@@ -140,7 +140,7 @@ class TwinMeta(type):
         Register a class acting as :py:class:`~.TwinProxy` for a real class
 
         :param real_class: a normal, non-cpy2py class
-        :type real_class: object or :py:class:`~.TwinObject`
+        :type real_class: object or :py:class:`~cpy2py.proxy.proxy_object.TwinObject`
         :param proxy_class: a proxy class similar to :py:class:`~.TwinProxy`
         :type proxy_class: object or :py:class:`~.TwinProxy`
         """

@@ -35,8 +35,9 @@ def bootstrap_kernel():
     """
     Deploy a kernel to make this interpreter a twinterpreter
 
-    :see: This script is invoked by :py:class:`~.TwinMaster` to
-          launch a twinterpreter.
+    :see: This script is invoked by
+          :py:class:`~cpy2py.twinterpreter.twin_master.TwinMaster`
+          to launch a twinterpreter.
     """
     parser = argparse.ArgumentParser("Python Twinterpreter Kernel")
     parser.add_argument(

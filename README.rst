@@ -46,7 +46,8 @@ twinterpreter and being represented by proxies in any other interpeter.
 Using twins, you can seamlessly split your application across multiple
 twins.
 
-You create twins by inheriting from :py:class:`~.TwinObject` instead of
+You create twins by inheriting from
+:py:class:`~cpy2py.proxy.proxy_object.TwinObject` instead of
 :py:class:`object` and setting a ``__twin_id__``. That's it.
 
 .. code:: python
@@ -64,7 +65,8 @@ You create twins by inheriting from :py:class:`~.TwinObject` instead of
         def callme(self, who, what="buy milk"):
             return some_clib.c_fcn_cll_cplx_xmpl(who, what)
 
-If you don't set ``__twin_id__`` on a child of :py:class:`~.TwinObject`,
+If you don't set ``__twin_id__`` on a child of
+:py:class:`~cpy2py.proxy.proxy_object.TwinObject`,
 the class will always be native to the main interpreter. Handy for all
 the stuff that's needed everywhere but really doesn't belong anywhere.
 
