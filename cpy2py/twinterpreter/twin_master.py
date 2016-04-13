@@ -74,7 +74,8 @@ class TwinMaster(object):
         self._init = True
         self.executable, self.twinterpreter_id = self._default_args(executable, twinterpreter_id)
         self._process = None
-        self._kernel = None
+        self._kernel_server = None
+        self._kernel_client = None
         self._server_thread = None
         self._pkl_protocol = proc_tools.get_best_pickle_protocol(self.executable)
 
@@ -106,7 +107,7 @@ class TwinMaster(object):
                     raise
                 # no such process anymore, cleanup
                 self._process = None
-                self._kernel = None
+                self._kernel_server = None
                 return False
             else:
                 return True
@@ -132,22 +133,26 @@ class TwinMaster(object):
                     '--ipyc-pkl-protocol', str(self._pkl_protocol),
                 ]
             )
-            self._kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
+            self._kernel_client = cpy2py.twinterpreter.kernel.SingleThreadKernelClient(
                 self.twinterpreter_id,
-                server_ipyc=my_server_ipyc,
-                client_ipyc=my_client_ipyc,
+                ipyc=my_client_ipyc,
                 pickle_protocol=self._pkl_protocol,
             )
-            self._server_thread = threading.Thread(target=self._kernel.run)
+            self._kernel_server = cpy2py.twinterpreter.kernel.SingleThreadKernelServer(
+                self.twinterpreter_id,
+                ipyc=my_server_ipyc,
+                pickle_protocol=self._pkl_protocol,
+            )
+            self._server_thread = threading.Thread(target=self._kernel_server.run)
             self._server_thread.daemon = True
             self._server_thread.start()
         return self.is_alive
 
     def stop(self):
         """Terminate the twinterpreter"""
-        if self._kernel is not None:
-            if self._kernel.stop():
-                self._kernel = None
+        if self._kernel_client is not None:
+            if self._kernel_client.stop():
+                self._kernel_server = None
                 self._process = None
         return self.is_alive
 
@@ -161,5 +166,5 @@ class TwinMaster(object):
         :param call_kwargs: keyword arguments to `call`
         :returns: result of `call(*call_args, **call_kwargs)`
         """
-        assert self._kernel is not None
-        return self._kernel.dispatch_call(call, *call_args, **call_kwargs)
+        assert self._kernel_client is not None
+        return self._kernel_client.dispatch_call(call, *call_args, **call_kwargs)

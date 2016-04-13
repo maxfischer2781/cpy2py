@@ -13,6 +13,12 @@
 # - # limitations under the License.
 """
 The kernel is the main thread of execution running inside a twinterpreter.
+
+Any connection between twinterpreters is handled by two kernels. Each
+consists of client and server side residing in the different interpreters.
+
+The kernels assume that they have been setup properly. Use
+:py:class:`~.TwinMaster` start kernel pairs.
 """
 import sys
 import os
@@ -64,46 +70,31 @@ class StopTwinterpreter(CPy2PyException):
         self.exit_code = exit_code
 
 
-class SingleThreadKernel(object):
+class SingleThreadKernelServer(object):
     """
-    Default kernel for handling requests between interpeters
-
-    Any connection between twinterpreters is handled by two kernels, one in each
-    twinterpreter. In each twinterpreter, the local kernel provides a client
-    interface for dispatching calls. At the same time, it acts as a server that
-    handles requests from its peer.
-
-    The kernels assume that they have been setup properly. Use
-    :py:class:`~TwinMaster` start kernel peers.
+    Default kernel server for sending requests to other interpreter
 
     :param peer_id: id of the kernel/twinterpreter this kernel is peered with
     :type peer_id: str
-    :param server_ipyc: :py:mod:`~IPyC` for incoming requests
-    :type server_ipyc: :py:class:`~DuplexFifoIPyC`
-    :param client_ipyc: :py:mod:`~IPyC` for outgoing requests
-    :type client_ipyc: :py:class:`~DuplexFifoIPyC`
+    :param ipyc: :py:mod:`~IPyC` for incoming requests
+    :type ipyc: :py:class:`~DuplexFifoIPyC`
+    :param pickle_protocol: protocol number for :py:mod:`pickle`
+    :type pickle_protocol: int
     """
     def __new__(cls, peer_id, *args, **kwargs):  # pylint: disable=unused-argument
-        assert peer_id not in kernel_state.KERNELS, 'Twinterpreters must have unique IDs'
-        kernel_state.KERNELS[peer_id] = object.__new__(cls)
-        return kernel_state.KERNELS[peer_id]
+        assert peer_id not in kernel_state.KERNEL_SERVERS, 'Twinterpreters must have unique IDs'
+        kernel_state.KERNEL_SERVERS[peer_id] = object.__new__(cls)
+        return kernel_state.KERNEL_SERVERS[peer_id]
 
-    def __init__(self, peer_id, server_ipyc, client_ipyc, pickle_protocol=2):
+    def __init__(self, peer_id, ipyc, pickle_protocol=2):
         self._logger = logging.getLogger('__cpy2py__.%s' % kernel_state.TWIN_ID)
         self.peer_id = peer_id
-        self._ipyc = (server_ipyc, client_ipyc)
-        if kernel_state.is_twinterpreter(kernel_state.MASTER_ID):
-            server_ipyc.open()
-            client_ipyc.open()
-        else:
-            client_ipyc.open()
-            server_ipyc.open()
-        # communication
-        self._server_send, self._server_recv = self._connect_ipyc(server_ipyc, pickle_protocol)
-        self._client_send, self._client_recv = self._connect_ipyc(client_ipyc, pickle_protocol)
-        self._request_id = 0
+        self._ipyc = ipyc
+        self._ipyc.open()
+        self._server_send, self._server_recv = _connect_ipyc(ipyc, pickle_protocol)
         # instance => ref_count
         self._instances_keepalive = {}
+        # directive lookup for methods
         self._directive_method = {
             __E_SHUTDOWN__: self._directive_shutdown,
             __E_CALL_FUNC__: self._directive_call_func,
@@ -115,17 +106,6 @@ class SingleThreadKernel(object):
             __E_REF_INCR__: self._directive_ref_incr,
             __E_REF_DECR__: self._directive_ref_decr,
         }
-
-    @staticmethod
-    def _connect_ipyc(ipyc, pickle_protocol):
-        """Connect to an IPyC duplex"""
-        pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
-        pickler.persistent_id = proxy_tracker.persistent_twin_id
-        send = pickler.dump
-        unpickler = pickle.Unpickler(ipyc.reader)
-        unpickler.persistent_load = proxy_tracker.persistent_twin_load
-        recv = unpickler.load
-        return send, recv
 
     def run(self):
         """
@@ -152,9 +132,8 @@ class SingleThreadKernel(object):
             self._server_send((request_id, __E_EXCEPTION__, err))
         finally:
             self._logger.critical('TWIN KERNEL SHUTDOWN: %s => %d', kernel_state.TWIN_ID, exit_code)
-            for ipyc in self._ipyc:
-                ipyc.close()
-            del kernel_state.KERNELS[self.peer_id]
+            self._ipyc.close()
+            del kernel_state.KERNEL_SERVERS[self.peer_id]
         return exit_code
 
     def _serve_request(self, request_id, directive):
@@ -182,6 +161,107 @@ class SingleThreadKernel(object):
         else:
             self._server_send((request_id, __E_SUCCESS__, response))
 
+    @staticmethod
+    def _directive_call_func(directive_body):
+        """Directive for :py:meth:`dispatch_call`"""
+        func_obj, func_args, func_kwargs = directive_body
+        return func_obj(*func_args, **func_kwargs)
+
+    @staticmethod
+    def _directive_call_method(directive_body):
+        """Directive for :py:meth:`dispatch_method_call`"""
+        instance, method_name, method_args, method_kwargs = directive_body
+        return getattr(instance, method_name)(*method_args, **method_kwargs)
+
+    @staticmethod
+    def _directive_get_attribute(directive_body):
+        """Directive for :py:meth:`get_attribute`"""
+        instance, attribute_name = directive_body
+        return getattr(instance, attribute_name)
+
+    @staticmethod
+    def _directive_set_attribute(directive_body):
+        """Directive for :py:meth:`set_attribute`"""
+        instance, attribute_name, new_value = directive_body
+        return setattr(instance, attribute_name, new_value)
+
+    @staticmethod
+    def _directive_del_attribute(directive_body):
+        """Directive for :py:meth:`del_attribute`"""
+        instance, attribute_name = directive_body
+        return delattr(instance, attribute_name)
+
+    def _directive_instantiate(self, directive_body):
+        """Directive for :py:meth:`instantiate_class`"""
+        cls, cls_args, cls_kwargs = directive_body
+        instance = cls(*cls_args, **cls_kwargs)
+        self._instances_keepalive[instance] = 1
+        return instance.__instance_id__
+
+    def _directive_ref_incr(self, directive_body):
+        """Directive for :py:meth:`increment_instance_ref`"""
+        instance = directive_body[0]
+        try:
+            self._instances_keepalive[instance] += 1
+        except KeyError:
+            self._instances_keepalive[instance] = 1
+        return self._instances_keepalive[instance]
+
+    def _directive_ref_decr(self, directive_body):
+        """Directive for :py:meth:`decrement_instance_ref`"""
+        instance = directive_body[0]
+        self._instances_keepalive[instance] -= 1
+        response = self._instances_keepalive[instance]
+        if self._instances_keepalive[instance] <= 0:
+            del self._instances_keepalive[instance]
+        return response
+
+    @staticmethod
+    def _directive_shutdown(directive_body):
+        """Directive for :py:meth:`stop`"""
+        message = directive_body[0]
+        raise StopTwinterpreter(message=message, exit_code=0)
+
+    def __repr__(self):
+        return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())
+
+
+def _connect_ipyc(ipyc, pickle_protocol):
+        """Connect pickle/unpickle trackers to a duplyed IPyC"""
+        pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
+        pickler.persistent_id = proxy_tracker.persistent_twin_id
+        send = pickler.dump
+        unpickler = pickle.Unpickler(ipyc.reader)
+        unpickler.persistent_load = proxy_tracker.persistent_twin_load
+        recv = unpickler.load
+        return send, recv
+
+
+class SingleThreadKernelClient(object):
+    """
+    Default kernel client for sending requests to other interpreter
+
+    :param peer_id: id of the kernel/twinterpreter this kernel is peered with
+    :type peer_id: str
+    :param ipyc: :py:mod:`~IPyC` for outgoing requests
+    :type ipyc: :py:class:`~DuplexFifoIPyC`
+    :param pickle_protocol: protocol number for :py:mod:`pickle`
+    :type pickle_protocol: int
+    """
+    def __new__(cls, peer_id, *args, **kwargs):  # pylint: disable=unused-argument
+        assert peer_id not in kernel_state.KERNEL_CLIENTS, 'Twinterpreters must have unique IDs'
+        kernel_state.KERNEL_CLIENTS[peer_id] = object.__new__(cls)
+        return kernel_state.KERNEL_CLIENTS[peer_id]
+
+    def __init__(self, peer_id, ipyc, pickle_protocol=2):
+        self._logger = logging.getLogger('__cpy2py__.%s' % kernel_state.TWIN_ID)
+        self.peer_id = peer_id
+        # communication
+        self._ipyc = ipyc
+        self._ipyc.open()
+        self._client_send, self._client_recv = _connect_ipyc(ipyc, pickle_protocol)
+        self._request_id = 0
+
     # dispatching: execute actions in other interpeter
     def _dispatch_request(self, request_type, *args):
         """Forward a request to peer and return result"""
@@ -205,100 +285,41 @@ class SingleThreadKernel(object):
         """Execute a function call and return the result"""
         return self._dispatch_request(__E_CALL_FUNC__, call, call_args, call_kwargs)
 
-    @staticmethod
-    def _directive_call_func(directive_body):
-        """Directive for :py:meth:`dispatch_call`"""
-        func_obj, func_args, func_kwargs = directive_body
-        return func_obj(*func_args, **func_kwargs)
-
     def dispatch_method_call(self, instance, method_name, *method_args, **methods_kwargs):
         """Execute a method call and return the result"""
         return self._dispatch_request(__E_CALL_METHOD__, instance, method_name, method_args, methods_kwargs)
-
-    @staticmethod
-    def _directive_call_method(directive_body):
-        """Directive for :py:meth:`dispatch_method_call`"""
-        instance, method_name, method_args, method_kwargs = directive_body
-        return getattr(instance, method_name)(*method_args, **method_kwargs)
 
     def get_attribute(self, instance, attribute_name):
         """Get an attribute of an instance"""
         return self._dispatch_request(__E_GET_ATTRIBUTE__, instance, attribute_name)
 
-    @staticmethod
-    def _directive_get_attribute(directive_body):
-        """Directive for :py:meth:`get_attribute`"""
-        instance, attribute_name = directive_body
-        return getattr(instance, attribute_name)
-
     def set_attribute(self, instance, attribute_name, new_value):
         """Set an attribute of an instance"""
         return self._dispatch_request(__E_SET_ATTRIBUTE__, instance, attribute_name, new_value)
-
-    @staticmethod
-    def _directive_set_attribute(directive_body):
-        """Directive for :py:meth:`set_attribute`"""
-        instance, attribute_name, new_value = directive_body
-        return setattr(instance, attribute_name, new_value)
 
     def del_attribute(self, instance, attribute_name):
         """Delete an attribute of an instance"""
         return self._dispatch_request(__E_DEL_ATTRIBUTE__, instance, attribute_name)
 
-    @staticmethod
-    def _directive_del_attribute(directive_body):
-        """Directive for :py:meth:`del_attribute`"""
-        instance, attribute_name = directive_body
-        return delattr(instance, attribute_name)
-
     def instantiate_class(self, cls, *cls_args, **cls_kwargs):
         """Instantiate a class, increment its reference count, and return its id"""
         return self._dispatch_request(__E_INSTANTIATE__, cls, cls_args, cls_kwargs)
-
-    def _directive_instantiate(self, directive_body):
-        """Directive for :py:meth:`instantiate_class`"""
-        cls, cls_args, cls_kwargs = directive_body
-        instance = cls(*cls_args, **cls_kwargs)
-        self._instances_keepalive[instance] = 1
-        return instance.__instance_id__
 
     def increment_instance_ref(self, instance):
         """Increment the reference count to an instance by one"""
         return self._dispatch_request(__E_REF_INCR__, instance)
 
-    def _directive_ref_incr(self, directive_body):
-        """Directive for :py:meth:`increment_instance_ref`"""
-        instance = directive_body[0]
-        try:
-            self._instances_keepalive[instance] += 1
-        except KeyError:
-            self._instances_keepalive[instance] = 1
-        return self._instances_keepalive[instance]
-
     def decrement_instance_ref(self, instance):
         """Decrement the reference count to an instance by one"""
         return self._dispatch_request(__E_REF_DECR__, instance)
 
-    def _directive_ref_decr(self, directive_body):
-        """Directive for :py:meth:`decrement_instance_ref`"""
-        instance = directive_body[0]
-        self._instances_keepalive[instance] -= 1
-        response = self._instances_keepalive[instance]
-        if self._instances_keepalive[instance] <= 0:
-            del self._instances_keepalive[instance]
-        return response
-
     def stop(self):
         """Shutdown the peer's server"""
         if self._dispatch_request(__E_SHUTDOWN__, 'stop'):
+            self._ipyc.close()
+            del kernel_state.KERNEL_CLIENTS[self.peer_id]
             return True
         return False
-
-    @staticmethod
-    def _directive_shutdown(directive_body):
-        """Directive for :py:meth:`stop`"""
-        message = directive_body[0]
-        raise StopTwinterpreter(message=message, exit_code=0)
 
     def __repr__(self):
         return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())

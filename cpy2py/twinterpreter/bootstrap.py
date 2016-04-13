@@ -34,6 +34,9 @@ def load_connector(connector_pkl):
 def bootstrap_kernel():
     """
     Deploy a kernel to make this interpreter a twinterpreter
+
+    :see: This script is invoked by :py:class:`~.TwinMaster` to
+          launch a twinterpreter.
     """
     parser = argparse.ArgumentParser("Python Twinterpreter Kernel")
     parser.add_argument(
@@ -66,13 +69,18 @@ def bootstrap_kernel():
     cpy2py.twinterpreter.kernel_state.MASTER_ID = settings.master_id
     server_ipyc = load_connector(settings.server_ipyc)
     client_ipyc = load_connector(settings.client_ipyc)
-    kernel = cpy2py.twinterpreter.kernel.SingleThreadKernel(
+    # start in opposite order as TwinMaster to avoid deadlocks
+    kernel_server = cpy2py.twinterpreter.kernel.SingleThreadKernelServer(
         peer_id=settings.peer_id,
-        server_ipyc=server_ipyc,
-        client_ipyc=client_ipyc,
+        ipyc=server_ipyc,
         pickle_protocol=settings.ipyc_pkl_protocol,
     )
-    sys.exit(kernel.run())
+    kernel_client = cpy2py.twinterpreter.kernel.SingleThreadKernelClient(
+        peer_id=settings.peer_id,
+        ipyc=client_ipyc,
+        pickle_protocol=settings.ipyc_pkl_protocol,
+    )
+    sys.exit(kernel_server.run())
 
 
 if __name__ == "__main__":

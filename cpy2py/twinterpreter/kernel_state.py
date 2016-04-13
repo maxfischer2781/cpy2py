@@ -28,8 +28,10 @@ from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
 
 
 # current twin state
-#: the kernel(s) running in this interpeter
-KERNELS = {}
+#: the kernel client(s) running in this interpeter
+KERNEL_CLIENTS = {}
+#: the kernel servers(s) running in this interpeter
+KERNEL_SERVERS = {}
 #: id of this interpreter/process
 TWIN_ID = os.path.basename(sys.executable)
 #: id of the main interpeter
@@ -43,7 +45,7 @@ def is_twinterpreter(kernel_id):
 
 def get_kernel(kernel_id):
     """
-    Get this interpreter's interface to a specific kernel
+    Get this interpreter's client to a specific kernel
 
     :param kernel_id: id of the desired kernel
     :type kernel_id: str, TWIN_MASTER or TWIN_ONLY_SLAVE
@@ -53,6 +55,6 @@ def get_kernel(kernel_id):
     """
     assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
     try:
-        return KERNELS[kernel_id]
+        return KERNEL_CLIENTS[kernel_id]
     except KeyError:
         raise TwinterpeterUnavailable(twin_id=kernel_id)
