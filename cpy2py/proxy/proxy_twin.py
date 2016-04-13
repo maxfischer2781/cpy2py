@@ -59,7 +59,6 @@ class TwinProxy(object):
               will be subclassed automatically by :py:class:`~.TwinMeta`.
     """
     __twin_id__ = None  # to be set by metaclass
-    __real_class__ = None  # to be set by metaclass
     __instance_id__ = None  # to be set on __new__
     __kernel__ = None  # to be set by metaclass
     __import_mod_name__ = (None, None)  # to be set by metaclass
