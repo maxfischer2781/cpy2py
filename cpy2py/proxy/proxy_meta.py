@@ -43,7 +43,7 @@ class TwinMeta(type):
     __real_class_store__ = {
     }
     #: attributes which are stored on the proxy as well
-    __proxy_inherits_attributes__ = [
+    __proxy_inherits_attributes__ = {
         '__twin_id__',  # which twinterpreter is the native one
         '__class__',  # meta-data
         '__module__',  # same
@@ -51,7 +51,7 @@ class TwinMeta(type):
         '__metaclass__',  # internal
         '__import_mod_name__',  # non-pickle loading
         '__is_twin_proxy__',  # shortcut whether object is native or not
-    ]
+    }
 
     def __new__(mcs, name, bases, class_dict):
         """Create twin object and proxy"""
