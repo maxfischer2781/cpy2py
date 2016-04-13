@@ -47,10 +47,6 @@ class TwinMaster(object):
 
     :note: Only one kernel may use a specific `twinterpreter_id` at any time.
     """
-    #: default executable
-    executable = None
-    #: default twin id
-    twinterpreter_id = None
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
 
@@ -82,15 +78,12 @@ class TwinMaster(object):
     @classmethod
     def _default_args(cls, executable, twinterpreter_id):
         """Resolve incomplete argument list using defaults"""
-        if executable is not None and twinterpreter_id is not None:
-            return executable, twinterpreter_id
-        elif executable is None and twinterpreter_id is None:
-            return cls.executable, cls.twinterpreter_id
-        elif executable is not None:
+        assert executable is not None or twinterpreter_id is not None,\
+            "Either 'executable' or 'twinterpreter_id' is required"
+        if twinterpreter_id is None:
             twinterpreter_id = os.path.basename(executable)
             executable = proc_tools.get_executable_path(executable)
-        else:
-            twinterpreter_id = twinterpreter_id
+        elif executable is None:
             executable = proc_tools.get_executable_path(twinterpreter_id)
         return executable, twinterpreter_id
 
