@@ -24,13 +24,12 @@ from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
 
 
-class TwinMaster(object):
+class TwinDef(object):
     """
-    Manager for a twinterpeter
+    Definition of a twinterpreter
 
-    Spawns, configures and supervises the actual interpeter process. In order to
-    use any twinterpeters, a corresponding TwinMaster must be created and its
-    :py:meth:`TwinMaster.start` method called.
+    This is a helper to resolve defaults. It also automatically extracts
+    configuration parameters.
 
     :param executable: path or name of the interpeter executable
     :type executable: str
@@ -49,45 +48,84 @@ class TwinMaster(object):
     Only one kernel may use a specific `twinterpreter_id` at any time. However,
     you can create the same :py:class:`~.TwinMaster` multiple times.
     """
-    #: singleton store `twinterpreter_id` => `master`
-    _master_store = {}
-
-    def __new__(cls, executable=None, twinterpreter_id=None):
-        executable, twinterpreter_id = cls._default_args(executable, twinterpreter_id)
-        try:
-            master = cls._master_store[twinterpreter_id]
-        except KeyError:
-            self = object.__new__(cls)
-            cls._master_store[twinterpreter_id] = self
-            return self
-        else:
-            assert master.executable == executable,\
-                "interpreter with same twinterpreter_id but different executable already exists"
-            return master
-
     def __init__(self, executable=None, twinterpreter_id=None):
-        # avoid duplicate initialisation of singleton
-        if hasattr(self, '_init'):
-            return
-        self._init = True
-        self.executable, self.twinterpreter_id = self._default_args(executable, twinterpreter_id)
-        self._process = None
-        self._kernel_server = None
-        self._kernel_client = None
-        self._server_thread = None
-        self._pkl_protocol = proc_tools.get_best_pickle_protocol(self.executable)
-
-    @staticmethod
-    def _default_args(executable, twinterpreter_id):
-        """Resolve incomplete argument list using defaults"""
+        if isinstance(executable, self.__class__):
+            executable, twinterpreter_id = executable.executable, executable.twinterpreter_id
+        if isinstance(twinterpreter_id, self.__class__):
+            executable, twinterpreter_id = twinterpreter_id.executable, twinterpreter_id.twinterpreter_id
+        # Resolve incomplete argument list using defaults
         assert executable is not None or twinterpreter_id is not None,\
-            "Either 'executable' or 'twinterpreter_id' is required"
+            "At least one of 'executable' and 'twinterpreter_id' must be set"
         if twinterpreter_id is None:
             twinterpreter_id = os.path.basename(executable)
             executable = proc_tools.get_executable_path(executable)
         elif executable is None:
             executable = proc_tools.get_executable_path(twinterpreter_id)
-        return executable, twinterpreter_id
+        self.executable = executable
+        self.twinterpreter_id = twinterpreter_id
+        self.pickle_protocol = proc_tools.get_best_pickle_protocol(self.executable)
+
+    def __eq__(self, other):
+        try:
+            return self.executable == other.executable and self.twinterpreter_id == other.twinterpreter_id
+        except AttributeError:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return not self == other
+
+
+class TwinMaster(object):
+    """
+    Manager for a twinterpeter
+
+    Spawns, configures and supervises the actual interpeter process. In order to
+    use any twinterpeters, a corresponding TwinMaster must be created and its
+    :py:meth:`TwinMaster.start` method called.
+
+    :param executable: path or name of the interpeter executable
+    :type executable: str
+    :param twinterpreter_id: identifier for the twin
+    :type twinterpreter_id: str
+    """
+    _initialized = False
+
+    #: singleton store `twinterpreter_id` => `master`
+    _master_store = {}
+
+    def __new__(cls, executable=None, twinterpreter_id=None):
+        twin_def = TwinDef(executable, twinterpreter_id)
+        try:
+            master = cls._master_store[twin_def.twinterpreter_id]
+        except KeyError:
+            self = object.__new__(cls)
+            cls._master_store[twin_def.twinterpreter_id] = self
+            return self
+        else:
+            assert master.twin_def == twin_def,\
+                "interpreter with same twinterpreter_id but different executable already exists"
+            return master
+
+    def __init__(self, executable=None, twinterpreter_id=None):
+        # avoid duplicate initialisation of singleton
+        if self._initialized:
+            return
+        self._initialized = True
+        self.twin_def = TwinDef(executable, twinterpreter_id)
+        self._process = None
+        self._kernel_server = None
+        self._kernel_client = None
+        self._server_thread = None
+
+    @property
+    def executable(self):
+        """Executable used to launch a twinterpreter"""
+        return self.twin_def.executable
+
+    @property
+    def twinterpreter_id(self):
+        """Identifier of a twinterpreter"""
+        return self.twin_def.twinterpreter_id
 
     @property
     def is_alive(self):
@@ -118,24 +156,24 @@ class TwinMaster(object):
             my_client_ipyc = ipyc_fifo.DuplexFifoIPyC()
             self._process = subprocess.Popen(
                 [
-                    self.executable, '-m', 'cpy2py.twinterpreter.bootstrap',
+                    self.twin_def.executable, '-m', 'cpy2py.twinterpreter.bootstrap',
                     '--peer-id', cpy2py.twinterpreter.kernel_state.TWIN_ID,
-                    '--twin-id', self.twinterpreter_id,
+                    '--twin-id', self.twin_def.twinterpreter_id,
                     '--master-id', cpy2py.twinterpreter.kernel_state.MASTER_ID,
                     '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
                     '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
-                    '--ipyc-pkl-protocol', str(self._pkl_protocol),
+                    '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
                 ]
             )
             self._kernel_client = cpy2py.twinterpreter.kernel.SingleThreadKernelClient(
-                self.twinterpreter_id,
+                self.twin_def.twinterpreter_id,
                 ipyc=my_client_ipyc,
-                pickle_protocol=self._pkl_protocol,
+                pickle_protocol=self.twin_def.pickle_protocol,
             )
             self._kernel_server = cpy2py.twinterpreter.kernel.SingleThreadKernelServer(
-                self.twinterpreter_id,
+                self.twin_def.twinterpreter_id,
                 ipyc=my_server_ipyc,
-                pickle_protocol=self._pkl_protocol,
+                pickle_protocol=self.twin_def.pickle_protocol,
             )
             self._server_thread = threading.Thread(target=self._kernel_server.run)
             self._server_thread.daemon = True
