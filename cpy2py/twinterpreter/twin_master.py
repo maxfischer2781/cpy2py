@@ -15,6 +15,7 @@ import subprocess
 import os
 import errno
 import threading
+import time
 
 import cpy2py.twinterpreter.kernel_state
 import cpy2py.twinterpreter.kernel
@@ -100,8 +101,7 @@ class TwinMaster(object):
                 if err.errno != errno.ESRCH:
                     raise
                 # no such process anymore, cleanup
-                self._process = None
-                self._kernel_server = None
+                self._cleanup()
                 return False
             else:
                 return True
@@ -144,10 +144,19 @@ class TwinMaster(object):
 
     def stop(self):
         """Terminate the twinterpreter"""
-        if self._kernel_client is not None and self._kernel_client.stop():
-                self._kernel_server = None
-                self._process = None
+        self._cleanup()
         return self.is_alive
+
+    def _cleanup(self):
+        """Try and close all connections"""
+        if self._kernel_client is not None and self._kernel_client.stop():
+            self._kernel_client = None
+            self._kernel_server = None
+        if self._process is not None:
+            self._process.kill()
+            time.sleep(0.1)
+            if self._process.poll() is not None:
+                self._process = None
 
     def execute(self, call, *call_args, **call_kwargs):
         """
