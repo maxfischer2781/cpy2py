@@ -12,6 +12,7 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 import os
+import re
 import sys
 import codecs
 from setuptools import setup, find_packages
@@ -31,6 +32,8 @@ except ImportError:
 # use readme for long descripion
 with codecs.open(os.path.join(repo_base, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
+for directive_re, replacement_re in [(':py:.*:', ''), (':envvar:', '')]:
+    long_description = re.sub(directive_re, replacement_re, long_description)
 
 setup(
     name='cpy2py',
