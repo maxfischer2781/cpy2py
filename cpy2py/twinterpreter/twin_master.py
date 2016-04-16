@@ -151,6 +151,8 @@ class TwinMaster(object):
 
         :returns: whether the twinterpeter is alive
         """
+        if self._master_store.get(self.twinterpreter_id) is not self:
+            raise RuntimeError("Attempt to start TwinMaster after destroying it")
         if not self.is_alive:
             my_server_ipyc = ipyc_fifo.DuplexFifoIPyC()
             my_client_ipyc = ipyc_fifo.DuplexFifoIPyC()
@@ -184,6 +186,11 @@ class TwinMaster(object):
         """Terminate the twinterpreter"""
         self._cleanup()
         return self.is_alive
+
+    def destroy(self):
+        """Stop any twinterpreter and cleanup the master"""
+        self.stop()
+        del self._master_store[self.twinterpreter_id]
 
     def _cleanup(self):
         """Try and close all connections"""
