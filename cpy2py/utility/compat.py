@@ -65,4 +65,9 @@ except AttributeError:
             raise _subprocess.CalledProcessError(retcode, cmd)
         return output
 
-__all__ = ['pickle', 'rangex', 'NullHandler', 'check_output']
+try:
+    stringabc = basestring
+except NameError:
+    stringabc = (str, bytes)
+
+__all__ = ['pickle', 'rangex', 'NullHandler', 'check_output', 'stringabc']
