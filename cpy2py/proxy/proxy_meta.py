@@ -52,6 +52,8 @@ class TwinMeta(type):
         '__import_mod_name__',  # non-pickle loading
         '__is_twin_proxy__',  # shortcut whether object is native or not
     ))
+    #: name of attribute signaling to not wrap class members
+    mark_localmember = "__local_member__"
 
     def __new__(mcs, name, bases, class_dict):
         """Create twin object and proxy"""
@@ -95,7 +97,9 @@ class TwinMeta(type):
         proxy_dict['__is_twin_proxy__'] = True
         # change methods to method proxies
         for aname in class_dict:
-            if aname in ('__init__', '__new__'):
+            if getattr(proxy_dict[aname], mcs.mark_localmember, False):
+                continue
+            elif aname in ('__init__', '__new__'):
                 del proxy_dict[aname]
             # methods must be proxy'd
             elif isinstance(proxy_dict[aname], types.FunctionType):

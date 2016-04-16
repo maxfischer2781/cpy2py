@@ -63,6 +63,19 @@ TwinObject = TwinMeta(
 )
 del DOCS
 
+
+def localmethod(method):
+    """
+    Mark method to always run in the calling twinterpreter
+
+    :param method: method to make local
+    :return: modified method
+
+    This function can be used as a decorator in class definitions.
+    """
+    setattr(method, TwinMeta.mark_localmember, True)
+    return method
+
 # TwinObject and TwinProxy are not created by metaclass, initialize manually
 TwinObject.__import_mod_name__ = (TwinObject.__module__, TwinObject.__name__)
 TwinProxy.__import_mod_name__ = TwinObject.__import_mod_name__
