@@ -100,32 +100,36 @@ What's there is more than sufficient to significantly enhance your applications.
 Features
 --------
 
-    * Any pickle'able callable can be dispatched to another interpreter.
+* Any pickle'able callable can be dispatched to another interpreter.
 
-    * Object functionality is almost fully covered!
+* Object functionality is almost fully covered!
 
-        * Objects may reside in any interpreter and transparently interact.
+    * Objects may reside in any interpreter and transparently interact.
 
-        * Both class and instance attributes work as expected.
+    * Both class and instance attributes work as expected.
 
-        * Methods, classmethods and staticmethods work transparently.
+    * Methods, classmethods and staticmethods work transparently.
 
-        * Inheritance is fully supported, including multiple inheritance.
-          Affiliation to interpreters can be changed freely.
+    * Inheritance is fully supported, including multiple inheritance.
+      Affiliation to interpreters can be changed freely.
 
-    * A wide range of interpeters is supported.
+* A wide range of interpeters is supported.
 
-        * Pure python, no dependencies means perfect portability.
+    * Pure python, no dependencies means perfect portability.
 
-        * Any interpeter compatible with python 2.6 to 3.5 is supported.
+    * Any interpeter compatible with python 2.6 to 3.5 is supported.
 
-        * Tested with cpython and pypy, on Linux and Mac OSX.
+    * Virtual Environments work out of the box.
+
+    * Tested with cpython and pypy, on Linux and Mac OSX.
 
 Gotchas/Upcomming
 -----------------
 
-    * Calls across interpreters are blocking and not threadsafe.
+* Calls across interpreters are blocking and not threadsafe.
 
-    * Properties and Decorators are not supported yet.
+* Properties and Decorators are not supported yet.
 
-    * A :py:mod:`weakref` to objects only takes local references into account, not cross-interpreter references.
+* Module level settings are not synchronized. See issue #7.
+
+* A :py:mod:`weakref` to objects only takes local references into account, not cross-interpreter references.
