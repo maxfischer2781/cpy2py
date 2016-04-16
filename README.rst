@@ -25,10 +25,10 @@ Twinterpreters and TwinMasters
 
 A twinterpreter is simply another interpreter running as a subprocess -
 with some glue and magic sprinkled on it. You can control and create them
-using a :py:class:`TwinMaster`.
+using a :py:class:`cpy2py.TwinMaster`.
 
-You should only ever worry about two methods: :py:meth:`~TwinMaster.start`
-launches the twinterpreter. :py:meth:`~TwinMaster.execute` executes
+You should only ever worry about two methods: :py:meth:`TwinMaster.start`
+launches the twinterpreter. :py:meth:`TwinMaster.execute` executes
 an arbitrary callable in the twinterpreter.
 
 .. code:: python
@@ -47,8 +47,8 @@ Using twins, you can seamlessly split your application across multiple
 twins.
 
 You create twins by inheriting from
-:py:class:`~cpy2py.proxy.proxy_object.TwinObject` instead of
-:py:class:`object` and setting a ``__twin_id__``. That's it.
+:py:class:`cpy2py.TwinObject` instead of :py:class:`object` and
+setting a ``__twin_id__``. That's it.
 
 .. code:: python
 
@@ -66,7 +66,7 @@ You create twins by inheriting from
             return some_clib.c_fcn_cll_cplx_xmpl(who, what)
 
 If you don't set ``__twin_id__`` on a child of
-:py:class:`~cpy2py.proxy.proxy_object.TwinObject`,
+:py:class:`cpy2py.TwinObject`,
 the class will always be native to the main interpreter. Handy for all
 the stuff that's needed everywhere but really doesn't belong anywhere.
 
@@ -104,31 +104,29 @@ Features
 
 * Object functionality is almost fully covered!
 
-    * Objects may reside in any interpreter and transparently interact.
+  * Objects may reside in any interpreter and transparently interact.
 
-    * Both class and instance attributes work as expected.
+  * Both class and instance attributes work as expected.
 
-    * Methods, classmethods and staticmethods work transparently.
+  * Methods, classmethods and staticmethods work transparently.
 
-    * Inheritance is fully supported, including multiple inheritance.
-      Affiliation to interpreters can be changed freely.
+  * Inheritance is fully supported, including multiple inheritance.
+    Affiliation to interpreters can be changed freely.
 
 * A wide range of interpeters is supported.
 
-    * Pure python, no dependencies means perfect portability.
+  * Pure python, no dependencies means perfect portability.
 
-    * Any interpeter compatible with python 2.6 to 3.5 is supported.
+  * Any interpeter compatible with python 2.6 to 3.5 is supported.
 
-    * Virtual Environments work out of the box.
+  * Virtual Environments work out of the box.
 
-    * Tested with cpython and pypy, on Linux and Mac OSX.
+  * Tested with cpython and pypy, on Linux and Mac OSX.
 
 Gotchas/Upcomming
 -----------------
 
 * Calls across interpreters are blocking and not threadsafe.
-
-* Properties and Decorators are not supported yet.
 
 * Module level settings are not synchronized. See issue #7.
 
