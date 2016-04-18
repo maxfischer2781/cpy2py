@@ -16,13 +16,15 @@ import sys
 import base64
 
 from cpy2py.utility.compat import pickle
-import cpy2py.twinterpreter.kernel
-import cpy2py.twinterpreter.kernel_state
+from cpy2py.kernel import kernel, kernel_state
+
+
+DEFAULT_PKL_PROTO = 2  # prot2 is supported by all supported versions
 
 
 def dump_connector(connector):
     """Dump an IPyC connection connector"""
-    return base64.b64encode(pickle.dumps(connector, 2))  # prot2 is supported by all supported versions
+    return base64.b64encode(pickle.dumps(connector, DEFAULT_PKL_PROTO))
 
 
 def load_connector(connector_pkl):
@@ -65,18 +67,22 @@ def bootstrap_kernel():
         help="pickle protocol to use for IPyC",
         type=int,
     )
+    parser.add_argument(
+        '--initializer',
+        help="base 64 encoded initialization functions",
+    )
     settings = parser.parse_args()
-    cpy2py.twinterpreter.kernel_state.TWIN_ID = settings.twin_id
-    cpy2py.twinterpreter.kernel_state.MASTER_ID = settings.master_id
+    kernel_state.TWIN_ID = settings.twin_id
+    kernel_state.MASTER_ID = settings.master_id
     server_ipyc = load_connector(settings.server_ipyc)
     client_ipyc = load_connector(settings.client_ipyc)
     # start in opposite order as TwinMaster to avoid deadlocks
-    kernel_server = cpy2py.twinterpreter.kernel.SingleThreadKernelServer(
+    kernel_server = kernel.SingleThreadKernelServer(
         peer_id=settings.peer_id,
         ipyc=server_ipyc,
         pickle_protocol=settings.ipyc_pkl_protocol,
     )
-    kernel_client = cpy2py.twinterpreter.kernel.SingleThreadKernelClient(
+    kernel_client = kernel.SingleThreadKernelClient(
         peer_id=settings.peer_id,
         ipyc=client_ipyc,
         pickle_protocol=settings.ipyc_pkl_protocol,

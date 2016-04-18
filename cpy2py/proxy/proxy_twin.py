@@ -11,9 +11,8 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
-import cpy2py.twinterpreter.kernel
-from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
-import cpy2py.twinterpreter.kernel_state
+from cpy2py.kernel.kernel_exceptions import TwinterpeterUnavailable
+from cpy2py.kernel import kernel_state
 
 from cpy2py.proxy import proxy_tracker
 
@@ -37,7 +36,7 @@ class ProxyMethod(object):
     def __get__(self, instance, owner):
         if instance is None:
             subject = owner
-            kernel = cpy2py.twinterpreter.kernel_state.get_kernel(subject.__twin_id__)
+            kernel = kernel_state.get_kernel(subject.__twin_id__)
         else:
             subject = instance
             kernel = subject.__kernel__
@@ -66,7 +65,7 @@ class TwinProxy(object):
 
     def __new__(cls, *args, **kwargs):
         self = object.__new__(cls)
-        __kernel__ = cpy2py.twinterpreter.kernel_state.get_kernel(self.__twin_id__)
+        __kernel__ = kernel_state.get_kernel(self.__twin_id__)
         object.__setattr__(self, '__kernel__', __kernel__)
         try:
             # native instance exists, but no proxy yet

@@ -37,7 +37,7 @@ from cpy2py.meta import __version__
 from cpy2py.utility.compat import NullHandler as _NullHandler
 from cpy2py.proxy.proxy_object import TwinObject
 from cpy2py.twinterpreter.twin_master import TwinMaster
-from cpy2py.twinterpreter import kernel_state
+from cpy2py.kernel import kernel_state
 
 
 _base_logger = _logging.getLogger('__cpy2py__')

@@ -24,7 +24,7 @@ State of this twinterpreter
 import os
 import sys
 
-from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterUnavailable
+from cpy2py.kernel.kernel_exceptions import TwinterpeterUnavailable
 
 
 # current twin state

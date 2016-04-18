@@ -13,7 +13,7 @@
 # - # limitations under the License.
 from __future__ import print_function
 import types
-from cpy2py.twinterpreter import kernel_state
+from cpy2py.kernel import kernel_state
 
 from cpy2py.proxy.proxy_twin import TwinProxy, ProxyMethod
 

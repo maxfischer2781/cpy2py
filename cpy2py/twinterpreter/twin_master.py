@@ -17,8 +17,7 @@ import errno
 import threading
 import time
 
-import cpy2py.twinterpreter.kernel_state
-import cpy2py.twinterpreter.kernel
+from cpy2py.kernel import kernel, kernel_state
 from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
@@ -159,20 +158,20 @@ class TwinMaster(object):
             self._process = subprocess.Popen(
                 [
                     self.twin_def.executable, '-m', 'cpy2py.twinterpreter.bootstrap',
-                    '--peer-id', cpy2py.twinterpreter.kernel_state.TWIN_ID,
+                    '--peer-id', kernel_state.TWIN_ID,
                     '--twin-id', self.twin_def.twinterpreter_id,
-                    '--master-id', cpy2py.twinterpreter.kernel_state.MASTER_ID,
+                    '--master-id', kernel_state.MASTER_ID,
                     '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
                     '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
                     '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
                 ]
             )
-            self._kernel_client = cpy2py.twinterpreter.kernel.SingleThreadKernelClient(
+            self._kernel_client = kernel.SingleThreadKernelClient(
                 self.twin_def.twinterpreter_id,
                 ipyc=my_client_ipyc,
                 pickle_protocol=self.twin_def.pickle_protocol,
             )
-            self._kernel_server = cpy2py.twinterpreter.kernel.SingleThreadKernelServer(
+            self._kernel_server = kernel.SingleThreadKernelServer(
                 self.twin_def.twinterpreter_id,
                 ipyc=my_server_ipyc,
                 pickle_protocol=self.twin_def.pickle_protocol,

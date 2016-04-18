@@ -26,11 +26,11 @@ import time
 import logging
 
 from cpy2py.utility.compat import pickle
-from cpy2py.twinterpreter import kernel_state
+from cpy2py.kernel import kernel_state
 
 from cpy2py.utility.exceptions import format_exception, CPy2PyException
 from cpy2py.ipyc import ipyc_exceptions
-from cpy2py.twinterpreter.kernel_exceptions import TwinterpeterTerminated
+from cpy2py.kernel.kernel_exceptions import TwinterpeterTerminated
 from cpy2py.proxy import proxy_tracker
 
 # Message Enums
