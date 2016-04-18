@@ -16,7 +16,7 @@ import sys
 import base64
 
 from cpy2py.utility.compat import pickle
-from cpy2py.kernel import kernel, kernel_state
+from cpy2py.kernel import kernel_core, kernel_state
 
 
 DEFAULT_PKL_PROTO = 2  # prot2 is supported by all supported versions
@@ -77,12 +77,12 @@ def bootstrap_kernel():
     server_ipyc = load_connector(settings.server_ipyc)
     client_ipyc = load_connector(settings.client_ipyc)
     # start in opposite order as TwinMaster to avoid deadlocks
-    kernel_server = kernel.SingleThreadKernelServer(
+    kernel_server = kernel_core.SingleThreadKernelServer(
         peer_id=settings.peer_id,
         ipyc=server_ipyc,
         pickle_protocol=settings.ipyc_pkl_protocol,
     )
-    kernel_client = kernel.SingleThreadKernelClient(
+    kernel_client = kernel_core.SingleThreadKernelClient(
         peer_id=settings.peer_id,
         ipyc=client_ipyc,
         pickle_protocol=settings.ipyc_pkl_protocol,
