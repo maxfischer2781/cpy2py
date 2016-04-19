@@ -164,7 +164,8 @@ class TwinMaster(object):
                     '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
                     '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
                     '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
-                ]
+                ],
+                env=self._twin_env()
             )
             self._kernel_client = kernel_core.SingleThreadKernelClient(
                 self.twin_def.twinterpreter_id,
@@ -180,6 +181,13 @@ class TwinMaster(object):
             self._server_thread.daemon = True
             self._server_thread.start()
         return self.is_alive
+
+    def _twin_env(self):
+        """Create the twin's starting environment"""
+        twin_env = os.environ.copy()
+        twin_env['__CPY2PY_TWINID__'] = self.twinterpreter_id
+        twin_env['__CPY2PY_MASTERID__'] = kernel_state.MASTER_ID
+        return twin_env
 
     def stop(self):
         """Terminate the twinterpreter"""

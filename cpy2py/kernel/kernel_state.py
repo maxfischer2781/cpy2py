@@ -17,9 +17,6 @@ State of this twinterpreter
 :note: This module is auto-initialized as part of the :py:mod:`cpy2py` import.
        Slaved twinterpreters are initialized via
        :py:func:`~cpy2py.twinterpreter.bootstrap.bootstrap_kernel` on startup.
-
-:note: The only attribute feasible to set manually is :py:data:`~.master_id`.
-       This must be done before any slaves are started.
 """
 import os
 import sys
@@ -33,14 +30,19 @@ KERNEL_CLIENTS = {}
 #: the kernel servers(s) running in this interpeter
 KERNEL_SERVERS = {}
 #: id of this interpreter/process
-TWIN_ID = os.path.basename(sys.executable)
+TWIN_ID = os.environ.pop('__CPY2PY_TWINID__', os.path.basename(sys.executable))
 #: id of the main interpeter
-MASTER_ID = TWIN_ID
+MASTER_ID = os.environ.pop('__CPY2PY_MASTERID__', TWIN_ID)
 
 
 def is_twinterpreter(kernel_id):
     """Check whether this interpreter is running a specific kernel"""
     return TWIN_ID == kernel_id
+
+
+def is_master():
+    """Check whether this interpreter is the group master"""
+    return is_twinterpreter(MASTER_ID)
 
 
 def get_kernel(kernel_id):

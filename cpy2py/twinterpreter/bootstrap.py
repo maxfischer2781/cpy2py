@@ -72,8 +72,8 @@ def bootstrap_kernel():
         help="base 64 encoded initialization functions",
     )
     settings = parser.parse_args()
-    kernel_state.TWIN_ID = settings.twin_id
-    kernel_state.MASTER_ID = settings.master_id
+    assert kernel_state.TWIN_ID == settings.twin_id
+    assert kernel_state.MASTER_ID == settings.master_id
     server_ipyc = load_connector(settings.server_ipyc)
     client_ipyc = load_connector(settings.client_ipyc)
     # start in opposite order as TwinMaster to avoid deadlocks
