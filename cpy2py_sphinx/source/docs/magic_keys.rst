@@ -1,3 +1,17 @@
+.. # - # Copyright 2016 Max Fischer
+.. # - #
+.. # - # Licensed under the Apache License, Version 2.0 (the "License");
+.. # - # you may not use this file except in compliance with the License.
+.. # - # You may obtain a copy of the License at
+.. # - #
+.. # - #     http://www.apache.org/licenses/LICENSE-2.0
+.. # - #
+.. # - # Unless required by applicable law or agreed to in writing, software
+.. # - # distributed under the License is distributed on an "AS IS" BASIS,
+.. # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.. # - # See the License for the specific language governing permissions and
+.. # - # limitations under the License.
+
 Magic Keys and Reserved Attributes
 ==================================
 
@@ -7,18 +21,24 @@ Some of them are useful to manually define, some for introspection, and some onl
 Magic Keys for Manual Definition
 --------------------------------
 
-:py:attr:`cpy2py.TwinObject.__twin_id__`
+* :py:attr:`cpy2py.TwinObject.__twin_id__`
 
-:py:data:`cpy2py.kernel_state.TWIN_ID`
+* :py:data:`cpy2py.kernel_state.TWIN_ID`
 
-:py:data:`cpy2py.kernel_state.MASTER_ID`
+* :py:data:`cpy2py.kernel_state.MASTER_ID`
 
 Other Magic Keys
 ----------------
 
-:py:envvar: __CPY2PY_TWIN_ID__
+* :py:envvar: __CPY2PY_TWIN_ID__
 
-:py:envvar: __CPY2PY_MASTER_ID__
+* :py:envvar: __CPY2PY_MASTER_ID__
 
 Internal Magic Keys
 -------------------
+
+* :py:attr:`cpy2py.proxy.proxy_object.TwinObject.__instance_id__`
+
+* :py:attr:`cpy2py.proxy.proxy_object.TwinObject.__import_mod_name__`
+
+* :py:attr:`cpy2py.proxy.proxy_object.TwinObject.__is_twin_proxy__`
