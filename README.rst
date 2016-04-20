@@ -141,6 +141,6 @@ Gotchas/Limitations
 
 * Calls across interpreters are blocking and not threadsafe.
 
-* Module level settings are not synchronized. See issue #7.
+* Module level settings are not synchronized. For example, configuration of :py:mod:`logging` is not applied to twinterpreters. Use :py:class:`~cpy2py.twinterpreter.group_state.TwinGroupState`. See also issue #7.
 
 * A :py:mod:`weakref` to objects only takes local references into account, not cross-interpreter references.
