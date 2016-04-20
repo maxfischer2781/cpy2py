@@ -165,7 +165,6 @@ def update_file(old_file, new_file, comparebytes=float("inf")):
         os.chown(new_file, stat.st_uid, stat.st_gid)
         os.rename(new_file, old_file)
         return True
-    print(old_file, "==", new_file)
     os.unlink(new_file)
     return False
 
@@ -215,8 +214,9 @@ def get_license_target_files(
     for folder in source_dirs:
         for dirpath, _, filenames in os.walk(os.path.join(REPO_BASE, folder)):
             for filename in filenames:
-                if re.search(SOURCE_FILE_RE, filename):
-                    yield os.path.join(dirpath, filename)
+                full_path = os.path.join(dirpath, filename)
+                if re.search(SOURCE_FILE_RE, filename) and not os.path.islink(full_path):
+                    yield full_path
     for filename in source_files:
         yield os.path.join(REPO_BASE, filename)
 
@@ -421,9 +421,8 @@ def main():
         print("Added LICENSE")
     else:
         print("Skipped LICENSE")
-    print(list(get_license_target_files(source_files=options.source_files, source_dirs=options.source_dirs)))
     for file_path in get_license_target_files(source_files=options.source_files, source_dirs=options.source_dirs):
-        print(file_path)
+        print(file_path, end='\r')
         update_license_header(file_path)
 
 
