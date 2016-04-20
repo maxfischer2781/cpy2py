@@ -136,8 +136,8 @@ Features
 
   * Tested with cpython and pypy, on Linux and Mac OSX.
 
-Gotchas/Upcomming
------------------
+Gotchas/Limitations
+-------------------
 
 * Calls across interpreters are blocking and not threadsafe.
 
