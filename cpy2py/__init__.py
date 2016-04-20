@@ -35,7 +35,7 @@ import os as _os
 
 from cpy2py.meta import __version__
 from cpy2py.utility.compat import NullHandler as _NullHandler
-from cpy2py.proxy.proxy_object import TwinObject
+from cpy2py.proxy.proxy_object import TwinObject, localmethod
 from cpy2py.twinterpreter.twin_master import TwinMaster
 from cpy2py.kernel import kernel_state
 
@@ -48,4 +48,4 @@ if _os.environ.get('CPY2PY_DEBUG'):
 else:
     _base_logger.addHandler(_NullHandler())
 
-__all__ = ['TwinObject', 'TwinMaster', 'kernel_state', '__version__']
+__all__ = ['TwinObject', 'TwinMaster', 'kernel_state', '__version__', 'localmethod']
