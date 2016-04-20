@@ -33,6 +33,21 @@ def load_connector(connector_pkl):
     return connector[0](*connector[1], **connector[2])
 
 
+def dump_initializer(initializers):
+    """Dump initializer functions"""
+    initializer_pkls = []
+    for initializer in initializers:
+        initializer_pkls.append(base64.b64encode(pickle.dumps(initializer, DEFAULT_PKL_PROTO)))
+    return initializer_pkls
+
+
+def run_initializer(initializer_pkls):
+    """Run initializer functions"""
+    for initializer_pkl in initializer_pkls:
+        initializer = pickle.loads(base64.b64decode(initializer_pkl))
+        initializer()
+
+
 def bootstrap_kernel():
     """
     Deploy a kernel to make this interpreter a twinterpreter
@@ -69,11 +84,15 @@ def bootstrap_kernel():
     )
     parser.add_argument(
         '--initializer',
+        nargs='*',
         help="base 64 encoded initialization functions",
+        default=[],
     )
     settings = parser.parse_args()
     assert kernel_state.TWIN_ID == settings.twin_id
     assert kernel_state.MASTER_ID == settings.master_id
+    # run initializers before creating any resources
+    run_initializer(settings.initializer)
     server_ipyc = load_connector(settings.server_ipyc)
     client_ipyc = load_connector(settings.client_ipyc)
     # start in opposite order as TwinMaster to avoid deadlocks

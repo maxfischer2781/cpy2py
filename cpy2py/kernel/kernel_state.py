@@ -14,9 +14,22 @@
 """
 State of this twinterpreter
 
-:note: This module is auto-initialized as part of the :py:mod:`cpy2py` import.
-       Slaved twinterpreters are initialized via
-       :py:func:`~cpy2py.twinterpreter.bootstrap.bootstrap_kernel` on startup.
+This module is auto-initialized as part of the :py:mod:`cpy2py` import.
+Slaved twinterpreters are initialized via
+:py:func:`~cpy2py.twinterpreter.bootstrap.bootstrap_kernel` on startup.
+
+If you wish to change :py:data:`TWIN_ID` of the main process, you must
+do so via environment variables:
+
+.. envvar:: __CPY2PY_TWIN_ID__
+
+   Identifier of this interpreter. If defined before starting a
+   :py:mod:`cpy2py` application, the master's identifier. It defaults
+   to ``os.path.basename(sys.executable)``.
+
+.. envvar:: __CPY2PY_MASTER_ID__
+
+   Identifier of the master interpreter. Do not set this explicitly.
 """
 import os
 import sys
@@ -30,9 +43,11 @@ KERNEL_CLIENTS = {}
 #: the kernel servers(s) running in this interpeter
 KERNEL_SERVERS = {}
 #: id of this interpreter/process
-TWIN_ID = os.environ.pop('__CPY2PY_TWINID__', os.path.basename(sys.executable))
+TWIN_ID = os.environ.pop('__CPY2PY_TWIN_ID__', os.path.basename(sys.executable))
 #: id of the main interpeter
-MASTER_ID = os.environ.pop('__CPY2PY_MASTERID__', TWIN_ID)
+MASTER_ID = os.environ.pop('__CPY2PY_MASTER_ID__', TWIN_ID)
+#: shared state of all twinterpreters
+TWIN_GROUP_STATE = None
 
 
 def is_twinterpreter(kernel_id):
