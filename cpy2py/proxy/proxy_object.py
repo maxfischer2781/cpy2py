@@ -56,7 +56,7 @@ TwinObject = TwinMeta(
         '__instance_id__': None,  # to be set on __new__
         #: tuple for twin import, of the form (<module name>, <object name>)
         '__import_mod_name__': (None, None),  # to be set by metaclass
-        '__is_twin_proxy__': True,  # recreated by metaclass
+        '__is_twin_proxy__': False,  # recreated by metaclass
         '__new__': new_twin_object,
         '__module__': __name__,
     }
