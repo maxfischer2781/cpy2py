@@ -86,11 +86,11 @@ class TestEnvironment(cpy2py.TwinObject):
         for master in self.twin_masters.values():
             master.stop()
 
-    def destroy_env(self):
+    def destroy_env(self, sleep=time.sleep, rmtree=shutil.rmtree):
         for key in list(self.twin_masters.keys()):
             self.twin_masters.pop(key).destroy()
-        time.sleep(0.1)
+        sleep(0.1)
         try:
-            shutil.rmtree(self.workdir_base)
+            rmtree(self.workdir_base)
         except OSError:
             pass
