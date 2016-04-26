@@ -24,6 +24,7 @@ import sys
 import os
 import time
 import logging
+import threading
 
 from cpy2py.utility.compat import pickle
 from cpy2py.kernel import kernel_state
@@ -70,6 +71,17 @@ class StopTwinterpreter(CPy2PyException):
         self.exit_code = exit_code
 
 
+def _connect_ipyc(ipyc, pickle_protocol):
+    """Connect pickle/unpickle trackers to a duplex IPyC"""
+    pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
+    pickler.persistent_id = proxy_tracker.persistent_twin_id
+    send = pickler.dump
+    unpickler = pickle.Unpickler(ipyc.reader)
+    unpickler.persistent_load = proxy_tracker.persistent_twin_load
+    recv = unpickler.load
+    return send, recv
+
+
 class SingleThreadKernelServer(object):
     """
     Default kernel server for sending requests to other interpreter
@@ -92,6 +104,8 @@ class SingleThreadKernelServer(object):
         self._ipyc = ipyc
         self._ipyc.open()
         self._server_send, self._server_recv = _connect_ipyc(ipyc, pickle_protocol)
+        self._terminate = threading.Event()
+        self._terminate.set()
         # instance => ref_count
         self._instances_keepalive = {}
         # directive lookup for methods
@@ -113,10 +127,12 @@ class SingleThreadKernelServer(object):
 
         :returns: exit code indicating potential failure
         """
+        assert self._terminate.is_set(), 'Kernel already active'
+        self._terminate.clear()
         exit_code, request_id = 1, None
         self._logger.warning('Starting kernel %s @ %s', kernel_state.TWIN_ID, time.asctime())
         try:
-            while True:
+            while not self._terminate.is_set():
                 self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
                 request_id, directive = self._server_recv()
                 self._serve_request(request_id, directive)
@@ -131,6 +147,7 @@ class SingleThreadKernelServer(object):
             format_exception(self._logger, 3)
             self._server_send((request_id, __E_EXCEPTION__, err))
         finally:
+            self._terminate.set()
             self._logger.critical('TWIN KERNEL SHUTDOWN: %s => %d', kernel_state.TWIN_ID, exit_code)
             self._ipyc.close()
             del kernel_state.KERNEL_SERVERS[self.peer_id]
@@ -160,6 +177,12 @@ class SingleThreadKernelServer(object):
                 raise StopTwinterpreter(message=err.__class__.__name__, exit_code=1)
         else:
             self._server_send((request_id, __E_SUCCESS__, response))
+
+    def stop(self):
+        """Shutdown the local server"""
+        # just tell server thread to stop, it'll cleanup automatically
+        self._terminate.set()
+        return True
 
     @staticmethod
     def _directive_call_func(directive_body):
@@ -224,17 +247,6 @@ class SingleThreadKernelServer(object):
 
     def __repr__(self):
         return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())
-
-
-def _connect_ipyc(ipyc, pickle_protocol):
-    """Connect pickle/unpickle trackers to a duplyed IPyC"""
-    pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
-    pickler.persistent_id = proxy_tracker.persistent_twin_id
-    send = pickler.dump
-    unpickler = pickle.Unpickler(ipyc.reader)
-    unpickler.persistent_load = proxy_tracker.persistent_twin_load
-    recv = unpickler.load
-    return send, recv
 
 
 class SingleThreadKernelClient(object):
