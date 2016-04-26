@@ -206,6 +206,7 @@ class TwinMaster(object):
         """Try and close all connections"""
         if self._kernel_client is not None and self._kernel_client.stop():
             self._kernel_client = None
+        if self._kernel_server is not None and self._kernel_server.stop():
             self._kernel_server = None
         if self._process is not None:
             self._process.kill()
