@@ -108,7 +108,7 @@ class TwinMeta(type):
                 try:
                     real_func = proxy_dict[aname].__func__
                 except AttributeError:  # py2.6
-                    real_func = proxy_dict[aname].__get__(object)
+                    real_func = proxy_dict[aname].__get__(None, object)
                 proxy_dict[aname] = ProxyMethod(real_func)
             # remove non-magic attributes so they don't shadow the real ones
             elif aname not in mcs.__proxy_inherits_attributes__:
