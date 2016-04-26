@@ -17,7 +17,7 @@ import errno
 import threading
 import time
 
-from cpy2py.kernel import kernel_core, kernel_state
+from cpy2py.kernel import kernel_single, kernel_state
 from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
@@ -168,12 +168,12 @@ class TwinMaster(object):
                 ] + bootstrap.dump_initializer(kernel_state.TWIN_GROUP_STATE.initializers),
                 env=self._twin_env()
             )
-            self._kernel_client = kernel_core.SingleThreadKernelClient(
+            self._kernel_client = kernel_single.SingleThreadKernelClient(
                 self.twin_def.twinterpreter_id,
                 ipyc=my_client_ipyc,
                 pickle_protocol=self.twin_def.pickle_protocol,
             )
-            self._kernel_server = kernel_core.SingleThreadKernelServer(
+            self._kernel_server = kernel_single.SingleThreadKernelServer(
                 self.twin_def.twinterpreter_id,
                 ipyc=my_server_ipyc,
                 pickle_protocol=self.twin_def.pickle_protocol,
