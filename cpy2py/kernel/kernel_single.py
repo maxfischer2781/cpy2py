@@ -71,7 +71,7 @@ class SingleThreadKernelServer(object):
         self._server_send, self._server_recv = _connect_ipyc(ipyc, pickle_protocol)
         self._terminate = threading.Event()
         self._terminate.set()
-        self._request_handler = RequestHandler(peer_id=self.peer_id, kernel_server=self)
+        self.request_handler = RequestHandler(peer_id=self.peer_id, kernel_server=self)
 
     def run(self):
         """
@@ -104,7 +104,7 @@ class SingleThreadKernelServer(object):
         while not self._terminate.is_set():
             self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
             request_id, directive = self._server_recv()
-            self._request_handler.serve_request(request_id, directive)
+            self.request_handler.serve_request(request_id, directive)
 
     def send_reply(self, request_id, reply_body):
         self._server_send((request_id, reply_body))
