@@ -142,13 +142,11 @@ class SingleThreadKernelClient(object):
         self._ipyc = ipyc
         self._ipyc.open()
         self._client_send, self._client_recv = _connect_ipyc(ipyc, pickle_protocol)
-        self._request_id = 0
         self.request_dispatcher = RequestDispatcher(peer_id=self.peer_id, kernel_client=self)
         kernel_state.KERNEL_INTERFACE[peer_id] = self.request_dispatcher
 
     def run_request(self, request_body):
-        self._request_id += 1
-        my_id = self._request_id
+        my_id = threading.current_thread().ident
         self._client_send((my_id, request_body))
         request_id, reply_body = self._client_recv()
         assert request_id == my_id, 'kernel messages order'
