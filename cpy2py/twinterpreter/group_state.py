@@ -102,6 +102,6 @@ class TwinGroupState(TwinObject):
         :note: This function is called automatically when bootstrapping
                a twinterpreter. It is not intended for manual use.
         """
-        client = kernel_state.KERNEL_CLIENTS[twin_id]
+        client = kernel_state.get_kernel(twin_id)
         for finalizer in self.finalizers:
             client.dispatch_call(finalizer)

@@ -225,4 +225,4 @@ class TwinMaster(object):
         :returns: result of `call(*call_args, **call_kwargs)`
         """
         assert self._kernel_client is not None
-        return self._kernel_client.dispatch_call(call, *call_args, **call_kwargs)
+        return self._kernel_client.request_dispatcher.dispatch_call(call, *call_args, **call_kwargs)

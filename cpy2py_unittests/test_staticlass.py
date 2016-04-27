@@ -54,8 +54,6 @@ class TestStaticObject(unittest.TestCase):
     def test_set_instance(self):
         instance = StaticObject()
         klass = StaticObject
-        #print(klass.__is_twin_proxy__)
-        #print(klass.__getattr__(klass, 'class_attribute'))
         for arg in self._get_test_args():
             # set via instance
             instance.cls_set(arg)

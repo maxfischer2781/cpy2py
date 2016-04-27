@@ -31,8 +31,9 @@ from cpy2py.kernel import kernel_state
 
 from cpy2py.utility.exceptions import format_exception, CPy2PyException
 from cpy2py.ipyc import ipyc_exceptions
-from cpy2py.kernel.kernel_exceptions import TwinterpeterTerminated
+from cpy2py.kernel.kernel_exceptions import TwinterpeterTerminated, StopTwinterpreter
 from cpy2py.proxy import proxy_tracker
+from cpy2py.kernel.kernel_requesthandler import RequestDispatcher, RequestHandler
 
 # Message Enums
 # twin call type
@@ -62,13 +63,6 @@ E_SYMBOL = {
     __E_SUCCESS__: '__E_SUCCESS__',
     __E_EXCEPTION__: '__E_EXCEPTION__',
 }
-
-
-class StopTwinterpreter(CPy2PyException):
-    """Signal to stop the twinterpeter"""
-    def __init__(self, message="Twinterpreter Shutdown", exit_code=1):
-        CPy2PyException.__init__(self, message)
-        self.exit_code = exit_code
 
 
 def _connect_ipyc(ipyc, pickle_protocol):
@@ -106,20 +100,7 @@ class SingleThreadKernelServer(object):
         self._server_send, self._server_recv = _connect_ipyc(ipyc, pickle_protocol)
         self._terminate = threading.Event()
         self._terminate.set()
-        # instance => ref_count
-        self._instances_keepalive = {}
-        # directive lookup for methods
-        self._directive_method = {
-            __E_SHUTDOWN__: self._directive_shutdown,
-            __E_CALL_FUNC__: self._directive_call_func,
-            __E_CALL_METHOD__: self._directive_call_method,
-            __E_GET_ATTRIBUTE__: self._directive_get_attribute,
-            __E_SET_ATTRIBUTE__: self._directive_set_attribute,
-            __E_DEL_ATTRIBUTE__: self._directive_del_attribute,
-            __E_INSTANTIATE__: self._directive_instantiate,
-            __E_REF_INCR__: self._directive_ref_incr,
-            __E_REF_DECR__: self._directive_ref_decr,
-        }
+        self._request_handler = RequestHandler(peer_id=self.peer_id, kernel_server=self)
 
     def run(self):
         """
@@ -135,7 +116,7 @@ class SingleThreadKernelServer(object):
             while not self._terminate.is_set():
                 self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
                 request_id, directive = self._server_recv()
-                self._serve_request(request_id, directive)
+                self._request_handler.serve_request(request_id, directive)
         except StopTwinterpreter as err:
             self._server_send((request_id, __E_SHUTDOWN__, err.exit_code))
             exit_code = err.exit_code
@@ -153,97 +134,14 @@ class SingleThreadKernelServer(object):
             del kernel_state.KERNEL_SERVERS[self.peer_id]
         return exit_code
 
-    def _serve_request(self, request_id, directive):
-        """Serve a request from :py:meth:`_dispatch_request`"""
-        try:
-            directive_type, directive_body = directive
-            directive_symbol = E_SYMBOL[directive_type]
-            directive_method = self._directive_method[directive_type]
-        except (KeyError, ValueError) as err:
-            # error in lookup or unpacking
-            raise CPy2PyException(err)
-        try:
-            self._logger.warning('Directive %s', directive_symbol)
-            response = directive_method(directive_body)
-        # catch internal errors to reraise them
-        except CPy2PyException:
-            raise
-        # send everything else back to calling scope
-        except Exception as err:  # pylint: disable=broad-except
-            self._server_send((request_id, __E_EXCEPTION__, err))
-            self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
-            format_exception(self._logger, 3)
-            if isinstance(err, (KeyboardInterrupt, SystemExit)):
-                raise StopTwinterpreter(message=err.__class__.__name__, exit_code=1)
-        else:
-            self._server_send((request_id, __E_SUCCESS__, response))
+    def send_reply(self, request_id, reply_body):
+        self._server_send((request_id, reply_body))
 
     def stop(self):
         """Shutdown the local server"""
         # just tell server thread to stop, it'll cleanup automatically
         self._terminate.set()
         return True
-
-    @staticmethod
-    def _directive_call_func(directive_body):
-        """Directive for :py:meth:`dispatch_call`"""
-        func_obj, func_args, func_kwargs = directive_body
-        return func_obj(*func_args, **func_kwargs)
-
-    @staticmethod
-    def _directive_call_method(directive_body):
-        """Directive for :py:meth:`dispatch_method_call`"""
-        instance, method_name, method_args, method_kwargs = directive_body
-        return getattr(instance, method_name)(*method_args, **method_kwargs)
-
-    @staticmethod
-    def _directive_get_attribute(directive_body):
-        """Directive for :py:meth:`get_attribute`"""
-        instance, attribute_name = directive_body
-        return getattr(instance, attribute_name)
-
-    @staticmethod
-    def _directive_set_attribute(directive_body):
-        """Directive for :py:meth:`set_attribute`"""
-        instance, attribute_name, new_value = directive_body
-        return setattr(instance, attribute_name, new_value)
-
-    @staticmethod
-    def _directive_del_attribute(directive_body):
-        """Directive for :py:meth:`del_attribute`"""
-        instance, attribute_name = directive_body
-        return delattr(instance, attribute_name)
-
-    def _directive_instantiate(self, directive_body):
-        """Directive for :py:meth:`instantiate_class`"""
-        cls, cls_args, cls_kwargs = directive_body
-        instance = cls(*cls_args, **cls_kwargs)
-        self._instances_keepalive[instance] = 1
-        return instance.__instance_id__
-
-    def _directive_ref_incr(self, directive_body):
-        """Directive for :py:meth:`increment_instance_ref`"""
-        instance = directive_body[0]
-        try:
-            self._instances_keepalive[instance] += 1
-        except KeyError:
-            self._instances_keepalive[instance] = 1
-        return self._instances_keepalive[instance]
-
-    def _directive_ref_decr(self, directive_body):
-        """Directive for :py:meth:`decrement_instance_ref`"""
-        instance = directive_body[0]
-        self._instances_keepalive[instance] -= 1
-        response = self._instances_keepalive[instance]
-        if self._instances_keepalive[instance] <= 0:
-            del self._instances_keepalive[instance]
-        return response
-
-    @staticmethod
-    def _directive_shutdown(directive_body):
-        """Directive for :py:meth:`stop`"""
-        message = directive_body[0]
-        raise StopTwinterpreter(message=message, exit_code=0)
 
     def __repr__(self):
         return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())
@@ -273,63 +171,23 @@ class SingleThreadKernelClient(object):
         self._ipyc.open()
         self._client_send, self._client_recv = _connect_ipyc(ipyc, pickle_protocol)
         self._request_id = 0
+        self.request_dispatcher = RequestDispatcher(peer_id=self.peer_id, kernel_client=self)
+        kernel_state.KERNEL_INTERFACE[peer_id] = self.request_dispatcher
 
-    # dispatching: execute actions in other interpeter
-    def _dispatch_request(self, request_type, *args):
-        """Forward a request to peer and return result"""
+    def run_request(self, request_body):
         self._request_id += 1
         my_id = self._request_id
-        try:
-            self._client_send((my_id, (request_type, args)))
-            request_id, result_type, result_body = self._client_recv()
-        except ipyc_exceptions.IPyCTerminated:
-            raise TwinterpeterTerminated(twin_id=self.peer_id)
+        self._client_send((my_id, request_body))
+        request_id, reply_body = self._client_recv()
         assert request_id == my_id, 'kernel messages order'
-        if result_type == __E_SUCCESS__:
-            return result_body
-        elif result_type == __E_EXCEPTION__:
-            raise result_body
-        elif result_type == __E_SHUTDOWN__:
-            return True
-        raise RuntimeError
-
-    def dispatch_call(self, call, *call_args, **call_kwargs):
-        """Execute a function call and return the result"""
-        return self._dispatch_request(__E_CALL_FUNC__, call, call_args, call_kwargs)
-
-    def dispatch_method_call(self, instance, method_name, *method_args, **methods_kwargs):
-        """Execute a method call and return the result"""
-        return self._dispatch_request(__E_CALL_METHOD__, instance, method_name, method_args, methods_kwargs)
-
-    def get_attribute(self, instance, attribute_name):
-        """Get an attribute of an instance"""
-        return self._dispatch_request(__E_GET_ATTRIBUTE__, instance, attribute_name)
-
-    def set_attribute(self, instance, attribute_name, new_value):
-        """Set an attribute of an instance"""
-        return self._dispatch_request(__E_SET_ATTRIBUTE__, instance, attribute_name, new_value)
-
-    def del_attribute(self, instance, attribute_name):
-        """Delete an attribute of an instance"""
-        return self._dispatch_request(__E_DEL_ATTRIBUTE__, instance, attribute_name)
-
-    def instantiate_class(self, cls, *cls_args, **cls_kwargs):
-        """Instantiate a class, increment its reference count, and return its id"""
-        return self._dispatch_request(__E_INSTANTIATE__, cls, cls_args, cls_kwargs)
-
-    def increment_instance_ref(self, instance):
-        """Increment the reference count to an instance by one"""
-        return self._dispatch_request(__E_REF_INCR__, instance)
-
-    def decrement_instance_ref(self, instance):
-        """Decrement the reference count to an instance by one"""
-        return self._dispatch_request(__E_REF_DECR__, instance)
+        return reply_body
 
     def stop(self):
         """Shutdown the peer's server"""
-        if self._dispatch_request(__E_SHUTDOWN__, 'stop'):
+        if self.request_dispatcher.shutdown_peer():
             self._ipyc.close()
             del kernel_state.KERNEL_CLIENTS[self.peer_id]
+            del kernel_state.KERNEL_INTERFACE[self.peer_id]
             return True
         return False
 

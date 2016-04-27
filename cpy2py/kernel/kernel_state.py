@@ -42,6 +42,8 @@ from cpy2py.kernel.kernel_exceptions import TwinterpeterUnavailable
 KERNEL_CLIENTS = {}
 #: the kernel servers(s) running in this interpeter
 KERNEL_SERVERS = {}
+#: low-level interface to dispatch commands to a kernel
+KERNEL_INTERFACE = {}
 #: id of this interpreter/process
 TWIN_ID = os.environ.pop('__CPY2PY_TWIN_ID__', os.path.basename(sys.executable))
 #: id of the main interpeter
@@ -72,6 +74,6 @@ def get_kernel(kernel_id):
     """
     assert not is_twinterpreter(kernel_id), 'Attempted call to own interpeter'
     try:
-        return KERNEL_CLIENTS[kernel_id]
+        return KERNEL_INTERFACE[kernel_id]
     except KeyError:
         raise TwinterpeterUnavailable(twin_id=kernel_id)

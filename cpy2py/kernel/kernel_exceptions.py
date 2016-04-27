@@ -32,3 +32,10 @@ class TwinterpeterTerminated(TwinterpeterUnavailable):
     def __init__(self, twin_id):
         TwinterpeterException.__init__(self, "Twinterpeter '%s' already terminated" % twin_id)
         self.twin_id = twin_id
+
+
+class StopTwinterpreter(cpy2py.utility.exceptions.CPy2PyException):
+    """Signal to stop the twinterpeter"""
+    def __init__(self, message="Twinterpreter Shutdown", exit_code=1):
+        cpy2py.utility.exceptions.CPy2PyException.__init__(self, message)
+        self.exit_code = exit_code
