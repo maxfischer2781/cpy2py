@@ -84,10 +84,7 @@ class SingleThreadKernelServer(object):
         exit_code, request_id = 1, None
         self._logger.warning('Starting kernel %s @ %s', kernel_state.TWIN_ID, time.asctime())
         try:
-            while not self._terminate.is_set():
-                self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
-                request_id, directive = self._server_recv()
-                self._request_handler.serve_request(request_id, directive)
+            self._serve_requests()
         except StopTwinterpreter as err:
             exit_code = err.exit_code
         # cPickle may raise EOFError by itself
@@ -102,6 +99,12 @@ class SingleThreadKernelServer(object):
             self._ipyc.close()
             del kernel_state.KERNEL_SERVERS[self.peer_id]
         return exit_code
+
+    def _serve_requests(self):
+        while not self._terminate.is_set():
+            self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
+            request_id, directive = self._server_recv()
+            self._request_handler.serve_request(request_id, directive)
 
     def send_reply(self, request_id, reply_body):
         self._server_send((request_id, reply_body))
