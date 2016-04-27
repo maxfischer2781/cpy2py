@@ -89,7 +89,6 @@ class SingleThreadKernelServer(object):
                 request_id, directive = self._server_recv()
                 self._request_handler.serve_request(request_id, directive)
         except StopTwinterpreter as err:
-            #self._server_send((request_id, __E_SHUTDOWN__, err.exit_code))
             exit_code = err.exit_code
         # cPickle may raise EOFError by itself
         except (ipyc_exceptions.IPyCTerminated, EOFError):
@@ -97,7 +96,6 @@ class SingleThreadKernelServer(object):
         except Exception as err:  # pylint: disable=broad-except
             self._logger.critical('TWIN KERNEL INTERNAL EXCEPTION')
             format_exception(self._logger, 3)
-            self._server_send((request_id, __E_EXCEPTION__, err))
         finally:
             self._terminate.set()
             self._logger.critical('TWIN KERNEL SHUTDOWN: %s => %d', kernel_state.TWIN_ID, exit_code)
