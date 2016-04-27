@@ -31,6 +31,9 @@ the application.
     :target: https://travis-ci.org/maxfischer2781/cpy2py
     :alt: Test Health
 
+.. contents:: Table of Contents
+   :depth: 2
+
 Quick Guide
 ===========
 
