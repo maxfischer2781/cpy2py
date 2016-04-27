@@ -29,40 +29,11 @@ import threading
 from cpy2py.utility.compat import pickle
 from cpy2py.kernel import kernel_state
 
-from cpy2py.utility.exceptions import format_exception, CPy2PyException
+from cpy2py.utility.exceptions import format_exception
 from cpy2py.ipyc import ipyc_exceptions
-from cpy2py.kernel.kernel_exceptions import TwinterpeterTerminated, StopTwinterpreter
+from cpy2py.kernel.kernel_exceptions import StopTwinterpreter
 from cpy2py.proxy import proxy_tracker
 from cpy2py.kernel.kernel_requesthandler import RequestDispatcher, RequestHandler
-
-# Message Enums
-# twin call type
-__E_SHUTDOWN__ = -1
-__E_CALL_FUNC__ = 11
-__E_CALL_METHOD__ = 12
-__E_GET_ATTRIBUTE__ = 21
-__E_SET_ATTRIBUTE__ = 22
-__E_DEL_ATTRIBUTE__ = 23
-__E_INSTANTIATE__ = 31
-__E_REF_INCR__ = 32
-__E_REF_DECR__ = 33
-# twin reply type
-__E_SUCCESS__ = 101
-__E_EXCEPTION__ = 102
-
-E_SYMBOL = {
-    __E_SHUTDOWN__: '__E_SHUTDOWN__',
-    __E_CALL_FUNC__: '__E_CALL_FUNC__',
-    __E_CALL_METHOD__: '__E_CALL_METHOD__',
-    __E_GET_ATTRIBUTE__: '__E_GET_ATTRIBUTE__',
-    __E_SET_ATTRIBUTE__: '__E_SET_ATTRIBUTE__',
-    __E_DEL_ATTRIBUTE__: '__E_DEL_ATTRIBUTE__',
-    __E_INSTANTIATE__: '__E_INSTANTIATE__',
-    __E_REF_INCR__: '__E_REF_INCR__',
-    __E_REF_DECR__: '__E_REF_DECR__',
-    __E_SUCCESS__: '__E_SUCCESS__',
-    __E_EXCEPTION__: '__E_EXCEPTION__',
-}
 
 
 def _connect_ipyc(ipyc, pickle_protocol):
@@ -93,7 +64,7 @@ class SingleThreadKernelServer(object):
         return kernel_state.KERNEL_SERVERS[peer_id]
 
     def __init__(self, peer_id, ipyc, pickle_protocol=2):
-        self._logger = logging.getLogger('__cpy2py__.%s' % kernel_state.TWIN_ID)
+        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.server' % (kernel_state.TWIN_ID, peer_id))
         self.peer_id = peer_id
         self._ipyc = ipyc
         self._ipyc.open()
@@ -118,7 +89,7 @@ class SingleThreadKernelServer(object):
                 request_id, directive = self._server_recv()
                 self._request_handler.serve_request(request_id, directive)
         except StopTwinterpreter as err:
-            self._server_send((request_id, __E_SHUTDOWN__, err.exit_code))
+            #self._server_send((request_id, __E_SHUTDOWN__, err.exit_code))
             exit_code = err.exit_code
         # cPickle may raise EOFError by itself
         except (ipyc_exceptions.IPyCTerminated, EOFError):
@@ -164,7 +135,7 @@ class SingleThreadKernelClient(object):
         return kernel_state.KERNEL_CLIENTS[peer_id]
 
     def __init__(self, peer_id, ipyc, pickle_protocol=2):
-        self._logger = logging.getLogger('__cpy2py__.%s' % kernel_state.TWIN_ID)
+        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.client' % (kernel_state.TWIN_ID, peer_id))
         self.peer_id = peer_id
         # communication
         self._ipyc = ipyc
