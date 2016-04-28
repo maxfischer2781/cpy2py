@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 import time
 
@@ -9,6 +10,8 @@ class PyPyng(TwinObject):
     __twin_id__ = 'pypy_asnyc'
 
     def play(self, opponent, recursion=0):
+        if recursion > 0 and recursion % 20 == 0:
+            print('.', end='')
         if recursion <= 0:
             return self.__class__.__name__
         return opponent.play(self, recursion-1)
