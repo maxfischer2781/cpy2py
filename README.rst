@@ -12,8 +12,9 @@
 .. # - # See the License for the specific language governing permissions and
 .. # - # limitations under the License.
 
+++++++
 CPy2Py
-======
+++++++
 
 |Code Health| |Test Status|
 
@@ -31,7 +32,8 @@ the application.
     :target: https://travis-ci.org/maxfischer2781/cpy2py
     :alt: Test Health
 
-.. contents:: :depth: 1
+.. contents:: **Table of Contents**
+    :depth: 2
 
 Quick Guide
 ===========
