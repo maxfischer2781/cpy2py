@@ -80,7 +80,7 @@ class SingleThreadKernelServer(object):
         """
         assert self._terminate.is_set(), 'Kernel already active'
         self._terminate.clear()
-        exit_code, request_id = 1, None
+        exit_code = 1
         self._logger.warning('Starting %s %s @ %s', kernel_state.TWIN_ID, self.__class__.__name__, time.asctime())
         try:
             self._serve_requests()

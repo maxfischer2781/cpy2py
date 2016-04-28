@@ -46,7 +46,7 @@ class AsyncKernelServer(SingleThreadKernelServer):
             self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
             request_id, directive = self._server_recv()
             if self._except_callback is not None:
-                raise self._except_callback
+                raise self._except_callback  # pylint: disable=raising-bad-type
             thread = threading.Thread(target=self._request_thread_main, args=(request_id, directive))
             thread.daemon = True
             thread.start()
@@ -54,7 +54,7 @@ class AsyncKernelServer(SingleThreadKernelServer):
     def _request_thread_main(self, request_id, directive):
         try:
             self.request_handler.serve_request(request_id, directive)
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             self._except_callback = err
 
 

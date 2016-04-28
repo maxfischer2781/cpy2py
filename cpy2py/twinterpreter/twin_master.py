@@ -94,14 +94,14 @@ class TwinDef(object):
             try:
                 client, server = kernel_arg.CLIENT, kernel_arg.SERVER
             except AttributeError:
-                raise ValueError("Expected 'kernel' to be a (client, server) tuple or module exposing CLIENT and SERVER")
+                raise ValueError("Expected 'kernel' to reference client and server")
         return client, server
 
     def __eq__(self, other):
         try:
             return self.executable == other.executable\
-                   and self.twinterpreter_id == other.twinterpreter_id\
-                   and self.kernel == other.kernel
+                and self.twinterpreter_id == other.twinterpreter_id\
+                and self.kernel == other.kernel
         except AttributeError:
             return NotImplemented
 
