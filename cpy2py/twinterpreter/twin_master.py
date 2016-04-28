@@ -17,7 +17,7 @@ import errno
 import threading
 import time
 
-from cpy2py.kernel import kernel_single, kernel_state
+from cpy2py.kernel import kernel_single, kernel_state, kernel_async
 from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
@@ -34,24 +34,40 @@ class TwinDef(object):
     :type executable: str
     :param twinterpreter_id: identifier for the twin
     :type twinterpreter_id: str
+    :param kernel: the type of kernel to deploy
+    :type kernel: module or tuple
 
-    For simplicity, it is sufficient to supply either `executable` or
-    `twinterpreter_id`. In this case, `twinterpreter_id` is assumed to be the
-    basename of `executable`.
+    For simplicity, it is sufficient to supply either ``executable`` or
+    ``twinterpreter_id``. In this case, ``twinterpreter_id`` is assumed to be
+    the basename of `executable`.
 
-    If given or derived, `executable` must point to a python interpreter. This
+    If given or derived, ``executable`` must point to a python interpreter. This
     includes interpreters created by `virtualenv <https://virtualenv.pypa.io/>`_.
     The interpreter can be specified as an absolute path, a relative path or a
     name to lookup in :envvar:`PATH`.
 
-    Only one kernel may use a specific `twinterpreter_id` at any time. However,
-    you can create the same :py:class:`~.TwinMaster` multiple times.
+    Since it impacts performance, one may decide to use a different ``kernel``.
+    Three methods for specifying the ``kernel`` are available:
+
+    * tuple of ``(client, server)``
+
+    * module providing ``mod.CLIENT`` and ``mod.SERVER``
+
+    * key to an element of :py:attr:`default_kernels`
+
+    Only one kernel may use a specific ``twinterpreter_id`` at any time. For
+    simplicity, one may "create" the same :py:class:`~.TwinMaster` multiple times;
+    the class works like a singleton in this case.
     """
-    def __init__(self, executable=None, twinterpreter_id=None):
+    default_kernels = {
+        'single': kernel_single,
+        'async': kernel_async,
+    }
+
+    def __init__(self, executable=None, twinterpreter_id=None, kernel=None):
         if isinstance(executable, self.__class__):
-            executable, twinterpreter_id = executable.executable, executable.twinterpreter_id
-        if isinstance(twinterpreter_id, self.__class__):
-            executable, twinterpreter_id = twinterpreter_id.executable, twinterpreter_id.twinterpreter_id
+            assert twinterpreter_id is None and kernel is None, "Mixing cloning and explicit assignment"
+            executable, twinterpreter_id, kernel = executable.executable, executable.twinterpreter_id, executable.kernel
         # Resolve incomplete argument list using defaults
         assert executable is not None or twinterpreter_id is not None,\
             "At least one of 'executable' and 'twinterpreter_id' must be set"
@@ -63,10 +79,29 @@ class TwinDef(object):
         self.executable = executable
         self.twinterpreter_id = twinterpreter_id
         self.pickle_protocol = proc_tools.get_best_pickle_protocol(self.executable)
+        self.kernel_client, self.kernel_server = self._resolve_kernel_arg(kernel)
+
+    @property
+    def kernel(self):
+        return self.kernel_client, self.kernel_server
+
+    def _resolve_kernel_arg(self, kernel_arg):
+        kernel_arg = kernel_arg or 'single'
+        kernel_arg = self.default_kernels.get(kernel_arg, kernel_arg)
+        try:
+            client, server = kernel_arg
+        except (TypeError, ValueError):
+            try:
+                client, server = kernel_arg.CLIENT, kernel_arg.SERVER
+            except AttributeError:
+                raise ValueError("Expected 'kernel' to be a (client, server) tuple or module exposing CLIENT and SERVER")
+        return client, server
 
     def __eq__(self, other):
         try:
-            return self.executable == other.executable and self.twinterpreter_id == other.twinterpreter_id
+            return self.executable == other.executable\
+                   and self.twinterpreter_id == other.twinterpreter_id\
+                   and self.kernel == other.kernel
         except AttributeError:
             return NotImplemented
 
@@ -82,18 +117,15 @@ class TwinMaster(object):
     use any twinterpeters, a corresponding TwinMaster must be created and its
     :py:meth:`TwinMaster.start` method called.
 
-    :param executable: path or name of the interpeter executable
-    :type executable: str
-    :param twinterpreter_id: identifier for the twin
-    :type twinterpreter_id: str
+    :see: :py:class:`~.TwinDef` for parameters and their interpretation.
     """
     _initialized = False
 
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
 
-    def __new__(cls, executable=None, twinterpreter_id=None):
-        twin_def = TwinDef(executable, twinterpreter_id)
+    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None):
+        twin_def = TwinDef(executable, twinterpreter_id, kernel)
         try:
             master = cls._master_store[twin_def.twinterpreter_id]
         except KeyError:
@@ -102,15 +134,15 @@ class TwinMaster(object):
             return self
         else:
             assert master.twin_def == twin_def,\
-                "interpreter with same twinterpreter_id but different executable already exists"
+                "interpreter with same twinterpreter_id but different settings already exists"
             return master
 
-    def __init__(self, executable=None, twinterpreter_id=None):
+    def __init__(self, executable=None, twinterpreter_id=None, kernel=None):
         # avoid duplicate initialisation of singleton
         if self._initialized:
             return
         self._initialized = True
-        self.twin_def = TwinDef(executable, twinterpreter_id)
+        self.twin_def = TwinDef(executable, twinterpreter_id, kernel)
         self._process = None
         self._kernel_server = None
         self._kernel_client = None
@@ -164,16 +196,17 @@ class TwinMaster(object):
                     '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
                     '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
                     '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
+                    '--kernel', bootstrap.dump_kernel(*self.twin_def.kernel),
                     '--initializer',
                 ] + bootstrap.dump_initializer(kernel_state.TWIN_GROUP_STATE.initializers),
                 env=self._twin_env()
             )
-            self._kernel_client = kernel_single.SingleThreadKernelClient(
+            self._kernel_client = self.twin_def.kernel_client(
                 self.twin_def.twinterpreter_id,
                 ipyc=my_client_ipyc,
                 pickle_protocol=self.twin_def.pickle_protocol,
             )
-            self._kernel_server = kernel_single.SingleThreadKernelServer(
+            self._kernel_server = self.twin_def.kernel_server(
                 self.twin_def.twinterpreter_id,
                 ipyc=my_server_ipyc,
                 pickle_protocol=self.twin_def.pickle_protocol,

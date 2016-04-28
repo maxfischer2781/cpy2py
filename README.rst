@@ -19,8 +19,8 @@ CPy2Py
 
 Multi-intepreter execution environment
 
-`cpy2py` allows multiple interpreters to act as one application in parallel
-to the main interpreter, other interpreters may be run to execute parts of
+`cpy2py` allows multiple interpreters to act as one application. In parallel
+to the main interpreter, other interpreters are run to execute parts of
 the application.
 
 .. |Code Health| image:: https://landscape.io/github/maxfischer2781/cpy2py/master/landscape.svg?style=flat
@@ -31,7 +31,7 @@ the application.
     :target: https://travis-ci.org/maxfischer2781/cpy2py
     :alt: Test Health
 
-.. contents:: :depth: 2
+.. contents:: :depth: 1
 
 Quick Guide
 ===========
@@ -142,7 +142,7 @@ Features
 Gotchas/Limitations
 -------------------
 
-* Calls across interpreters are blocking and not threadsafe.
+* Calls across interpreters are blocking and not threadsafe. If recursion switches between twinterpreters, :py:class:`cpy2py.TwinMaster` must use the ``'async'`` kernel.
 
 * Module level settings are not synchronized. For example, configuration of :py:mod:`logging` is not applied to twinterpreters. Use :py:class:`~cpy2py.twinterpreter.group_state.TwinGroupState`. See also issue #7.
 

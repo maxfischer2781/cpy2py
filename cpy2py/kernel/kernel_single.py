@@ -12,13 +12,12 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 """
-The kernel is the main thread of execution running inside a twinterpreter.
+Singlethreaded Kernel Client and Server
 
-Any connection between twinterpreters is handled by two kernels. Each
-consists of client and server side residing in the different interpreters.
-
-The kernels assume that they have been setup properly. Use
-:py:class:`~cpy2py.twinterpreter.twin_master.TwinMaster` start kernel pairs.
+These form the most simple kernel available. The implementation is simple
+and will thus require minimal overhead. However, this type of kernel
+operates *strictly* singlethreaded - no more than one request may be
+served at a time. This makes recursion across twinterpreters impossible.
 """
 import sys
 import os
@@ -82,7 +81,7 @@ class SingleThreadKernelServer(object):
         assert self._terminate.is_set(), 'Kernel already active'
         self._terminate.clear()
         exit_code, request_id = 1, None
-        self._logger.warning('Starting kernel %s @ %s', kernel_state.TWIN_ID, time.asctime())
+        self._logger.warning('Starting %s %s @ %s', kernel_state.TWIN_ID, self.__class__.__name__, time.asctime())
         try:
             self._serve_requests()
         except StopTwinterpreter as err:
@@ -163,3 +162,6 @@ class SingleThreadKernelClient(object):
 
     def __repr__(self):
         return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())
+
+SERVER = SingleThreadKernelServer
+CLIENT = SingleThreadKernelClient

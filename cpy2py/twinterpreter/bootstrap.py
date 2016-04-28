@@ -33,6 +33,16 @@ def load_connector(connector_pkl):
     return connector[0](*connector[1], **connector[2])
 
 
+def dump_kernel(kernel_client, kernel_server):
+    """Dump kernel client and server classes"""
+    return base64.b64encode(pickle.dumps((kernel_client, kernel_server), DEFAULT_PKL_PROTO))
+
+
+def load_kernel(kernel_pkl):
+    """Load kernel client and server classes"""
+    return pickle.loads(base64.b64decode(kernel_pkl))
+
+
 def dump_initializer(initializers):
     """Dump initializer functions"""
     initializer_pkls = []
@@ -83,6 +93,10 @@ def bootstrap_kernel():
         type=int,
     )
     parser.add_argument(
+        '--kernel',
+        help="base 64 encoded kernel client and server class",
+    )
+    parser.add_argument(
         '--initializer',
         nargs='*',
         help="base 64 encoded initialization functions",
@@ -95,13 +109,18 @@ def bootstrap_kernel():
     run_initializer(settings.initializer)
     server_ipyc = load_connector(settings.server_ipyc)
     client_ipyc = load_connector(settings.client_ipyc)
+    # use custom kernels
+    if settings.kernel:
+        client, server = load_kernel(settings.kernel)
+    else:
+        client, server = kernel_single.CLIENT, kernel_single.SERVER
     # start in opposite order as TwinMaster to avoid deadlocks
-    kernel_server = kernel_single.SingleThreadKernelServer(
+    kernel_server = server(
         peer_id=settings.peer_id,
         ipyc=server_ipyc,
         pickle_protocol=settings.ipyc_pkl_protocol,
     )
-    kernel_client = kernel_single.SingleThreadKernelClient(
+    kernel_client = client(
         peer_id=settings.peer_id,
         ipyc=client_ipyc,
         pickle_protocol=settings.ipyc_pkl_protocol,
