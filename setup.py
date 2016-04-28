@@ -32,8 +32,16 @@ except ImportError:
 # use readme for long descripion
 with codecs.open(os.path.join(repo_base, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
-for directive_re, replacement_re in [(':py:.*:', ''), (':envvar:', '')]:
+for directive_re, replacement_re in [
+    (':py:\S*?:`~(.*?)`', '`\g<1>`'),
+    (':py:\S*?:', ''),
+    (':envvar:', ''),
+]:
     long_description = re.sub(directive_re, replacement_re, long_description)
+
+if '--longdescription' in sys.argv:
+    print(long_description)
+    sys.exit(1)
 
 setup(
     name='cpy2py',
