@@ -22,39 +22,49 @@ from cpy2py.kernel import kernel_single, kernel_state
 DEFAULT_PKL_PROTO = 2  # prot2 is supported by all supported versions
 
 
+# storing and loading of initial state
+def _dump_any(obj):
+    return base64.b64encode(pickle.dumps(obj, DEFAULT_PKL_PROTO))
+
+
+def _load_any(obj_pkl):
+    return pickle.loads(base64.b64decode(obj_pkl))
+
+
 def dump_connector(connector):
     """Dump an IPyC connection connector"""
-    return base64.b64encode(pickle.dumps(connector, DEFAULT_PKL_PROTO))
+    return _dump_any(connector)
 
 
 def load_connector(connector_pkl):
     """Create an IPyC connection from a connector pickle"""
-    connector = pickle.loads(base64.b64decode(connector_pkl))
+    connector = _load_any(connector_pkl)
     return connector[0](*connector[1], **connector[2])
 
 
 def dump_kernel(kernel_client, kernel_server):
     """Dump kernel client and server classes"""
-    return base64.b64encode(pickle.dumps((kernel_client, kernel_server), DEFAULT_PKL_PROTO))
+    return _dump_any((kernel_client, kernel_server))
 
 
 def load_kernel(kernel_pkl):
     """Load kernel client and server classes"""
-    return pickle.loads(base64.b64decode(kernel_pkl))
+    return _load_any(kernel_pkl)
 
 
 def dump_initializer(initializers):
     """Dump initializer functions"""
     initializer_pkls = []
     for initializer in initializers:
-        initializer_pkls.append(base64.b64encode(pickle.dumps(initializer, DEFAULT_PKL_PROTO)))
+        initializer_pkls.append(_dump_any(initializer))
     return initializer_pkls
 
 
 def run_initializer(initializer_pkls):
     """Run initializer functions"""
     for initializer_pkl in initializer_pkls:
-        initializer = pickle.loads(base64.b64decode(initializer_pkl))
+        initializer = _load_any(initializer_pkl)
+        # run immediately in case there are dependencies during unpickling
         initializer()
 
 
