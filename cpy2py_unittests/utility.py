@@ -29,7 +29,7 @@ class TestEnvironment(cpy2py.TwinObject):
         self.twin_masters = {}
         self.autostart = autostart
 
-    def add_venv_master(self, executable=None, twinterpreter_id=None, requirements=None):
+    def add_venv_master(self, executable=None, twinterpreter_id=None, kernel=None, requirements=None):
         """
         Add a python virtual environment and twin master
 
@@ -39,7 +39,7 @@ class TestEnvironment(cpy2py.TwinObject):
         :type requirements: None or list[str]
         :return:
         """
-        parent_def = twin_master.TwinDef(executable, twinterpreter_id)
+        parent_def = twin_master.TwinDef(executable=executable, twinterpreter_id=twinterpreter_id, kernel=kernel)
         assert parent_def.twinterpreter_id not in self.twin_masters, "Collision in twinterpreter ids"
         # create virtual environment
         venv_dir = self._get_venv_dir(parent_def.twinterpreter_id)
