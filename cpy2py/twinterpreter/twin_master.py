@@ -221,9 +221,9 @@ class MainDef(object):
         if self.main_module is None:
             self._bootstrap_none()
         elif os.path.exists(self.main_module):
-            self._bootstrap_path(self.main_module)
+            self._bootstrap_path(str(self.main_module))
         else:
-            self._bootstrap_name(self.main_module)
+            self._bootstrap_name(str(self.main_module))
 
     @staticmethod
     def _bootstrap_none():
@@ -253,7 +253,7 @@ class MainDef(object):
         sys.modules['__main__'] = sys.modules['__cpy2py_main__'] = main_module
 
     def __repr__(self):
-        return "%s(main_module=%s, run_main=%s)" % (self.__class__.__name__, self.main_module, self.run_main)
+        return "%s(main_module=%r, run_main=%r)" % (self.__class__.__name__, self.main_module, self.run_main)
 
     def __eq__(self, other):
         try:
