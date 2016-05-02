@@ -200,7 +200,7 @@ class RequestDispatcher(object):
         """Forward a request to peer and return the result"""
         try:
             result_type, result_body = self.kernel_client.run_request((request_type, args))
-        except ipyc_exceptions.IPyCTerminated:
+        except (ipyc_exceptions.IPyCTerminated, IOError):
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         if result_type == __E_SUCCESS__:
             return result_body
