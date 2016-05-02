@@ -70,4 +70,10 @@ try:
 except NameError:
     stringabc = (str, bytes)
 
-__all__ = ['pickle', 'rangex', 'NullHandler', 'check_output', 'stringabc']
+if bytes == str:
+    str_to_bytes = str
+else:
+    def str_to_bytes(bstr):
+        return bytes(bstr, 'ascii')
+
+__all__ = ['pickle', 'rangex', 'NullHandler', 'check_output', 'stringabc', 'str_to_bytes']
