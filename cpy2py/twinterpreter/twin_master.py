@@ -229,6 +229,16 @@ class MainDef(object):
     def __repr__(self):
         return "%s(main_module=%s, run_main=%s)" % (self.__class__.__name__, self.main_module, self.run_main)
 
+    def __eq__(self, other):
+        try:
+            return self.main_module == other.main_module\
+                and self.run_main == other.run_main
+        except AttributeError:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return not self == other
+
 
 class TwinMaster(object):
     """
@@ -245,7 +255,7 @@ class TwinMaster(object):
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
 
-    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None):
+    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None, main_module=MainDef.FETCH_NAME, run_main=None):
         twin_def = TwinDef(executable, twinterpreter_id, kernel)
         try:
             master = cls._master_store[twin_def.twinterpreter_id]
@@ -254,7 +264,8 @@ class TwinMaster(object):
             cls._master_store[twin_def.twinterpreter_id] = self
             return self
         else:
-            assert master.twin_def == twin_def,\
+            main_def = MainDef(main_module, run_main)
+            assert master.twin_def == twin_def and master.main_def == main_def,\
                 "interpreter with same twinterpreter_id but different settings already exists"
             return master
 
