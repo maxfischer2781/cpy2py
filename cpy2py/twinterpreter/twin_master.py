@@ -120,8 +120,11 @@ class MainDef(object):
     :type main_module: str or None
     :param run_main: bootstrap ``__main__`` with ``__name__ == "__main__"``
     :type run_main: bool
+    :param restore_argv: whether to replicate the parent ``sys.argv``
+    :type restore_argv: bool
 
-    The paremeter ``main_module`` can be specified in several ways:
+    The paremeter ``main_module`` identifies the ``__main__`` module for future lookup.
+    It can be specified explicitly, or set to automatic detection.
 
     File Path
       Filesystem path to a module to execute, e.g. "/foo/bar.py". Will be
@@ -142,13 +145,34 @@ class MainDef(object):
 
     :py:const:`None`
       Do not bootstrap ``__main__``.
+
+    Setting ``run_main`` defines whether ``__main__`` is actually executed as a script;
+    that is, it satisfies ``__name__ == "__main__"``. Active code in ``__main__`` should
+    usually be guarded against running when imported as a module.
+
+    In most cases, twinterpreters and other elements are likely created from active code
+    in ``__main__``. Rerunning this in twinterpreters would duplicate such elements. The
+    default is thus to avoid executing such code again.
     """
     FETCH_PATH = "Use __main__ via absolute path"
     FETCH_NAME = "Use __main__ via module name"
 
-    def __init__(self, main_module=FETCH_NAME, run_main=False):
+    def __init__(self, main_module=True, run_main=False, restore_argv=False):
         self.main_module = main_module
         self.run_main = run_main
+        self._argv = []  # argv EXCLUDING first element (executable name)
+        self.restore_argv = restore_argv
+
+    @property
+    def restore_argv(self):
+        return bool(self._argv)
+
+    @restore_argv.setter
+    def restore_argv(self, value):
+        if value:
+            self._argv = sys.argv[1:]
+        else:
+            self._argv = []
 
     def _resolve_main(self, main_module):
         if main_module is True:
@@ -188,10 +212,12 @@ class MainDef(object):
         return {
             'main_module': self._resolve_main(self.main_module),
             'run_main': self.run_main,
+            '_argv': self._argv,
         }
 
     def bootstrap(self):
         assert self.main_module != self.FETCH_NAME and self.main_module != self.FETCH_PATH
+        sys.argv[1:] = self._argv[:]
         if self.main_module is None:
             self._bootstrap_none()
         elif os.path.exists(self.main_module):
@@ -255,7 +281,7 @@ class TwinMaster(object):
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
 
-    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None, main_module=MainDef.FETCH_NAME, run_main=None):
+    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None, main_module=MainDef.FETCH_NAME, run_main=None, restore_argv=False):
         twin_def = TwinDef(executable, twinterpreter_id, kernel)
         try:
             master = cls._master_store[twin_def.twinterpreter_id]
@@ -264,18 +290,18 @@ class TwinMaster(object):
             cls._master_store[twin_def.twinterpreter_id] = self
             return self
         else:
-            main_def = MainDef(main_module, run_main)
+            main_def = MainDef(main_module, run_main, restore_argv)
             assert master.twin_def == twin_def and master.main_def == main_def,\
                 "interpreter with same twinterpreter_id but different settings already exists"
             return master
 
-    def __init__(self, executable=None, twinterpreter_id=None, kernel=None, main_module=MainDef.FETCH_NAME, run_main=None):
+    def __init__(self, executable=None, twinterpreter_id=None, kernel=None, main_module=MainDef.FETCH_NAME, run_main=None, restore_argv=False):
         # avoid duplicate initialisation of singleton
         if self._initialized:
             return
         self._initialized = True
         self.twin_def = TwinDef(executable, twinterpreter_id, kernel)
-        self.main_def = MainDef(main_module, run_main)
+        self.main_def = MainDef(main_module, run_main, restore_argv)
         self._process = None
         self._kernel_server = None
         self._kernel_client = None
