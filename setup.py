@@ -17,72 +17,74 @@ import sys
 import codecs
 from setuptools import setup, find_packages
 
-repo_base = os.path.abspath(os.path.dirname(__file__))
+# guard against rerunning setup.py when bootstrapping __main__
+if __name__ == '__main__':
+    repo_base = os.path.abspath(os.path.dirname(__file__))
 
-# grab meta without import package
-sys.path.insert(0, os.path.join(repo_base, 'cpy2py'))
-import meta as cpy2py_meta
+    # grab meta without import package
+    sys.path.insert(0, os.path.join(repo_base, 'cpy2py'))
+    import meta as cpy2py_meta
 
-install_requires = []
-try:
-    import argparse
-except ImportError:
-    install_requires.append('argparse')
+    install_requires = []
+    try:
+        import argparse
+    except ImportError:
+        install_requires.append('argparse')
 
-# use readme for long descripion
-with codecs.open(os.path.join(repo_base, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
-for directive_re, replacement_re in [
-    (':py:\S*?:`~(.*?)`', '`\g<1>`'),
-    (':py:\S*?:', ''),
-    (':envvar:', ''),
-]:
-    long_description = re.sub(directive_re, replacement_re, long_description)
+    # use readme for long descripion
+    with codecs.open(os.path.join(repo_base, 'README.rst'), encoding='utf-8') as f:
+        long_description = f.read()
+    for directive_re, replacement_re in [
+        (':py:\S*?:`~(.*?)`', '`\g<1>`'),
+        (':py:\S*?:', ''),
+        (':envvar:', ''),
+    ]:
+        long_description = re.sub(directive_re, replacement_re, long_description)
 
-if '--longdescription' in sys.argv:
-    print(long_description)
-    sys.exit(1)
+    if '--longdescription' in sys.argv:
+        print(long_description)
+        sys.exit(1)
 
-setup(
-    name='cpy2py',
+    setup(
+        name='cpy2py',
 
-    # meta data
-    version=cpy2py_meta.__version__,
+        # meta data
+        version=cpy2py_meta.__version__,
 
-    description='Framework for combining different python interpeters',
-    long_description=long_description,
-    url='https://github.com/maxfischer2781/cpy2py',
+        description='Framework for combining different python interpeters',
+        long_description=long_description,
+        url='https://github.com/maxfischer2781/cpy2py',
 
-    author='Max Fischer',
-    author_email='maxfischer2781@gmail.com',
+        author='Max Fischer',
+        author_email='maxfischer2781@gmail.com',
 
-    license='Apache V2.0',
-    platforms=['Operating System :: OS Independent'],
-    classifiers=[
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache Software License',
-        # TODO: confirm others
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        # TODO: confirm others
-        'Programming Language :: Python :: Implementation :: CPython',
-        'Programming Language :: Python :: Implementation :: PyPy',
-        'Topic :: Software Development :: Interpreters',
-        'Topic :: Software Development :: Libraries :: Application Frameworks',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ],
-    keywords='interpreter framework development ipc processing pypy cpython',
+        license='Apache V2.0',
+        platforms=['Operating System :: OS Independent'],
+        classifiers=[
+            'Development Status :: 4 - Beta',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved :: Apache Software License',
+            # TODO: confirm others
+            'Programming Language :: Python :: 2.6',
+            'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3.3',
+            'Programming Language :: Python :: 3.4',
+            'Programming Language :: Python :: 3.5',
+            # TODO: confirm others
+            'Programming Language :: Python :: Implementation :: CPython',
+            'Programming Language :: Python :: Implementation :: PyPy',
+            'Topic :: Software Development :: Interpreters',
+            'Topic :: Software Development :: Libraries :: Application Frameworks',
+            'Topic :: Software Development :: Libraries :: Python Modules',
+        ],
+        keywords='interpreter framework development ipc processing pypy cpython',
 
-    # content
-    packages=find_packages(exclude=('cpy2py_*', 'dev_tools')),
-    install_requires=install_requires,
-    extras_require={
-        'example': ['matplotlib'],
-    },
-    # unit tests
-    test_suite='cpy2py_unittests',
-)
+        # content
+        packages=find_packages(exclude=('cpy2py_*', 'dev_tools')),
+        install_requires=install_requires,
+        extras_require={
+            'example': ['matplotlib'],
+        },
+        # unit tests
+        test_suite='cpy2py_unittests',
+    )
