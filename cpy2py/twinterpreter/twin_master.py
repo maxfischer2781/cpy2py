@@ -16,6 +16,9 @@ import os
 import errno
 import threading
 import time
+import sys
+import types
+import runpy
 
 from cpy2py.kernel import kernel_single, kernel_state, kernel_async
 from cpy2py.twinterpreter import bootstrap
@@ -109,6 +112,124 @@ class TwinDef(object):
         return not self == other
 
 
+class MainDef(object):
+    """
+    Definition on how to bootstrap ``__main__``
+
+    :param main_module: module path, name or directive to fetch ``__main__``
+    :type main_module: str or None
+    :param run_main: bootstrap ``__main__`` with ``__name__ == "__main__"``
+    :type run_main: bool
+
+    The paremeter ``main_module`` can be specified in several ways:
+
+    File Path
+      Filesystem path to a module to execute, e.g. "/foo/bar.py". Will be
+      run like invoking "python /foo/bar.py".
+
+    Module Name
+      Python module name/path to a module to execute, e.g. "foo.bar". Will be
+      run like invoking "python -m foo.bar".
+
+    :py:attr:`FETCH_PATH`
+      Use the file path of ``__main__``.
+
+    :py:attr:`FETCH_NAME`
+      Use the module name of ``__main__``.
+
+    :py:const:`True`
+      Try using :py:attr:`FETCH_NAME` if possible. Otherwise, use :py:attr:`FETCH_PATH`.
+
+    :py:const:`None`
+      Do not bootstrap ``__main__``.
+    """
+    FETCH_PATH = "Use __main__ via absolute path"
+    FETCH_NAME = "Use __main__ via module name"
+
+    def __init__(self, main_module=FETCH_NAME, run_main=False):
+        self.main_module = main_module
+        self.run_main = run_main
+
+    def _resolve_main(self, main_module):
+        if main_module is True:
+            try:
+                return self._get_main_name()
+            except ValueError:
+                return os.path.abspath(sys.modules['__main__'].__file__)
+        if main_module == self.FETCH_PATH:
+            return os.path.abspath(sys.modules['__main__'].__file__)
+        elif main_module == self.FETCH_NAME:
+            return self._get_main_name()
+        return main_module
+
+    @staticmethod
+    def _get_main_name():
+        """
+        Get the module name of ``__main__``
+
+        :raises: :py:exc:`ValueError` if ``__main__`` does not provide its name
+        :returns: full module/package name of ``__main__``
+        """
+        main = sys.modules['__main__']
+        try:
+            return main.__spec__.name
+        except AttributeError:
+            pass
+        try:
+            package, name = main.__package__, os.path.splitext(os.path.basename(main.__file__))[0]
+            if package is None and os.path.abspath(os.path.dirname(main.__file__)) != os.path.abspath(os.getcwd()):
+                raise AttributeError
+        except AttributeError:
+            raise ValueError("Cannot derive path if __main__ not run as module/package (see 'python -m')")
+        else:
+            return (package + '.' + name) if package else name
+
+    def __getstate__(self):
+        return {
+            'main_module': self._resolve_main(self.main_module),
+            'run_main': self.run_main,
+        }
+
+    def bootstrap(self):
+        assert self.main_module != self.FETCH_NAME and self.main_module != self.FETCH_PATH
+        if self.main_module is None:
+            self._bootstrap_none()
+        elif os.path.exists(self.main_module):
+            self._bootstrap_path(self.main_module)
+        else:
+            self._bootstrap_name(self.main_module)
+
+    @staticmethod
+    def _bootstrap_none():
+        sys.modules['__cpy2py_main__'] = sys.modules['__cpy2py_bootstrap__'] = sys.modules['__main__']
+
+    def _bootstrap_path(self, main_path):
+        # See https://github.com/ipython/ipython/issues/4698
+        if os.path.splitext(os.path.basename(main_path))[0] == 'ipython':
+            return self._bootstrap_none()
+        main_name = '__main__' if self.run_main else '__cpy2py_main__'
+        main_dict = runpy.run_path(main_path, run_name=main_name)
+        self._bootstrap_set_main(main_dict)
+
+    def _bootstrap_name(self, mod_name):
+        # guard against running __main__ files of packages
+        if not self.run_main and (mod_name == "__main__" or mod_name.endswith(".__main__")):
+            return self._bootstrap_none()
+        main_name = '__main__' if self.run_main else '__cpy2py_main__'
+        main_dict = runpy.run_module(mod_name, run_name=main_name, alter_sys=True)
+        self._bootstrap_set_main(main_dict)
+
+    @staticmethod
+    def _bootstrap_set_main(main_dict):
+        sys.modules['__cpy2py_bootstrap__'] = sys.modules['__main__']
+        main_module = types.ModuleType('__cpy2py_main__')
+        main_module.__dict__.update(main_dict)
+        sys.modules['__main__'] = sys.modules['__cpy2py_main__'] = main_module
+
+    def __repr__(self):
+        return "%s(main_module=%s, run_main=%s)" % (self.__class__.__name__, self.main_module, self.run_main)
+
+
 class TwinMaster(object):
     """
     Manager for a twinterpeter
@@ -117,7 +238,7 @@ class TwinMaster(object):
     use any twinterpeters, a corresponding TwinMaster must be created and its
     :py:meth:`TwinMaster.start` method called.
 
-    :see: :py:class:`~.TwinDef` for parameters and their interpretation.
+    :see: :py:class:`~.TwinDef` and :py:class:`~.MainDef` for parameters and their meaning.
     """
     _initialized = False
 
@@ -197,6 +318,8 @@ class TwinMaster(object):
                     '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
                     '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
                     '--kernel', bootstrap.dump_kernel(*self.twin_def.kernel),
+                    '--main-def', bootstrap.dump_main_def(MainDef()),
+                    '--cwd', os.getcwd(),
                     '--initializer',
                 ] + bootstrap.dump_initializer(kernel_state.TWIN_GROUP_STATE.initializers),
                 env=self._twin_env()
