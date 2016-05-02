@@ -16,7 +16,7 @@
 CPy2Py
 ++++++
 
-|Code Health| |Test Status|
+|landscape| |travis| |pypi|
 
 Multi-intepreter execution environment
 
@@ -24,13 +24,17 @@ Multi-intepreter execution environment
 to the main interpreter, other interpreters are run to execute parts of
 the application.
 
-.. |Code Health| image:: https://landscape.io/github/maxfischer2781/cpy2py/master/landscape.svg?style=flat
+.. |landscape| image:: https://landscape.io/github/maxfischer2781/cpy2py/master/landscape.svg?style=flat
    :target: https://landscape.io/github/maxfischer2781/cpy2py/master
    :alt: Code Health
 
-.. |Test Status| image:: https://travis-ci.org/maxfischer2781/cpy2py.svg?branch=master
+.. |travis| image:: https://travis-ci.org/maxfischer2781/cpy2py.svg?branch=master
     :target: https://travis-ci.org/maxfischer2781/cpy2py
     :alt: Test Health
+
+.. |pypi| image:: https://img.shields.io/pypi/v/cpy2py.svg
+    :target: https://pypi.python.org/pypi/cpy2py
+    :alt: PyPI Package
 
 .. contents:: **Table of Contents**
     :depth: 2
