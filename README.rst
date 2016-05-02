@@ -124,13 +124,14 @@ Features
 
 * Any pickle'able callable can be dispatched to another interpreter.
 
-* Object functionality is almost fully covered!
+* Objects can natively support twinterpreters.
 
-  * Objects may reside in any interpreter and transparently interact.
+  * Objects may be set to reside in any interpreter.
+
+  * Once created, objects use :py:mod:`cpy2py` completely transparently.
 
   * Both class and instance attributes work as expected.
-
-  * Methods, classmethods and staticmethods work transparently.
+    Methods, classmethods, staticmethods and descriptors are fully supported.
 
   * Inheritance is fully supported, including multiple inheritance.
     Affiliation to interpreters can be changed freely.
@@ -148,8 +149,32 @@ Features
 Gotchas/Limitations
 -------------------
 
-* Calls across interpreters are blocking and not threadsafe. If recursion switches between twinterpreters, :py:class:`cpy2py.TwinMaster` must use the ``'async'`` kernel.
+* Calls across interpreters are blocking and not threadsafe.
+  If recursion switches between twinterpreters, :py:class:`cpy2py.TwinMaster` must use the ``'async'`` kernel.
 
-* Module level settings are not synchronized. For example, configuration of :py:mod:`logging` is not applied to twinterpreters. Use :py:class:`~cpy2py.twinterpreter.group_state.TwinGroupState`. See also issue #7.
+* Module level settings are not synchronized.
+  For example, configuration of :py:mod:`logging` is not applied to twinterpreters.
+  Use :py:class:`~cpy2py.twinterpreter.group_state.TwinGroupState`.
 
 * A :py:mod:`weakref` to objects only takes local references into account, not cross-interpreter references.
+
+Performance
+-----------
+
+Dispatching to another twinterpreter adds about 200 - 300 us of overhead.
+This is mainly due to serialization for the IPC between the interpreters.
+
+In general, twinterpreters get faster the shorter they have to wait between requests.
+``pypy`` twinterpreters benefit from a high number of requests, allowing their JIT to warm up.
+Python3 connections are the fastest, provided that both twinterpreters support pickle protocol 4.
+
+You can benchmark the overhead yourself using the :py:mod:`cpy2py_benchmark` tools.
+
+==================== ==================== ==================== ====================
+               pypy2               15x15k                30x5k                300x1
+==================== ==================== ==================== ====================
+               pypy2        187 ±  1.5 us        228 ±  2.5 us        505 ± 51.8 us
+               pypy3        165 ±  1.3 us        209 ±  2.4 us        402 ±  8.0 us
+           python2.7        178 ±  0.6 us        139 ±  0.3 us        239 ±  7.6 us
+           python3.4        149 ±  0.4 us        118 ±  0.2 us        258 ±  8.0 us
+==================== ==================== ==================== ====================
