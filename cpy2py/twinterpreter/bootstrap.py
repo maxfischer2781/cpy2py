@@ -24,61 +24,63 @@ DEFAULT_PKL_PROTO = 2  # prot2 is supported by all supported versions
 
 
 # storing and loading of initial state
-def _dump_any(obj):
+def dump_any(obj):
+    """Default for dumping arbitrary objects to CLI"""
     return base64.b64encode(pickle.dumps(obj, DEFAULT_PKL_PROTO))
 
 
-def _load_any(obj_pkl):
+def load_any(obj_pkl):
+    """Default for loading arbitrary objects from CLI"""
     return pickle.loads(base64.b64decode(obj_pkl))
 
 
 def dump_connector(connector):
     """Dump an IPyC connection connector"""
-    return _dump_any(connector)
+    return dump_any(connector)
 
 
 def load_connector(connector_pkl):
     """Create an IPyC connection from a connector pickle"""
-    connector = _load_any(connector_pkl)
+    connector = load_any(connector_pkl)
     return connector[0](*connector[1], **connector[2])
 
 
 def dump_kernel(kernel_client, kernel_server):
     """Dump kernel client and server classes"""
-    return _dump_any((kernel_client, kernel_server))
+    return dump_any((kernel_client, kernel_server))
 
 
 def load_kernel(kernel_pkl):
     """Load kernel client and server classes"""
-    return _load_any(kernel_pkl)
+    return load_any(kernel_pkl)
 
 
 def dump_initializer(initializers):
     """Dump initializer functions"""
     initializer_pkls = []
     for initializer in initializers:
-        initializer_pkls.append(_dump_any(initializer))
+        initializer_pkls.append(dump_any(initializer))
     return initializer_pkls
 
 
 def run_initializer(initializer_pkls):
     """Run initializer functions"""
     for initializer_pkl in initializer_pkls:
-        initializer = _load_any(initializer_pkl)
+        initializer = load_any(initializer_pkl)
         # run immediately in case there are dependencies during unpickling
         initializer()
 
 
 def dump_main_def(main_def):
     """Dump the main module"""
-    return _dump_any(main_def)
+    return dump_any(main_def)
 
 
 def run_main_def(main_def_pkl):
     """Bootstrap a main module"""
     if main_def_pkl is None:
         return
-    main_def = _load_any(main_def_pkl)
+    main_def = load_any(main_def_pkl)
     return main_def.bootstrap()
 
 
@@ -140,11 +142,12 @@ def bootstrap_kernel():
     settings = parser.parse_args()
     assert kernel_state.TWIN_ID == settings.twin_id
     assert kernel_state.MASTER_ID == settings.master_id
-    # setup environment/namespace first
+    # setup parent environment/namespace first
     if settings.cwd:
         os.chdir(settings.cwd)
     run_main_def(settings.main_def)
     # run initializers before creating any resources
+    # TwinMaster will run the finalizers directly
     run_initializer(settings.initializer)
     server_ipyc = load_connector(settings.server_ipyc)
     client_ipyc = load_connector(settings.client_ipyc)
