@@ -18,6 +18,7 @@ import os
 
 from cpy2py.utility.compat import pickle
 from cpy2py.kernel import kernel_single, kernel_state
+from cpy2py.kernel.kernel_exceptions import TwinterpeterTerminated
 
 
 DEFAULT_PKL_PROTO = 2  # prot2 is supported by all supported versions
@@ -168,7 +169,10 @@ def bootstrap_kernel():
         pickle_protocol=settings.ipyc_pkl_protocol,
     )
     exit_code = kernel_server.run()
-    kernel_client.stop()
+    try:
+        kernel_client.stop()
+    except TwinterpeterTerminated:
+        pass
     sys.exit(exit_code)
 
 
