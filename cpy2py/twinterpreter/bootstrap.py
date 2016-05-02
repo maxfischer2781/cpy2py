@@ -16,7 +16,7 @@ import sys
 import base64
 import os
 
-from cpy2py.utility.compat import pickle
+from cpy2py.utility.compat import pickle, str_to_bytes
 from cpy2py.kernel import kernel_single, kernel_state
 from cpy2py.kernel.kernel_exceptions import TwinterpeterTerminated
 
@@ -32,7 +32,7 @@ def dump_any(obj):
 
 def load_any(obj_pkl):
     """Default for loading arbitrary objects from CLI"""
-    return pickle.loads(base64.b64decode(obj_pkl))
+    return pickle.loads(base64.b64decode(str_to_bytes(obj_pkl)))
 
 
 def dump_connector(connector):
