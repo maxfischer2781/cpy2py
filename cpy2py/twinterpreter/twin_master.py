@@ -258,12 +258,13 @@ class TwinMaster(object):
                 "interpreter with same twinterpreter_id but different settings already exists"
             return master
 
-    def __init__(self, executable=None, twinterpreter_id=None, kernel=None):
+    def __init__(self, executable=None, twinterpreter_id=None, kernel=None, main_module=MainDef.FETCH_NAME, run_main=None):
         # avoid duplicate initialisation of singleton
         if self._initialized:
             return
         self._initialized = True
         self.twin_def = TwinDef(executable, twinterpreter_id, kernel)
+        self.main_def = MainDef(main_module, run_main)
         self._process = None
         self._kernel_server = None
         self._kernel_client = None
@@ -318,7 +319,7 @@ class TwinMaster(object):
                     '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
                     '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
                     '--kernel', bootstrap.dump_kernel(*self.twin_def.kernel),
-                    '--main-def', bootstrap.dump_main_def(MainDef()),
+                    '--main-def', bootstrap.dump_main_def(self.main_def),
                     '--cwd', os.getcwd(),
                     '--initializer',
                 ] + bootstrap.dump_initializer(kernel_state.TWIN_GROUP_STATE.initializers),
