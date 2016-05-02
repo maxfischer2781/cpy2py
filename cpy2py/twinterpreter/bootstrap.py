@@ -14,6 +14,7 @@
 import argparse
 import sys
 import base64
+import os
 
 from cpy2py.utility.compat import pickle
 from cpy2py.kernel import kernel_single, kernel_state
@@ -68,6 +69,19 @@ def run_initializer(initializer_pkls):
         initializer()
 
 
+def dump_main_def(main_def):
+    """Dump the main module"""
+    return _dump_any(main_def)
+
+
+def run_main_def(main_def_pkl):
+    """Bootstrap a main module"""
+    if main_def_pkl is None:
+        return
+    main_def = _load_any(main_def_pkl)
+    return main_def.bootstrap()
+
+
 def bootstrap_kernel():
     """
     Deploy a kernel to make this interpreter a twinterpreter
@@ -77,6 +91,7 @@ def bootstrap_kernel():
           to launch a twinterpreter.
     """
     parser = argparse.ArgumentParser("Python Twinterpreter Kernel")
+    # identification
     parser.add_argument(
         '--peer-id',
         help="unique identifier for our owner",
@@ -89,6 +104,7 @@ def bootstrap_kernel():
         '--master-id',
         help="unique identifier for the master twinterpreter",
     )
+    # communication
     parser.add_argument(
         '--server-ipyc',
         help="base 64 encoded pickled server connection",
@@ -106,6 +122,15 @@ def bootstrap_kernel():
         '--kernel',
         help="base 64 encoded kernel client and server class",
     )
+    # internal environment
+    parser.add_argument(
+        '--main-def',
+        help="base 64 encoded main module bootstrap",
+    )
+    parser.add_argument(
+        '--cwd',
+        help="current work dir to use",
+    )
     parser.add_argument(
         '--initializer',
         nargs='*',
@@ -115,6 +140,10 @@ def bootstrap_kernel():
     settings = parser.parse_args()
     assert kernel_state.TWIN_ID == settings.twin_id
     assert kernel_state.MASTER_ID == settings.master_id
+    # setup environment/namespace first
+    if settings.cwd:
+        os.chdir(settings.cwd)
+    run_main_def(settings.main_def)
     # run initializers before creating any resources
     run_initializer(settings.initializer)
     server_ipyc = load_connector(settings.server_ipyc)
