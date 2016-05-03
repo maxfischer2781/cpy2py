@@ -79,6 +79,8 @@ class TwinDef(object):
             executable = proc_tools.get_executable_path(executable)
         elif executable is None:
             executable = proc_tools.get_executable_path(twinterpreter_id)
+        else:
+            executable = proc_tools.get_executable_path(executable)
         self.executable = executable
         self.twinterpreter_id = twinterpreter_id
         self.pickle_protocol = proc_tools.get_best_pickle_protocol(self.executable)
