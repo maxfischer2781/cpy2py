@@ -119,7 +119,7 @@ class MainDef(object):
     Definition on how to bootstrap ``__main__``
 
     :param main_module: module path, name or directive to fetch ``__main__``
-    :type main_module: str or None
+    :type main_module: str, bool or None
     :param run_main: bootstrap ``__main__`` with ``__name__ == "__main__"``
     :type run_main: bool
     :param restore_argv: whether to replicate the parent ``sys.argv``
@@ -232,8 +232,9 @@ class MainDef(object):
         sys.modules['__cpy2py_main__'] = sys.modules['__cpy2py_bootstrap__'] = sys.modules['__main__']
 
     def _bootstrap_path(self, main_path):
-        # See https://github.com/ipython/ipython/issues/4698
-        if os.path.splitext(os.path.basename(main_path))[0] == 'ipython':
+        # ipython - see https://github.com/ipython/ipython/issues/4698
+        # utrunner - PyCharm unittests
+        if os.path.splitext(os.path.basename(main_path))[0] in ('ipython', 'utrunner'):
             return self._bootstrap_none()
         main_name = '__main__' if self.run_main else '__cpy2py_main__'
         main_dict = runpy.run_path(main_path, run_name=main_name)
@@ -283,7 +284,7 @@ class TwinMaster(object):
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
 
-    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None, main_module=MainDef.FETCH_NAME, run_main=None, restore_argv=False):
+    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None, restore_argv=False):
         twin_def = TwinDef(executable, twinterpreter_id, kernel)
         try:
             master = cls._master_store[twin_def.twinterpreter_id]
@@ -297,7 +298,7 @@ class TwinMaster(object):
                 "interpreter with same twinterpreter_id but different settings already exists"
             return master
 
-    def __init__(self, executable=None, twinterpreter_id=None, kernel=None, main_module=MainDef.FETCH_NAME, run_main=None, restore_argv=False):
+    def __init__(self, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None, restore_argv=False):
         # avoid duplicate initialisation of singleton
         if self._initialized:
             return
