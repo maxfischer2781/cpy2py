@@ -7,6 +7,7 @@ import os
 
 from cpy2py import TwinMaster
 from cpy2py.utility.compat import rangex
+from cpy2py.utility.proc_tools import get_executable_path
 import argparse
 
 
@@ -39,7 +40,7 @@ class TimingVector(object):
         avg = self.average
         err = self.error
         if avg is None:
-            return u'-- ± -- s'
+            return u' --  ± ---- s'
         elif avg >= 1.0:
             return u'%3d ±%3d.%1d s' % (avg, err, (err * 10) % 10)
         elif avg > 0.001:
@@ -84,6 +85,12 @@ def main():
     )
     settings = cli.parse_args()
     interpreters = settings.interpreter
+    for interpreter in interpreters[:]:
+        try:
+            _ = get_executable_path(interpreter)
+        except OSError as err:
+            interpreters.remove(interpreter)
+            print("Ignoring interpreter:", interpreter, err.__class__.__name__, err)
     repeats = []
     for test in settings.repeats:
         test = test.split(':', 2)
@@ -98,7 +105,7 @@ def main():
                 sys.stdout.flush()
                 time_overhead(interpreter, count, total, call, reply)
             results[name][interpreter] = total, call, reply
-        print('Test', name, 'Done', ' ' * 20)
+        print('Test', name, 'Done', ' ' * 80)
     print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
     print('%20s %20s %20s %20s' % ('interpreter', 'total', 'call', 'reply'))
     print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
