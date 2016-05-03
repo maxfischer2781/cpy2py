@@ -58,9 +58,9 @@ class TestPingPongCall(unittest.TestCase):
     def test_bounce_lots(self):
         pypy_instance = PyPyng()
         py_instance = Pyng()
-        for bounces in rangex(1, 200, 20):
+        for bounces in rangex(1, 100, 20):
             self.assertEqual(py_instance.__class__.__name__, pypy_instance.play(py_instance, bounces))
             self.assertEqual(pypy_instance.__class__.__name__, py_instance.play(pypy_instance, bounces))
-        for bounces in rangex(0, 200, 20):
+        for bounces in rangex(0, 100, 20):
             self.assertEqual(pypy_instance.__class__.__name__, pypy_instance.play(py_instance, bounces))
             self.assertEqual(py_instance.__class__.__name__, py_instance.play(pypy_instance, bounces))
