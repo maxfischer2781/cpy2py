@@ -154,7 +154,7 @@ Gotchas/Limitations
 
 * Module level settings are not synchronized.
   For example, configuration of :py:mod:`logging` is not applied to twinterpreters.
-  Use :py:class:`~cpy2py.twinterpreter.group_state.TwinGroupState`.
+  Use :py:class:`~cpy2py.twinterpreter.group_state.TwinGroupState` for initialisation, or write modules aware of twinterpreters.
 
 * A :py:mod:`weakref` to objects only takes local references into account, not cross-interpreter references.
 

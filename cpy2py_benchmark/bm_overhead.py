@@ -59,30 +59,30 @@ def time_overhead(executable, count, total, call, reply):
         start_time = time.time()
         twin_time = twinterpreter.execute(time.time)
         end_time = time.time()
-        total.pushback(end_time-start_time)
-        call.pushback(twin_time-start_time)
-        reply.pushback(end_time-twin_time)
+        total.pushback(end_time - start_time)
+        call.pushback(twin_time - start_time)
+        reply.pushback(end_time - twin_time)
     # cleanup
     twinterpreter.destroy()
 
-CLI = argparse.ArgumentParser(
-    "Test overhead for dispatching function calls"
-)
-CLI.add_argument(
-    '--repeats',
-    nargs='+',
-    help='Tests to run in the form <count>:<tries>:<name>. [%(default)s]',
-    default=['15000:15:15x15k', '5000:30:30x5k', '1:50:50x1', '1:1500:1.5kx1']
-)
-CLI.add_argument(
-    '--interpreter',
-    nargs='+',
-    help='Interpreters to use. [%(default)s]',
-    default=['pypy', 'pypy3', 'python2.6', 'python2.7', 'python3.4']
-)
 
-if __name__ == "__main__":
-    settings = CLI.parse_args()
+def main():
+    cli = argparse.ArgumentParser(
+        "Test overhead for dispatching function calls"
+    )
+    cli.add_argument(
+        '--repeats',
+        nargs='+',
+        help='Tests to run in the form <count>:<tries>:<name>. [%(default)s]',
+        default=['15000:15:15x15k', '5000:30:30x5k', '1:50:50x1', '1:1500:1.5kx1']
+    )
+    cli.add_argument(
+        '--interpreter',
+        nargs='+',
+        help='Interpreters to use. [%(default)s]',
+        default=['pypy', 'pypy3', 'python2.6', 'python2.7', 'python3.4']
+    )
+    settings = cli.parse_args()
     interpreters = settings.interpreter
     repeats = []
     for test in settings.repeats:
@@ -94,28 +94,30 @@ if __name__ == "__main__":
         for interpreter in interpreters:
             total, call, reply = TimingVector(), TimingVector(), TimingVector()
             for idx in rangex(tries):
-                sys.stdout.write(' '.join(('Test', name, '=>', interpreter, str(idx), '/', str(tries), ' '*20, '\r')))
+                sys.stdout.write(' '.join(('Test', name, '=>', interpreter, str(idx), '/', str(tries), ' ' * 20, '\r')))
                 sys.stdout.flush()
                 time_overhead(interpreter, count, total, call, reply)
             results[name][interpreter] = total, call, reply
-        print('Test', name, 'Done', ' '*20)
-    print("="*20, "="*20, "="*20, "="*20)
+        print('Test', name, 'Done', ' ' * 20)
+    print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
     print('%20s %20s %20s %20s' % ('interpreter', 'total', 'call', 'reply'))
-    print("="*20, "="*20, "="*20, "="*20)
+    print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
     for _, _, name in repeats:
         for key in interpreters:
             tot, call, reply = results[name][key]
             print(u'%10s [%7s] %20s %20s %20s' % (key, name, tot, call, reply))
-        print("="*20, "="*20, "="*20, "="*20)
+        print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
     print('\n\n\n')
-    print(*(["="*20] * (len(repeats) + 1)))
+    print(*(["=" * 20] * (len(repeats) + 1)))
     print(os.path.splitext(os.path.basename(sys.executable))[0].rjust(20), *['%20s' % name for _, _, name in repeats])
-    print(*(["="*20] * (len(repeats) + 1)))
+    print(*(["=" * 20] * (len(repeats) + 1)))
     for key in interpreters:
         print(key.rjust(20), end=" ")
         for _, _, name in repeats:
             print(u'%20s' % results[name][key][0], end=" ")
         print("")
-    print(*(["="*20] * (len(repeats) + 1)))
+    print(*(["=" * 20] * (len(repeats) + 1)))
     print('\n\n\n')
 
+if __name__ == "__main__":
+    main()
