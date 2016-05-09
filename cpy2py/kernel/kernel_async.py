@@ -61,7 +61,7 @@ class AsyncKernelServer(SingleThreadKernelServer):
 class AsyncKernelClient(SingleThreadKernelClient):
     def __init__(self, peer_id, ipyc, pickle_protocol=2):
         SingleThreadKernelClient.__init__(self, peer_id=peer_id, ipyc=ipyc, pickle_protocol=pickle_protocol)
-        self._request_send_lock = threading.Lock()
+        self._request_send_lock = threading.RLock()
         # request_id => (signal, reply)
         self._requests = {}
         self._terminate = threading.Event()
@@ -74,25 +74,39 @@ class AsyncKernelClient(SingleThreadKernelClient):
         self._terminate.clear()
         try:
             while not self._terminate.is_set():
+                self._logger.warning('Client Listening [%s]', kernel_state.TWIN_ID)
                 request_id, reply_body = self._client_recv()
-                self._requests[request_id][1] = reply_body
-                self._requests[request_id][0].set()
+                request = self._requests.pop(request_id)
+                request[1] = reply_body
+                request[0].set()
+                del request
         except (ipyc_exceptions.IPyCTerminated, EOFError):
             self._terminate.set()
 
     def run_request(self, request_body):
         my_id = threading.current_thread().ident
-        request_done = threading.Event()
-        self._requests[my_id] = [request_done, None]
         with self._request_send_lock:
+            self._requests[my_id] = my_request = [threading.Event(), self.request_dispatcher.empty_reply]
             self._client_send((my_id, request_body))
-        request_done.wait()
-        reply_body = self._requests.pop(my_id)[1]
-        return reply_body
+        my_request[0].wait()
+        return my_request[1]
 
     def stop(self):
-        self._terminate.set()
-        SingleThreadKernelClient.stop(self)
+        with self._request_send_lock:
+            self._terminate.set()
+            return SingleThreadKernelClient.stop(self)
+
+    def stop_local(self):
+        """Shutdown the local server"""
+        with self._request_send_lock:
+            self._terminate.set()
+            while True:
+                try:
+                    self._requests.popitem()[1][0].set()
+                except KeyError:
+                    break
+        SingleThreadKernelClient.stop_local(self)
+
 
 SERVER = AsyncKernelServer
 CLIENT = AsyncKernelClient

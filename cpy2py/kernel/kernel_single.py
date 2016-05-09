@@ -101,7 +101,7 @@ class SingleThreadKernelServer(object):
 
     def _serve_requests(self):
         while not self._terminate.is_set():
-            self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
+            self._logger.warning('Server Listening [%s]', kernel_state.TWIN_ID)
             request_id, directive = self._server_recv()
             self.request_handler.serve_request(request_id, directive)
 
@@ -152,13 +152,17 @@ class SingleThreadKernelClient(object):
         return reply_body
 
     def stop(self):
-        """Shutdown the peer's server"""
+        """Shutdown all servers"""
         if self.request_dispatcher.shutdown_peer():
-            self._ipyc.close()
-            del kernel_state.KERNEL_CLIENTS[self.peer_id]
-            del kernel_state.KERNEL_INTERFACE[self.peer_id]
+            self.stop_local()
             return True
         return False
+
+    def stop_local(self):
+        """Shutdown the local server"""
+        self._ipyc.close()
+        del kernel_state.KERNEL_CLIENTS[self.peer_id]
+        del kernel_state.KERNEL_INTERFACE[self.peer_id]
 
     def __repr__(self):
         return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())

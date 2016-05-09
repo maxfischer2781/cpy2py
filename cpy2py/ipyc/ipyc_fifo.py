@@ -15,6 +15,9 @@ import atexit
 import os
 import shutil
 import tempfile
+import time
+
+from cpy2py.utility.compat import inf
 
 
 class DuplexFifoIPyC(object):
@@ -48,8 +51,23 @@ class DuplexFifoIPyC(object):
 
     def close(self):
         """Close connections"""
-        self._fifo_read.close()
-        self._fifo_write.close()
+        return self._close_force(self._fifo_read) and self._close_force(self._fifo_write)
+
+    def _close_force(self, file_obj, max_tries=inf, max_time=30):
+        """Ensure a file is closed"""
+        close_time, close_tries = lambda s=time.time(): time.time() - s, 1
+        while not file_obj.closed:
+            try:
+                file_obj.close()
+            except IOError:  # concurrent operation on same file from threading
+                if close_time() < max_time and close_tries < max_tries:
+                    close_tries += 1
+                    time.sleep(1E-6)
+                    continue
+                raise
+            else:
+                break
+        return file_obj.closed
 
     # file interface
     def read(self, size=None):

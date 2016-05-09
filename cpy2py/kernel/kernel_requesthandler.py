@@ -21,12 +21,17 @@ from cpy2py.kernel.kernel_exceptions import StopTwinterpreter, TwinterpeterTermi
 
 # Message Enums
 # twin call type
+# # internal
 __E_SHUTDOWN__ = -1
+__E_NOOP__ = -2
+# # calls
 __E_CALL_FUNC__ = 11
 __E_CALL_METHOD__ = 12
+# # attributes
 __E_GET_ATTRIBUTE__ = 21
 __E_SET_ATTRIBUTE__ = 22
 __E_DEL_ATTRIBUTE__ = 23
+# instantiation/references
 __E_INSTANTIATE__ = 31
 __E_REF_INCR__ = 32
 __E_REF_DECR__ = 33
@@ -36,6 +41,7 @@ __E_EXCEPTION__ = 102
 
 E_SYMBOL = {
     __E_SHUTDOWN__: '__E_SHUTDOWN__',
+    __E_NOOP__: '__E_NOOP__',
     __E_CALL_FUNC__: '__E_CALL_FUNC__',
     __E_CALL_METHOD__: '__E_CALL_METHOD__',
     __E_GET_ATTRIBUTE__: '__E_GET_ATTRIBUTE__',
@@ -79,6 +85,7 @@ class RequestHandler(object):
 
     def serve_request(self, request_id, directive):
         """Serve a request from :py:meth:`_dispatch_request`"""
+        # unpack request
         try:
             directive_type, directive_body = directive
             directive_symbol = E_SYMBOL[directive_type]
@@ -86,6 +93,7 @@ class RequestHandler(object):
         except (KeyError, ValueError) as err:
             # error in lookup or unpacking
             raise CPy2PyException(err)
+        # run request
         try:
             self._logger.warning('Directive %s', directive_symbol)
             response = directive_method(directive_body)
@@ -191,10 +199,14 @@ class RequestDispatcher(object):
     :param kernel_client: client sending requests and receiving replies
     :type kernel_client: :py:class:`~cpy2py.kernel.kernel_single.SingleThreadKernelClient`
     """
+    #: placeholder for replies that have not been served
+    empty_reply = (None, None)
+
     def __init__(self, peer_id, kernel_client):
         self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.dispatcher' % (kernel_state.TWIN_ID, peer_id))
         self.peer_id = peer_id
         self.kernel_client = kernel_client
+        self.exit_code = None
 
     def _dispatch_request(self, request_type, *args):
         """Forward a request to peer and return the result"""
@@ -207,7 +219,10 @@ class RequestDispatcher(object):
         elif result_type == __E_EXCEPTION__:
             raise result_body
         elif result_type == __E_SHUTDOWN__:
+            self.exit_code = result_body
             return True
+        elif result_type is None:
+            raise TwinterpeterTerminated(twin_id=self.peer_id)
         raise RuntimeError
 
     def dispatch_call(self, call, *call_args, **call_kwargs):
@@ -243,7 +258,12 @@ class RequestDispatcher(object):
         return self._dispatch_request(__E_REF_DECR__, instance)
 
     def shutdown_peer(self, message='shutdown'):
+        """Tell peer to shut down"""
         return self._dispatch_request(__E_SHUTDOWN__, message)
+
+    def noop(self):
+        """Send a noop to release blocking streams"""
+        return self._dispatch_request(__E_NOOP__, None)
 
     def stop(self):
         return self.kernel_client.stop()
