@@ -101,7 +101,8 @@ class SingleThreadKernelServer(object):
 
     def _serve_requests(self):
         while not self._terminate.is_set():
-            self._logger.warning('Server Listening [%s]', kernel_state.TWIN_ID)
+            if __debug__:
+                self._logger.warning('Server Listening [%s]', kernel_state.TWIN_ID)
             request_id, directive = self._server_recv()
             self.request_handler.serve_request(request_id, directive)
 

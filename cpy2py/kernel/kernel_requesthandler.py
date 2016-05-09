@@ -88,14 +88,14 @@ class RequestHandler(object):
         # unpack request
         try:
             directive_type, directive_body = directive
-            directive_symbol = E_SYMBOL[directive_type]
             directive_method = self._directive_method[directive_type]
         except (KeyError, ValueError) as err:
             # error in lookup or unpacking
             raise CPy2PyException(err)
         # run request
         try:
-            self._logger.warning('Directive %s', directive_symbol)
+            if __debug__:
+                self._logger.warning('Directive %s', E_SYMBOL[directive_type])
             response = directive_method(directive_body)
         except StopTwinterpreter as err:
             self.kernel_server.send_reply(request_id, (__E_SHUTDOWN__, err.exit_code))
