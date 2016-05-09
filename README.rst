@@ -122,13 +122,19 @@ What's there is more than sufficient to significantly enhance your applications.
 Features
 --------
 
-* Any pickle'able callable can be dispatched to another interpreter.
+* Seamlessly integrates into python code.
 
-* Objects can natively support twinterpreters.
+  * All internals are wrapped away behind the plain python interfaces.
+    No eval, exec or code strings required.
 
-  * Objects may be set to reside in any interpreter.
+  * Lightweight hooks optimize objects and functions for use with :py:mod:`cpy2py`.
 
-  * Once created, objects use :py:mod:`cpy2py` completely transparently.
+  * If needed, **any** pickle'able callable can be dispatched to another interpreter.
+
+* Objects natively integrate with twinterpreters.
+
+  * Objects can live in a specific interpreter, with proxies replacing them in others.
+    Classes and instances transparently interact with :py:mod:`cpy2py` in the background.
 
   * Both class and instance attributes work as expected.
     Methods, classmethods, staticmethods and descriptors are fully supported.
