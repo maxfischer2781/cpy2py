@@ -104,6 +104,9 @@ All such loggers are children of the ``__cpy2py__`` logger. By default,
 no active handlers are attached and propagation is disabled. If needed,
 you reconfigure them like any other :py:mod:`logging` logger to suit your
 needs.
+Note that if python is run with the `-O` flag, several logging calls are
+skipped entirely to improve performance.
+
 
 For small scale debugging, one can set the environment variable
 :envvar:`CPY2PY_DEBUG`. If it is defined and not empty, logging output
@@ -169,6 +172,7 @@ Performance
 
 Dispatching to another twinterpreter adds about 200 - 300 us of overhead.
 This is mainly due to serialization for the IPC between the interpreters.
+Using the asynchronous kernel, there is an additional overhead for creating threads.
 
 In general, twinterpreters get faster the shorter they have to wait between requests.
 ``pypy`` twinterpreters benefit from a high number of requests, allowing their JIT to warm up.
