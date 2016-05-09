@@ -51,9 +51,9 @@ class TimingVector(object):
             return u'%3d ±%3d.%1d ns' % (avg * 1E9, err * 1E9, (err * 1E10) % 10)
 
 
-def time_overhead(executable, count, total, call, reply):
+def time_overhead(executable, count, total, call, reply, kernel):
     # prepare kernel
-    twinterpreter = TwinMaster(executable=executable, twinterpreter_id='other')
+    twinterpreter = TwinMaster(executable=executable, twinterpreter_id='other', kernel=kernel)
     twinterpreter.start()
     for _ in rangex(count):
         # test
@@ -66,7 +66,6 @@ def time_overhead(executable, count, total, call, reply):
     # cleanup
     twinterpreter.destroy()
 
-
 def main():
     cli = argparse.ArgumentParser(
         "Test overhead for dispatching function calls"
@@ -75,55 +74,80 @@ def main():
         '--repeats',
         nargs='+',
         help='Tests to run in the form <count>:<tries>:<name>. [%(default)s]',
-        default=['15000:15:15x15k', '5000:30:30x5k', '1:50:50x1', '1:1500:1.5kx1']
+        default=['15000:15:15x15k', '5000:30:30x5k', '1:50:50x1']
     )
     cli.add_argument(
-        '--interpreter',
+        '--interpreters',
         nargs='+',
         help='Interpreters to use. [%(default)s]',
         default=['pypy', 'pypy3', 'python2.6', 'python2.7', 'python3.4']
     )
+    cli.add_argument(
+        '--kernels',
+        nargs='+',
+        help='Kernel modules to use as <module>[:<name>]. [%(default)s]',
+        default=['cpy2py.kernel.kernel_async:async', 'cpy2py.kernel.kernel_single:single']
+    )
     settings = cli.parse_args()
-    interpreters = settings.interpreter
-    for interpreter in interpreters[:]:
+    interpreters = []
+    for interpreter in settings.interpreters:
         try:
             _ = get_executable_path(interpreter)
+            interpreters.append(interpreter)
         except OSError as err:
-            interpreters.remove(interpreter)
             print("Ignoring interpreter:", interpreter, err.__class__.__name__, err)
+    kernels = []
+    for kernel in settings.kernels:
+        module, _, nick = kernel.partition(':')
+        __import__(module)
+        nick = nick or module.rsplit('.',1)[-1]
+        kernels.append((sys.modules[module], nick))
     repeats = []
     for test in settings.repeats:
         test = test.split(':', 2)
         repeats.append((int(test[0]), int(test[1]), test[2]))
     results = {}
+    start_time = time.time()
     for count, tries, name in repeats:
         results[name] = {}
+        strat_time_tries = time.time()
         for interpreter in interpreters:
-            total, call, reply = TimingVector(), TimingVector(), TimingVector()
-            for idx in rangex(tries):
-                sys.stdout.write(' '.join(('Test', name, '=>', interpreter, str(idx), '/', str(tries), ' ' * 20, '\r')))
-                sys.stdout.flush()
-                time_overhead(interpreter, count, total, call, reply)
-            results[name][interpreter] = total, call, reply
-        print('Test', name, 'Done', ' ' * 80)
+            results[name][interpreter] = {}
+            for kernel, kname in kernels:
+                total, call, reply = TimingVector(), TimingVector(), TimingVector()
+                for idx in rangex(tries):
+                    sys.stdout.write(' '.join(('Test', name.rjust(15), kname.rjust(15), '=>', interpreter, str(idx), '/', str(tries), ' ' * 20, '\r')))
+                    sys.stdout.flush()
+                    time_overhead(interpreter, count, total, call, reply, kernel)
+                results[name][interpreter][kname] = total, call, reply
+        print('Test', name.rjust(15), 'Done', '%.1f' % (time.time() - strat_time_tries), ' ' * 80)
+    print('Test', 'all'.rjust(15), 'Done', '%.1f' % (time.time() - start_time))
     print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
     print('%20s %20s %20s %20s' % ('interpreter', 'total', 'call', 'reply'))
     print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
     for _, _, name in repeats:
-        for key in interpreters:
-            tot, call, reply = results[name][key]
-            print(u'%10s [%7s] %20s %20s %20s' % (key, name, tot, call, reply))
-        print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
+        for _, kname in kernels:
+            for key in interpreters:
+                tot, call, reply = results[name][key][kname]
+                print(u'%10s [%7s] %20s %20s %20s' % (key, name, tot, call, reply))
+            print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
     print('\n\n\n')
-    print(*(["=" * 20] * (len(repeats) + 1)))
-    print(os.path.splitext(os.path.basename(sys.executable))[0].rjust(20), *['%20s' % name for _, _, name in repeats])
-    print(*(["=" * 20] * (len(repeats) + 1)))
+    print(*(["=" * 20] * (len(kernels) * len(repeats) + 1)))
+    print(os.path.splitext(os.path.basename(sys.executable))[0].rjust(20), end=' ')
+    for _, kname in kernels:
+        print(kname.rjust(20), *(['\\' + (' ' * 19)] * (len(repeats) - 1)), end=' ')
+    print('')
+    print(
+        '\\' + (' ' * 19),
+        *(['%20s' % name for _, _, name in repeats] * len(kernels)))
+    print(*(["=" * 20] * (len(kernels) * len(repeats) + 1)))
     for key in interpreters:
         print(key.rjust(20), end=" ")
-        for _, _, name in repeats:
-            print(u'%20s' % results[name][key][0], end=" ")
+        for _, kname in kernels:
+            for _, _, name in repeats:
+                print(u'%20s' % results[name][key][kname][0], end=" ")
         print("")
-    print(*(["=" * 20] * (len(repeats) + 1)))
+    print(*(["=" * 20] * (len(kernels) * len(repeats) + 1)))
     print('\n\n\n')
 
 if __name__ == "__main__":
