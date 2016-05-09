@@ -84,6 +84,7 @@ if __name__ == '__main__':
         install_requires=install_requires,
         extras_require={
             'example': ['matplotlib'],
+            'profiling': ['vmprof'],
         },
         # unit tests
         test_suite='cpy2py_unittests',
