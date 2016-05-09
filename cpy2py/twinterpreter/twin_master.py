@@ -24,6 +24,7 @@ from cpy2py.kernel import kernel_single, kernel_state, kernel_async
 from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
+from cpy2py.utility.compat import stringabc
 
 
 class TwinDef(object):
@@ -350,19 +351,7 @@ class TwinMaster(object):
             my_server_ipyc = ipyc_fifo.DuplexFifoIPyC()
             my_client_ipyc = ipyc_fifo.DuplexFifoIPyC()
             self._process = subprocess.Popen(
-                [
-                    self.twin_def.executable, '-m', 'cpy2py.twinterpreter.bootstrap',
-                    '--peer-id', kernel_state.TWIN_ID,
-                    '--twin-id', self.twin_def.twinterpreter_id,
-                    '--master-id', kernel_state.MASTER_ID,
-                    '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
-                    '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
-                    '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
-                    '--kernel', bootstrap.dump_kernel(*self.twin_def.kernel),
-                    '--main-def', bootstrap.dump_main_def(self.main_def),
-                    '--cwd', os.getcwd(),
-                    '--initializer',
-                ] + bootstrap.dump_initializer(kernel_state.TWIN_GROUP_STATE.initializers),
+                self._twin_args(my_client_ipyc=my_client_ipyc, my_server_ipyc=my_server_ipyc),
                 env=self._twin_env()
             )
             self._kernel_client = self.twin_def.kernel_client(
@@ -381,6 +370,35 @@ class TwinMaster(object):
             # finalize the twinterpreter
             kernel_state.TWIN_GROUP_STATE.run_finalizers(self.twinterpreter_id)
         return self.is_alive
+
+    def _twin_args(self, my_client_ipyc, my_server_ipyc):
+        """Create the twin's CLI args"""
+        twin_args = []
+        # twinterpreter invocation
+        if isinstance(self.twin_def.executable, stringabc):
+            # bare interpreter - /foo/bar/python
+            twin_args.append(self.twin_def.executable)
+        else:
+            # invoked interpreter - [ssh foo@bar python] or [which python]
+            twin_args.extend(self.twin_def.executable)
+        # preserve -O
+        if not __debug__:
+            twin_args.append('-O')
+        # bootstrap
+        twin_args.extend([
+            '-m', 'cpy2py.twinterpreter.bootstrap',
+            '--peer-id', kernel_state.TWIN_ID,
+            '--twin-id', self.twin_def.twinterpreter_id,
+            '--master-id', kernel_state.MASTER_ID,
+            '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
+            '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
+            '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
+            '--kernel', bootstrap.dump_kernel(*self.twin_def.kernel),
+            '--main-def', bootstrap.dump_main_def(self.main_def),
+            '--cwd', os.getcwd(),
+            '--initializer',
+        ] + bootstrap.dump_initializer(kernel_state.TWIN_GROUP_STATE.initializers))
+        return twin_args
 
     def _twin_env(self):
         """Create the twin's starting environment"""
