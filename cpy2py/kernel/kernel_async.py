@@ -82,6 +82,7 @@ class AsyncKernelClient(SingleThreadKernelClient):
                 del request
         except (ipyc_exceptions.IPyCTerminated, EOFError):
             self._terminate.set()
+            raise  # reraise for base.run to pickup termination event
 
     def run_request(self, request_body):
         my_id = threading.current_thread().ident
