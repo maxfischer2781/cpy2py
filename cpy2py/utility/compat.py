@@ -76,6 +76,11 @@ else:
     def str_to_bytes(bstr):
         return bytes(bstr, 'ascii')
 
+try:
+    intern_str = intern
+except NameError:
+    intern_str = sys.intern
+
 inf = float('inf')
 
-__all__ = ['pickle', 'rangex', 'NullHandler', 'check_output', 'stringabc', 'str_to_bytes', 'inf']
+__all__ = ['pickle', 'rangex', 'NullHandler', 'check_output', 'stringabc', 'str_to_bytes', 'inf', 'intern_str']
