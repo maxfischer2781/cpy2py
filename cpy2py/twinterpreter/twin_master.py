@@ -20,7 +20,7 @@ import sys
 import types
 import runpy
 
-from cpy2py.kernel import kernel_single, kernel_state, kernel_async
+from cpy2py.kernel import kernel_single, kernel_state, kernel_async, kernel_multi
 from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
@@ -66,6 +66,7 @@ class TwinDef(object):
     default_kernels = {
         'single': kernel_single,
         'async': kernel_async,
+        'multi': kernel_multi,
     }
 
     def __init__(self, executable=None, twinterpreter_id=None, kernel=None):

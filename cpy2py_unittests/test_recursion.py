@@ -7,7 +7,7 @@ from cpy2py.utility.compat import rangex
 
 
 class PyPyng(TwinObject):
-    __twin_id__ = 'pypy_asnyc'
+    __twin_id__ = 'pypy_multi'
 
     def play(self, opponent, recursion=0):
         if recursion > 0:
@@ -26,7 +26,7 @@ class Pyng(PyPyng):
 
 class TestPingPongCall(unittest.TestCase):
     def setUp(self):
-        self.twinterpreter = TwinMaster(executable='pypy', twinterpreter_id='pypy_asnyc', kernel='async')
+        self.twinterpreter = TwinMaster(executable='pypy', twinterpreter_id='pypy_multi', kernel='async')
         self.twinterpreter.start()
 
     def tearDown(self):
