@@ -49,7 +49,7 @@ class TestEnvironment(cpy2py.TwinObject):
             venv_dir
         ])
         # add requirements
-        pip_requirements = [os.path.dirname(os.path.dirname(os.path.abspath(cpy2py.__file__)))]
+        pip_requirements = [os.path.dirname(os.path.dirname(os.path.abspath(cpy2py.__file__))), 'coverage']
         if isinstance(requirements, stringabc):
             pip_requirements.append(requirements)
         elif requirements is not None:

@@ -14,8 +14,8 @@ addons:
     packages:
     - pypy
 before_script:
-  - pip install --user codecov
-  - pip install --user coverage
+  - pip install codecov
+  - pip install coverage
   - curl https://bootstrap.pypa.io/get-pip.py > get-pip.py
   - pypy get-pip.py --user
   - pypy -m pip install --user coverage
