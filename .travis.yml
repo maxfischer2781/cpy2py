@@ -17,3 +17,5 @@ script:
   - echo $TRAVIS_PYTHON_VERSION && which python && which pypy
   - python -c 'import os, sys; print(os.path.basename(sys.executable))'
   - python setup.py test
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
