@@ -2,7 +2,7 @@
 source = cpy2py
 branch = TRUE
 cover_pylib = FALSE
-#parallel = TRUE
+parallel = TRUE
 
 [report]
 exclude_lines =

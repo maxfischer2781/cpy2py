@@ -28,3 +28,17 @@ if kernel_state.is_master():
     _register_twin_group_state(TGS)
     TGS.add_finalizer(_register_twin_group_state, TGS)
     del TGS
+
+
+# plugins
+def _bootstrap_coverage():
+    try:
+        import coverage
+    except ImportError:
+        pass
+    else:
+        coverage.process_startup()
+
+
+if kernel_state.is_master():
+    kernel_state.TWIN_GROUP_STATE.add_initializer(_bootstrap_coverage)

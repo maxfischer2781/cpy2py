@@ -85,6 +85,7 @@ if __name__ == '__main__':
         extras_require={
             'example': ['matplotlib'],
             'profiling': ['vmprof'],
+            'coverage': ['coverage'],
         },
         # unit tests
         test_suite='cpy2py_unittests',

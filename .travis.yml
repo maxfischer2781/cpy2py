@@ -13,13 +13,14 @@ addons:
   apt:
     packages:
     - pypy
-before_install:
+before_script:
   - pip install codecov
   - pip install coverage
+  - export COVERAGE_PROCESS_START=$(pwd)/.coveragerc
+  - echo $TRAVIS_PYTHON_VERSION && which python && which pypy && python -c 'import os, sys; print(os.path.basename(sys.executable))'
 script:
-  - echo $TRAVIS_PYTHON_VERSION && which python && which pypy
-  - python -c 'import os, sys; print(os.path.basename(sys.executable))'
   - coverage run setup.py test
 after_success:
+  - coverage combine .coverage.*
   - coverage report
   - codecov
