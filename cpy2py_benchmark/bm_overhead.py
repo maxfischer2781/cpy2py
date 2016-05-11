@@ -28,8 +28,32 @@ class TimingVector(object):
             return None
         return math.sqrt(sum((val - avg)**2 for val in self._values)) / len(self._values)
 
+    @property
+    def min(self):
+        if not self._values:
+            return None
+        return min(self._values)
+
+    @property
+    def max(self):
+        if not self._values:
+            return None
+        return max(self._values)
+
     def pushback(self, value):
         self._values.append(value)
+
+    def long_str(self):
+        return u'%s %s' % (
+            self,
+            self.range_str()
+        )
+
+    def range_str(self):
+        return u'[%s…%s]' % (
+            self.time_repr(self.min),
+            self.time_repr(self.max)
+        )
 
     def __str__(self):
         if sys.version_info > (2,):
@@ -37,18 +61,24 @@ class TimingVector(object):
         return self.__unicode__().encode('utf-8')
 
     def __unicode__(self):
-        avg = self.average
-        err = self.error
-        if avg is None:
-            return u' --  ± ---- s'
-        elif avg >= 1.0:
-            return u'%3d ±%3d.%1d s' % (avg, err, (err * 10) % 10)
-        elif avg > 0.001:
-            return u'%3d ±%3d.%1d ms' % (avg * 1E3, err * 1E3, (err * 1E4) % 10)
-        elif avg > 0.000001:
-            return u'%3d ±%3d.%1d us' % (avg * 1E6, err * 1E6, (err * 1E7) % 10)
-        elif avg > 0.000000001:
-            return u'%3d ±%3d.%1d ns' % (avg * 1E9, err * 1E9, (err * 1E10) % 10)
+        return u'%s ± %s' % (self.time_repr(self.average), self.time_repr(self.error))
+
+    @staticmethod
+    def time_repr(num):
+        if num is None:
+            return '---  s'
+        if num == 0:
+            return '0.0  s'
+        e_power = 18
+        for t_power, prefix in enumerate('EPTGMk mμnpfa'):
+            power = e_power - t_power * 3
+            p_num = num / (10 ** power)
+            if 1E3 > p_num > 1.0:
+                if p_num > 100:
+                    return '%3.0f %ss' % (p_num, prefix)
+                if p_num > 10:
+                    return '%2.0f. %ss' % (p_num, prefix)
+                return '%3.1f %ss' % (p_num, prefix)
 
 
 def time_overhead(executable, count, total, call, reply, kernel):
@@ -116,7 +146,23 @@ def main():
             for kernel, kname in kernels:
                 total, call, reply = TimingVector(), TimingVector(), TimingVector()
                 for idx in rangex(tries):
-                    sys.stdout.write(' '.join(('Test', name.rjust(15), kname.rjust(15), '=>', interpreter, str(idx), '/', str(tries), ' ' * 20, '\r')))
+                    sys.stdout.write(' '.join((
+                        # what
+                        'Test',
+                        name.rjust(15),
+                        kname.rjust(15),
+                        '=>',
+                        interpreter,
+                        # progress
+                        str(idx),
+                        '/',
+                        str(tries),
+                        # timing
+                        total.long_str(),
+                        # filler
+                        ' ' * 20,
+                        '\r'
+                    )))
                     sys.stdout.flush()
                     time_overhead(interpreter, count, total, call, reply, kernel)
                 results[name][interpreter][kname] = total, call, reply
