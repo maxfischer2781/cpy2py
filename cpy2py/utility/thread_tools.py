@@ -22,7 +22,7 @@ from collections import deque
 import time
 import ast
 
-from .compat import stringabc, inf, intern_str
+from .compat import stringabc, inf, intern_str, unicode_str, long_int
 from .exceptions import CPy2PyException
 
 
@@ -251,7 +251,7 @@ class ThreadGuard(object):
 
     def __long__(self):
         with self._lock:
-            return long(self._value)
+            return long_int(self._value)
 
     def __round__(self):
         with self._lock:
@@ -286,7 +286,7 @@ class ThreadGuard(object):
 
     def __unicode__(self):
         with self._lock:
-            return unicode(self._value)
+            return unicode_str(self._value)
 
     def __repr__(self):
         with self._lock:

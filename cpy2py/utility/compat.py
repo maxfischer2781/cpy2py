@@ -65,6 +65,7 @@ except AttributeError:
             raise _subprocess.CalledProcessError(retcode, cmd)
         return output
 
+# types
 try:
     stringabc = basestring
 except NameError:
@@ -77,10 +78,31 @@ else:
         return bytes(bstr, 'ascii')
 
 try:
+    unicode_str = unicode
+except NameError:
+    unicode_str = str
+
+try:
+    long_int = long
+except NameError:
+    long_int = int
+
+try:
     intern_str = intern
 except NameError:
     intern_str = sys.intern
 
 inf = float('inf')
 
-__all__ = ['pickle', 'rangex', 'NullHandler', 'check_output', 'stringabc', 'str_to_bytes', 'inf', 'intern_str']
+__all__ = [
+    'pickle',
+    'rangex',
+    'NullHandler',
+    'check_output',
+    'stringabc',
+    'str_to_bytes',
+    'inf',
+    'intern_str',
+    'unicode_str',
+    'long_int'
+]
