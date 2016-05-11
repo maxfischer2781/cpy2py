@@ -118,7 +118,10 @@ class FifoQueue(object):
                     while True:
                         with self._queue_mutex:
                             if wait_mutex.acquire(False):
-                                return self._queue_content.pop()
+                                try:
+                                    return self._queue_content.pop()
+                                except IndexError:  # someone else beat us to it, continue waiting
+                                    pass
                         _w_now = min(
                             _w_now * _w_fail * (_w_order ** _w_idx),  # diminishing wake
                             _w_start + timeout - time.time(),  # timeout

@@ -26,7 +26,7 @@ class Pyng(PyPyng):
 
 class TestPingPongCall(unittest.TestCase):
     def setUp(self):
-        self.twinterpreter = TwinMaster(executable='pypy', twinterpreter_id='pypy_multi', kernel='async')
+        self.twinterpreter = TwinMaster(executable='pypy', twinterpreter_id='pypy_multi', kernel='multi')
         self.twinterpreter.start()
 
     def tearDown(self):

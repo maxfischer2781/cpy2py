@@ -22,7 +22,7 @@ threads.
 import threading
 import random
 
-from cpy2py.utility.thread_tools import FifoQueue, ItemError
+from cpy2py.utility.thread_tools import FifoQueue, ItemError, ThreadGuard
 from .kernel_async import AsyncKernelClient, AsyncKernelServer
 
 
@@ -41,10 +41,11 @@ class MultiThreadKernelServer(AsyncKernelServer):
         AsyncKernelServer.__init__(self, peer_id=peer_id, ipyc=ipyc, pickle_protocol=pickle_protocol)
         self._worker_threads = set()
         self._work_queue = FifoQueue()
+        self._idle_workers = ThreadGuard(0)
 
     def _dispatch_request_handling(self, request_id, directive):
         self._work_queue.put((request_id, directive))
-        if self._work_queue.qsize() > len(self._worker_threads):
+        if self._work_queue.qsize() > self._idle_workers:
             self._start_worker()
 
     def _start_worker(self):
@@ -55,6 +56,7 @@ class MultiThreadKernelServer(AsyncKernelServer):
 
     def _worker_thread_main(self):
         while True:
+            self._idle_workers += 1
             try:
                 request_id, directive = self._work_queue.get(True, 9 + 2 * random.random())
             except ItemError:
@@ -66,6 +68,8 @@ class MultiThreadKernelServer(AsyncKernelServer):
                     continue
                 else:
                     break
+            finally:
+                self._idle_workers -= 1
             try:
                 self.request_handler.serve_request(request_id, directive)
             except Exception as err:  # pylint: disable=broad-except
