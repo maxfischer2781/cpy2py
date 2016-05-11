@@ -109,6 +109,7 @@ def time_overhead(executable, count, total, call, reply, kernel):
     # cleanup
     twinterpreter.destroy()
 
+
 def main():
     cli = argparse.ArgumentParser(
         "Test overhead for dispatching function calls"
@@ -143,7 +144,7 @@ def main():
     for kernel in settings.kernels:
         module, _, nick = kernel.partition(':')
         __import__(module)
-        nick = nick or module.rsplit('.',1)[-1]
+        nick = nick or module.rsplit('.', 1)[-1]
         kernels.append((sys.modules[module], nick))
     repeats = []
     for test in settings.repeats:

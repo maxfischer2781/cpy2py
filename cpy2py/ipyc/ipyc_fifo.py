@@ -53,7 +53,8 @@ class DuplexFifoIPyC(object):
         """Close connections"""
         return self._close_force(self._fifo_read) and self._close_force(self._fifo_write)
 
-    def _close_force(self, file_obj, max_tries=inf, max_time=30):
+    @staticmethod
+    def _close_force(file_obj, max_tries=inf, max_time=30):
         """Ensure a file is closed"""
         close_time, close_tries = lambda s=time.time(): time.time() - s, 1
         while not file_obj.closed:
