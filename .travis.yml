@@ -16,7 +16,9 @@ addons:
 before_script:
   - pip install codecov
   - pip install coverage
-  - pip_pypy install coverage
+  - curl https://bootstrap.pypa.io/get-pip.py > get-pip.py
+  - pypy get-pip.py
+  - pypy -m pip install coverage
   - export COVERAGE_PROCESS_START=$(pwd)/.coveragerc
   - echo $TRAVIS_PYTHON_VERSION && which python && which pypy && python -c 'import os, sys; print(os.path.basename(sys.executable))'
 script:
