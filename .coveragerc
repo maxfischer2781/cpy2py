@@ -1,0 +1,14 @@
+[run]
+source = cpy2py
+branch = TRUE
+cover_pylib = FALSE
+parallel = TRUE
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __debug__:
+    raise AssertionError
+    raise NotImplementedError
+    return NotImplemented

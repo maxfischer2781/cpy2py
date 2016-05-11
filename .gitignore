@@ -11,3 +11,6 @@ cpy2py_sphinx/source/.*
 build/
 cpy2py.egg-info/
 dist/
+
+# coverage
+.coverage
