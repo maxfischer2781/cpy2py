@@ -6,9 +6,13 @@ cover_pylib = FALSE
 
 [report]
 exclude_lines =
+    # default
     pragma: no cover
+    # python debug/internals
     def __repr__
     if __debug__:
     raise AssertionError
     raise NotImplementedError
     return NotImplemented
+    # cpy2py debug
+    CPY2PY_DEBUG

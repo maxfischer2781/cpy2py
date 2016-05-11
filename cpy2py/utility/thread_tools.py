@@ -20,13 +20,319 @@ fashion, portable across python versions.
 from threading import Lock
 from collections import deque
 import time
+import ast
 
-from .compat import inf, intern_str
+from .compat import stringabc, inf, intern_str
 from .exceptions import CPy2PyException
 
 
 #: sentinel for unset variables
 UNSET = intern_str("<unset_sentinel>")
+
+
+class ThreadGuard(object):
+    """
+    Threadsafe wrapper for primitives
+
+    This class wraps all magic methods (e.g. ``a + b``, ``a[b]``) to
+    make them atomic.
+
+    :note: Derived values inherit the original type. For example,
+           ``foo = ThreadGuard(1.0) * 2`` will be of type
+           :py:class:`float`, i.e. the result of ``1.0 * 2``.
+
+    :note: When invoked as a context manager, the underlying lock
+           will be held until the context is exited.
+    """
+    def __init__(self, start=0.0, lock_type=Lock):
+        if isinstance(start, stringabc):
+            start = ast.literal_eval(start)
+        self._value = start
+        self._lock = lock_type()
+
+    def __add__(self, other):
+        with self._lock:
+            return self._value + other
+
+    def __sub__(self, other):
+        with self._lock:
+            return self._value - other
+
+    def __mul__(self, other):
+        with self._lock:
+            return self._value * other
+
+    def __div__(self, other):
+        with self._lock:
+            return self._value / other
+
+    __truediv__ = __div__
+
+    def __floordiv__(self, other):
+        with self._lock:
+            return self._value // other
+
+    def __mod__(self, other):
+        with self._lock:
+            return self._value % other
+
+    def __divmod__(self, other):
+        with self._lock:
+            return self._value // other, self._value % other
+
+    def __pow__(self, power, modulo=None):
+        with self._lock:
+            return pow(self._value, power, modulo)
+
+    def __lshift__(self, other):
+        with self._lock:
+            return self._value << other
+
+    def __rshift__(self, other):
+        with self._lock:
+            return self._value >> other
+
+    def __and__(self, other):
+        with self._lock:
+            return self._value & other
+
+    def __xor__(self, other):
+        with self._lock:
+            return self._value ^ other
+
+    def __or__(self, other):
+        with self._lock:
+            return self._value | other
+
+    def __radd__(self, other):
+        with self._lock:
+            return other + self._value
+
+    def __rsub__(self, other):
+        with self._lock:
+            return other - self._value
+
+    def __rmul__(self, other):
+        with self._lock:
+            return other * self._value
+
+    def __rdiv__(self, other):
+        with self._lock:
+            return other / self._value
+
+    __rtruediv__ = __rdiv__
+
+    def __rfloordiv__(self, other):
+        with self._lock:
+            return other // self._value
+
+    def __rmod__(self, other):
+        with self._lock:
+            return other % self._value
+
+    def __rdivmod__(self, other):
+        with self._lock:
+            return other // self._value, other % self._value
+
+    def __rpow__(self, other):
+        with self._lock:
+            return other ** self._value
+
+    def __rlshift__(self, other):
+        with self._lock:
+            return other << self._value
+
+    def __rrshift__(self, other):
+        with self._lock:
+            return other >> self._value
+
+    def __rand__(self, other):
+        with self._lock:
+            return other & self._value
+
+    def __rxor__(self, other):
+        with self._lock:
+            return other ^ self._value
+
+    def __ror__(self, other):
+        with self._lock:
+            return other | self._value
+
+    # inplace operations
+    def __iadd__(self, other):
+        with self._lock:
+            self._value += other
+            return self
+
+    def __isub__(self, other):
+        with self._lock:
+            self._value -= other
+            return self
+
+    def __imul__(self, other):
+        with self._lock:
+            self._value *= other
+            return self
+
+    def __idiv__(self, other):
+        with self._lock:
+            self._value /= other
+            return self
+
+    __itruediv__ = __idiv__
+
+    def __ifloordiv__(self, other):
+        with self._lock:
+            self._value //= other
+            return self
+
+    def __imod__(self, other):
+        with self._lock:
+            self._value %= other
+            return self
+
+    def __ipow__(self, power, modulo=None):
+        with self._lock:
+            self._value = pow(self._value, power, modulo)
+            return self
+
+    def __ilshift__(self, other):
+        with self._lock:
+            self._value <<= other
+            return self
+
+    def __irshift__(self, other):
+        with self._lock:
+            self._value >>= other
+            return self
+
+    def __iand__(self, other):
+        with self._lock:
+            self._value &= other
+            return self
+
+    def __ixor__(self, other):
+        with self._lock:
+            self._value ^= other
+            return self
+
+    def __ior__(self, other):
+        with self._lock:
+            self._value |= other
+            return self
+
+    def __neg__(self):
+        with self._lock:
+            return -self._value
+
+    def __pos__(self):
+        with self._lock:
+            return +self._value
+
+    def __abs__(self):
+        with self._lock:
+            return abs(self._value)
+
+    def __invert__(self):
+        with self._lock:
+            return ~self._value
+
+    def __complex__(self):
+        with self._lock:
+            return complex(self._value)
+
+    def __int__(self):
+        with self._lock:
+            return int(self._value)
+
+    def __float__(self):
+        with self._lock:
+            return float(self._value)
+
+    def __long__(self):
+        with self._lock:
+            return long(self._value)
+
+    def __round__(self):
+        with self._lock:
+            return round(self._value)
+
+    def __index__(self):
+        try:
+            with self._lock:
+                return self._value.__index__()
+        except AttributeError:
+            return NotImplemented
+
+    def __enter__(self):
+        self._lock.acquire()
+        try:
+            _enter = self._value.__enter__
+        except AttributeError:
+            self._lock.release()
+        else:
+            return _enter()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            _exit = self._value.__exit__
+            return _exit(exc_type, exc_val, exc_tb)
+        finally:
+            self._lock.release()
+
+    def __str__(self):
+        with self._lock:
+            return str(self._value)
+
+    def __unicode__(self):
+        with self._lock:
+            return unicode(self._value)
+
+    def __repr__(self):
+        with self._lock:
+            return '%s<%r>' % (self.__class__.__name__, self._value)
+
+    def __bytes__(self):
+        with self._lock:
+            return bytes(self._value)
+
+    def __lt__(self, other):
+        with self._lock:
+            return self._value < other
+
+    def __gt__(self, other):
+        with self._lock:
+            return self._value > other
+
+    def __le__(self, other):
+        with self._lock:
+            return self._value <= other
+
+    def __ge__(self, other):
+        with self._lock:
+            return self._value >= other
+
+    def __eq__(self, other):
+        with self._lock:
+            return self._value == other
+
+    def __ne__(self, other):
+        with self._lock:
+            return self._value != other
+
+    def __hash__(self):
+        with self._lock:
+            return hash(self._value)
+
+    def __nonzero__(self):
+        with self._lock:
+            return bool(self._value)
+
+    __bool__ = __nonzero__
+
+    def __call__(self, *args, **kwargs):
+        with self._lock:
+            return self._value(*args, **kwargs)
 
 
 class ItemError(CPy2PyException):
