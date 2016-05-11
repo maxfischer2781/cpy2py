@@ -16,7 +16,7 @@
 CPy2Py
 ++++++
 
-|landscape| |travis| |pypi|
+|pypi| |landscape| |travis| |codecov|
 
 Multi-intepreter execution environment
 
@@ -35,6 +35,10 @@ the application.
 .. |pypi| image:: https://img.shields.io/pypi/v/cpy2py.svg
     :target: https://pypi.python.org/pypi/cpy2py
     :alt: PyPI Package
+
+.. |codecov| image:: https://codecov.io/gh/maxfischer2781/cpy2py/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/maxfischer2781/cpy2py
+  :alt: Code Coverage
 
 .. contents:: **Table of Contents**
     :depth: 2
