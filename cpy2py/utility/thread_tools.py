@@ -99,8 +99,9 @@ class FifoQueue(object):
                 self._waiters.append(wait_mutex)
         try:
             if not timeout or timeout <= 0 or timeout == inf:
-                with wait_mutex, self._queue_mutex:
-                    return self._queue_content.pop()
+                with wait_mutex:
+                    with self._queue_mutex:
+                        return self._queue_content.pop()
             else:
                 # in Py3, we can explicitly block for a specific time
                 try:
