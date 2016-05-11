@@ -159,7 +159,7 @@ def update_file(old_file, new_file, comparebytes=float("inf")):
         os.rename(new_file, old_file)
         return True
     if filehash(old_file, maxbytes=comparebytes) != filehash(new_file, maxbytes=comparebytes):
-        print(old_file, "!=", new_file)
+        print(old_file, "updated")
         stat = os.stat(old_file)
         os.chmod(new_file, stat.st_mode)
         os.chown(new_file, stat.st_uid, stat.st_gid)
@@ -422,7 +422,7 @@ def main():
     else:
         print("Skipped LICENSE")
     for file_path in get_license_target_files(source_files=options.source_files, source_dirs=options.source_dirs):
-        print(file_path, end='\r')
+        print(os.path.relpath(file_path).ljust(80), end='\r')
         update_license_header(file_path)
 
 
