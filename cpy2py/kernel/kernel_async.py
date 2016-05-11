@@ -48,9 +48,12 @@ class AsyncKernelServer(SingleThreadKernelServer):
             request_id, directive = self._server_recv()
             if self._except_callback is not None:
                 raise self._except_callback  # pylint: disable=raising-bad-type
-            thread = threading.Thread(target=self._request_thread_main, args=(request_id, directive))
-            thread.daemon = True
-            thread.start()
+            self._dispatch_request_handling(request_id, directive)
+
+    def _dispatch_request_handling(self, request_id, directive):
+        thread = threading.Thread(target=self._request_thread_main, args=(request_id, directive))
+        thread.daemon = True
+        thread.start()
 
     def _request_thread_main(self, request_id, directive):
         try:
