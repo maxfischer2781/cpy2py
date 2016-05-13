@@ -422,13 +422,17 @@ class TwinMaster(object):
         """Try and close all connections"""
         if self._kernel_client is not None and self._kernel_client.stop():
             self._kernel_client = None
-        if self._kernel_server is not None and self._kernel_server.stop():
-            self._kernel_server = None
         if self._process is not None:
-            self._process.kill()
-            time.sleep(0.1)
+            # allow twin to shut down before killing it outright
+            shutdown_time = time.time()
+            if self._process.poll() is None:
+                time.sleep(0.1)
+                if time.time() - shutdown_time > 5:
+                    self._process.kill()
             if self._process.poll() is not None:
                 self._process = None
+        if self._kernel_server is not None and self._kernel_server.stop():
+            self._kernel_server = None
 
     def execute(self, call, *call_args, **call_kwargs):
         """
