@@ -87,6 +87,7 @@ class AsyncKernelClient(SingleThreadKernelClient):
                 del request
         except (ipyc_exceptions.IPyCTerminated, EOFError):
             self._terminate.set()
+            self._release_requests()
             raise  # reraise for base.run to pickup termination event
 
     def run_request(self, request_body):
@@ -104,6 +105,11 @@ class AsyncKernelClient(SingleThreadKernelClient):
 
     def stop_local(self):
         """Shutdown the local server"""
+        self._release_requests()
+        SingleThreadKernelClient.stop_local(self)
+
+    def _release_requests(self):
+        """Release all outstanding requests"""
         with self._request_send_lock:
             self._terminate.set()
             while True:
@@ -111,7 +117,6 @@ class AsyncKernelClient(SingleThreadKernelClient):
                     self._requests.popitem()[1][0].set()
                 except KeyError:
                     break
-        SingleThreadKernelClient.stop_local(self)
 
 
 SERVER = AsyncKernelServer
