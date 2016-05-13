@@ -114,7 +114,8 @@ skipped entirely to improve performance.
 
 For small scale debugging, one can set the environment variable
 :envvar:`CPY2PY_DEBUG`. If it is defined and not empty, logging output
-is written to `stderr`.
+is written to `stderr`. In addition, if it names a valid :py:mod:`logging`
+level, that logging level is used.
 
 Note that loggers are meant for development and only address the internal
 state. Your application should not depend on this information. Unless
