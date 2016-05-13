@@ -45,6 +45,9 @@ _base_logger.propagate = False
 # debugging logger to stderr
 if _os.environ.get('CPY2PY_DEBUG'):
     _base_logger.addHandler(_logging.StreamHandler())
+    level = _os.environ.get('CPY2PY_DEBUG').upper()
+    if isinstance(getattr(_logging, level, None), int):
+        _base_logger.level = getattr(_logging, level)
 else:
     _base_logger.addHandler(_NullHandler())
 
