@@ -17,13 +17,13 @@ Tools for working with objects
 This module re-implements several STL threading objects in a lightweight
 fashion, portable across python versions.
 """
-from threading import Lock
+from threading import Lock, ThreadError
 from collections import deque
 import time
 import ast
 import operator
 
-from .compat import stringabc, inf, intern_str, unicode_str, long_int
+from .compat import stringabc, inf, intern_str, unicode_str, long_int, rangex
 from .exceptions import CPy2PyException
 
 
@@ -394,8 +394,13 @@ class FifoQueue(object):
         """Put a single item in the queue"""
         with self._queue_mutex:
             self._queue_content.append(item)
-            if self._waiters:
-                self._waiters[0].release()
+            for w_idx in rangex(len(self._waiters)):
+                try:
+                    self._waiters[w_idx].release()
+                except (ThreadError, RuntimeError):
+                    continue
+                else:
+                    break
 
     def get(self, block=True, timeout=inf):
         """
