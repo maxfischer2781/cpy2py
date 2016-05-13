@@ -21,8 +21,6 @@ from cpy2py.kernel.kernel_exceptions import StopTwinterpreter, TwinterpeterTermi
 
 # Message Enums
 # twin call type
-# # internal
-__E_SHUTDOWN__ = -1
 # # calls
 __E_CALL_FUNC__ = 11
 __E_CALL_METHOD__ = 12
@@ -39,7 +37,6 @@ __E_SUCCESS__ = 101
 __E_EXCEPTION__ = 102
 
 E_SYMBOL = {
-    __E_SHUTDOWN__: '__E_SHUTDOWN__',
     __E_CALL_FUNC__: '__E_CALL_FUNC__',
     __E_CALL_METHOD__: '__E_CALL_METHOD__',
     __E_GET_ATTRIBUTE__: '__E_GET_ATTRIBUTE__',
@@ -104,9 +101,6 @@ class RequestHandler(object):
             if __debug__:
                 self._logger.warning('[%s] Directive %s', kernel_state.TWIN_ID, E_SYMBOL[directive_type])
             response = directive_method(directive_body)
-        except StopTwinterpreter as err:
-            self.kernel_server.send_reply(request_id, (__E_SHUTDOWN__, err.exit_code))
-            raise
         # catch internal errors to reraise them
         except CPy2PyException:
             raise
@@ -265,7 +259,7 @@ class RequestDispatcher(object):
 
     def shutdown_peer(self, message='shutdown'):
         """Tell peer to shut down"""
-        return self._dispatch_event(__E_SHUTDOWN__, TerminationEvent(message=message, exit_code=0))
+        return self._dispatch_event(TerminationEvent(message=message, exit_code=0))
 
     def stop(self):
         return self.kernel_client.stop()
