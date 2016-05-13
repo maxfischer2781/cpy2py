@@ -69,7 +69,7 @@ class ThreadGuard(object):
 
     # __div__ is py2 only
     if hasattr(operator, '__div__'):
-        def __div__(self, other):
+        def __div__(self, other):  # nopep8
             with self._lock:
                 return operator.__div__(self._value, other)
 
@@ -126,7 +126,7 @@ class ThreadGuard(object):
             return operator.__mul__(other, self._value)
 
     if hasattr(operator, '__div__'):
-        def __rdiv__(self, other):
+        def __rdiv__(self, other):  # nopep8
             with self._lock:
                 return operator.__div__(other, self._value)
 
@@ -187,7 +187,7 @@ class ThreadGuard(object):
             return self
 
     if hasattr(operator, '__idiv__'):
-        def __idiv__(self, other):
+        def __idiv__(self, other):  # nopep8
             with self._lock:
                 self._value = operator.__idiv__(self._value, other)
                 return self

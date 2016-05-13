@@ -181,12 +181,25 @@ def main():
                     time_overhead(interpreter, count, total, call, reply, kernel)
                 results[name][interpreter][kname] = total, call, reply
         print('Test', name.rjust(15), 'Done', '%.1f' % (time.time() - strat_time_tries), ' ' * 80)
+        print_results(
+            start_time=start_time,
+            results=results,
+            repeats=[rp[2] for rp in repeats],
+            kernels=[kn[1] for kn in kernels],
+            interpreters=interpreters,
+        )
+
+
+def print_results(start_time, results, repeats=None, kernels=None, interpreters=None):
+    repeats = repeats or list(results)
+    interpreters = interpreters or list(results[repeats[0]])
+    kernels = kernels or list(results[repeats[0]][interpreters[0]])
     print('Test', 'all'.rjust(15), 'Done', '%.1f' % (time.time() - start_time))
     print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
     print('%20s %20s %20s %20s' % ('interpreter', 'total', 'call', 'reply'))
     print("=" * 20, "=" * 20, "=" * 20, "=" * 20)
-    for _, _, name in repeats:
-        for _, kname in kernels:
+    for name in repeats:
+        for kname in kernels:
             for key in interpreters:
                 tot, call, reply = results[name][key][kname]
                 print(u'%10s [%7s] %20s %20s %20s' % (key, name, tot, call, reply))
@@ -194,17 +207,17 @@ def main():
     print('\n\n\n')
     print(*(["=" * 20] * (len(kernels) * len(repeats) + 1)))
     print(os.path.splitext(os.path.basename(sys.executable))[0].rjust(20), end=' ')
-    for _, kname in kernels:
+    for kname in kernels:
         print(kname.rjust(20), *(['\\' + (' ' * 19)] * (len(repeats) - 1)), end=' ')
     print('')
     print(
         '\\' + (' ' * 19),
-        *(['%20s' % name for _, _, name in repeats] * len(kernels)))
+        *(['%20s' % name for name in repeats] * len(kernels)))
     print(*(["=" * 20] * (len(kernels) * len(repeats) + 1)))
     for key in interpreters:
         print(key.rjust(20), end=" ")
-        for _, kname in kernels:
-            for _, _, name in repeats:
+        for kname in kernels:
+            for name in repeats:
                 print(u'%20s' % results[name][key][kname][0], end=" ")
         print("")
     print(*(["=" * 20] * (len(kernels) * len(repeats) + 1)))

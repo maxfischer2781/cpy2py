@@ -287,7 +287,8 @@ class TwinMaster(object):
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
 
-    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None, restore_argv=False):
+    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
+                restore_argv=False):
         twin_def = TwinDef(executable, twinterpreter_id, kernel)
         try:
             master = cls._master_store[twin_def.twinterpreter_id]
@@ -297,11 +298,12 @@ class TwinMaster(object):
             return self
         else:
             main_def = MainDef(main_module, run_main, restore_argv)
-            assert master.twin_def == twin_def and master.main_def == main_def,\
+            assert master.twin_def == twin_def and master.main_def == main_def, \
                 "interpreter with same twinterpreter_id but different settings already exists"
             return master
 
-    def __init__(self, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None, restore_argv=False):
+    def __init__(self, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
+                 restore_argv=False):
         # avoid duplicate initialisation of singleton
         if self._initialized:
             return
@@ -355,7 +357,7 @@ class TwinMaster(object):
         if self._master_store.get(self.twinterpreter_id) is not self:
             raise RuntimeError("Attempt to start TwinMaster after destroying it")
         if not self.is_alive:
-            self._logger.warning('<%s> Starting Twin [%s]' % (kernel_state.TWIN_ID, self.twinterpreter_id))
+            self._logger.warning('<%s> Starting Twin [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
             my_server_ipyc = ipyc_fifo.DuplexFifoIPyC()
             my_client_ipyc = ipyc_fifo.DuplexFifoIPyC()
             self._process = subprocess.Popen(
@@ -377,9 +379,9 @@ class TwinMaster(object):
             self._server_thread.start()
             # finalize the twinterpreter
             kernel_state.TWIN_GROUP_STATE.run_finalizers(self.twinterpreter_id)
-            self._logger.info('<%s> Initialized Twin [%s]' % (kernel_state.TWIN_ID, self.twinterpreter_id))
+            self._logger.info('<%s> Initialized Twin [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
         else:
-            self._logger.warning('<%s> Reusing Twin [%s]' % (kernel_state.TWIN_ID, self.twinterpreter_id))
+            self._logger.warning('<%s> Reusing Twin [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
         return self.is_alive
 
     def _twin_args(self, my_client_ipyc, my_server_ipyc):
@@ -427,7 +429,7 @@ class TwinMaster(object):
         """Stop any twinterpreter and cleanup the master"""
         self.stop()
         del self._master_store[self.twinterpreter_id]
-        self._logger.info('<%s> Destroyed Twin [%s]' % (kernel_state.TWIN_ID, self.twinterpreter_id))
+        self._logger.info('<%s> Destroyed Twin [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
 
     def _cleanup(self):
         """Try and close all connections"""
@@ -443,11 +445,11 @@ class TwinMaster(object):
                     self._process.kill()
             if self._process.poll() is not None:
                 self._process = None
-                self._logger.info('<%s> Cleaned up Twin Process [%s]' % (kernel_state.TWIN_ID, self.twinterpreter_id))
+                self._logger.info('<%s> Cleaned up Twin Process [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
         # reap server LAST in case twin shutdown needs it
         if self._kernel_server is not None and self._kernel_server.stop():
             self._kernel_server = None
-            self._logger.info('<%s> Cleaned up Twin Server [%s]' % (kernel_state.TWIN_ID, self.twinterpreter_id))
+            self._logger.info('<%s> Cleaned up Twin Server [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
 
     def execute(self, call, *call_args, **call_kwargs):
         """
