@@ -25,7 +25,7 @@ before_script:
   - export COVERAGE_PROCESS_START=$(pwd)/.coveragerc
   - echo $TRAVIS_PYTHON_VERSION && which python && which pypy && python -c 'import os, sys; print(os.path.basename(sys.executable))'
 script:
-  - python $OPTIMIZE coverage run setup.py test
+  - python $OPTIMIZE -m coverage run setup.py test
 after_success:
   - coverage combine .coverage.*
   - coverage report
