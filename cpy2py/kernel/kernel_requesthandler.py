@@ -23,7 +23,6 @@ from cpy2py.kernel.kernel_exceptions import StopTwinterpreter, TwinterpeterTermi
 # twin call type
 # # internal
 __E_SHUTDOWN__ = -1
-__E_NOOP__ = -2
 # # calls
 __E_CALL_FUNC__ = 11
 __E_CALL_METHOD__ = 12
@@ -41,7 +40,6 @@ __E_EXCEPTION__ = 102
 
 E_SYMBOL = {
     __E_SHUTDOWN__: '__E_SHUTDOWN__',
-    __E_NOOP__: '__E_NOOP__',
     __E_CALL_FUNC__: '__E_CALL_FUNC__',
     __E_CALL_METHOD__: '__E_CALL_METHOD__',
     __E_GET_ATTRIBUTE__: '__E_GET_ATTRIBUTE__',
@@ -278,10 +276,6 @@ class RequestDispatcher(object):
     def shutdown_peer(self, message='shutdown'):
         """Tell peer to shut down"""
         return self._dispatch_event(__E_SHUTDOWN__, TerminationEvent(message=message, exit_code=0))
-
-    def noop(self):
-        """Send a noop to release blocking streams"""
-        return self._dispatch_request(__E_NOOP__, None)
 
     def stop(self):
         return self.kernel_client.stop()
