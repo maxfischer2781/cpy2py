@@ -6,12 +6,13 @@ python:
   - "3.4"
   - "3.5"
   - "pypy"
+  - "pypy3"
 os:
   - linux
 #  - osx
 env:
-  - OPTIMIZE=''
-  - OPTIMIZE='-O'
+  - PYTHONOPTIMIZE=''
+  - PYTHONOPTIMIZE='YES'
 addons:
   apt:
     packages:
@@ -25,7 +26,7 @@ before_script:
   - export COVERAGE_PROCESS_START=$(pwd)/.coveragerc
   - echo $TRAVIS_PYTHON_VERSION && which python && which pypy && python -c 'import os, sys; print(os.path.basename(sys.executable))'
 script:
-  - python $OPTIMIZE -m coverage run setup.py test
+  - coverage run setup.py test
 after_success:
   - coverage combine .coverage.*
   - coverage report
