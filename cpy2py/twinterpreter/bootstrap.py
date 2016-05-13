@@ -15,6 +15,7 @@ import argparse
 import sys
 import base64
 import os
+import logging
 
 from cpy2py.utility.compat import pickle, str_to_bytes
 from cpy2py.kernel import kernel_single, kernel_state
@@ -173,6 +174,9 @@ def bootstrap_kernel():
         kernel_client.stop()
     except TwinterpeterTerminated:
         pass
+    logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
+        '[%s] %s.bootstrap_kernel exiting with %s', kernel_state.TWIN_ID, __name__, exit_code
+    )
     sys.exit(exit_code)
 
 
