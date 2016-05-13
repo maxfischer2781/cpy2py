@@ -14,6 +14,7 @@
 """
 Alternative interpreters deployed in parallel
 """
+import logging
 # bootstrap group state
 from cpy2py.kernel import kernel_state
 from cpy2py.twinterpreter import group_state
@@ -32,12 +33,18 @@ if kernel_state.is_master():
 
 # plugins
 def _bootstrap_coverage():
+    logger = logging.getLogger('__cpy2py__.bootstrap.plugin.coverage')
     try:
         import coverage
+        logger.info('plugin coverage available')
     except ImportError:
-        pass
+        logger.warning('plugin coverage unavailable')
     else:
         coverage.process_startup()
+        if hasattr(coverage.process_startup, "done"):
+            logger.info('plugin coverage enabled')
+        else:
+            logger.info('plugin coverage disabled')
 
 
 if kernel_state.is_master():
