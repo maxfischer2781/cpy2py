@@ -435,7 +435,7 @@ class TwinMaster(object):
         """Try and close all connections"""
         if self._kernel_client is not None and self._kernel_client.stop():
             self._kernel_client = None
-            self._logger.info('<%s> Cleaned up Twin Client [%s]' % (kernel_state.TWIN_ID, self.twinterpreter_id))
+            self._logger.info('<%s> Cleaned up Twin Client [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
         if self._process is not None:
             # allow twin to shut down before killing it outright
             shutdown_time = time.time()
