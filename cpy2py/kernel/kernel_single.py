@@ -167,8 +167,11 @@ class SingleThreadKernelClient(object):
     def stop_local(self):
         """Shutdown the local server"""
         self._ipyc.close()
-        del kernel_state.KERNEL_CLIENTS[self.peer_id]
-        del kernel_state.KERNEL_INTERFACE[self.peer_id]
+        try:
+            del kernel_state.KERNEL_CLIENTS[self.peer_id]
+            del kernel_state.KERNEL_INTERFACE[self.peer_id]
+        except KeyError:
+            pass
 
     def __repr__(self):
         return '<%s[%s@%s]>' % (self.__class__.__name__, sys.executable, os.getpid())

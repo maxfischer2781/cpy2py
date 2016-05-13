@@ -22,6 +22,10 @@ from collections import deque
 import time
 import ast
 import operator
+try:
+    from thread import error as thread_error
+except ImportError:
+    from _thread import error as thread_error
 
 from .compat import stringabc, inf, intern_str, unicode_str, long_int, rangex
 from .exceptions import CPy2PyException
@@ -397,7 +401,7 @@ class FifoQueue(object):
             for w_idx in rangex(len(self._waiters)):
                 try:
                     self._waiters[w_idx].release()
-                except (ThreadError, RuntimeError):
+                except (ThreadError, RuntimeError, thread_error):
                     continue
                 else:
                     break
