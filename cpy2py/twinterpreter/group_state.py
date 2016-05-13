@@ -88,7 +88,7 @@ class TwinGroupState(TwinObject):
         with self._global_lock:
             getattr(self, collection).append(initializer)
             if init_existing:
-                for twin_id, client in kernel_state.KERNEL_CLIENTS.items():
+                for twin_id, client in kernel_state.KERNEL_INTERFACE.items():
                     if twin_id == initializer.parent_twin_id:
                         continue
                     client.dispatch_call(initializer.call, *initializer.args, **initializer.kwargs)
