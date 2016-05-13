@@ -51,7 +51,6 @@ class TestCallScope(unittest.TestCase):
         self.assertFalse(self.twinterpreter.execute(test_kernel, 'foobar'))
 
     def test_local_method(self):
-        """local method should execute in local scope"""
         pypy_instance = PyPyObject()
         # call from master scope
         self.assertEqual(pypy_instance.local_kernel(), kernel_state.MASTER_ID)
