@@ -101,6 +101,6 @@ class TwinProxy(object):
             # decrement the twin reference count
             try:
                 self.__kernel__.decrement_instance_ref(self)
-            except TwinterpeterUnavailable:
-                # twin already dead, doesn't care for use anymore
+            except (TwinterpeterUnavailable, AttributeError):
+                # twin already dead, doesn't care for us anymore
                 return
