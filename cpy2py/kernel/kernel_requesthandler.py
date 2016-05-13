@@ -277,7 +277,7 @@ class RequestDispatcher(object):
 
     def shutdown_peer(self, message='shutdown'):
         """Tell peer to shut down"""
-        return self._dispatch_request(__E_SHUTDOWN__, message)
+        return self._dispatch_event(__E_SHUTDOWN__, TerminationEvent(message=message, exit_code=0))
 
     def noop(self):
         """Send a noop to release blocking streams"""
