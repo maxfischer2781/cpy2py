@@ -44,7 +44,7 @@ class AsyncKernelServer(SingleThreadKernelServer):
     def _serve_requests(self):
         while not self._terminate.is_set():
             if __debug__:
-                self._logger.warning('Listening [%s]', kernel_state.TWIN_ID)
+                self._logger.warning('[%s] Server Listening', kernel_state.TWIN_ID)
             request_id, directive = self._server_recv()
             if self._except_callback is not None:
                 raise self._except_callback  # pylint: disable=raising-bad-type
@@ -79,7 +79,7 @@ class AsyncKernelClient(SingleThreadKernelClient):
         try:
             while not self._terminate.is_set():
                 if __debug__:
-                    self._logger.warning('Client Listening [%s]', kernel_state.TWIN_ID)
+                    self._logger.warning('[%s] Client Listening', kernel_state.TWIN_ID)
                 request_id, reply_body = self._client_recv()
                 request = self._requests.pop(request_id)
                 request[1] = reply_body
