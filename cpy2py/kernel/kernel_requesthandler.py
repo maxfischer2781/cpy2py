@@ -80,7 +80,6 @@ class RequestHandler(object):
         self._instances_keepalive = {}
         # directive lookup for methods
         self._directive_method = {
-            __E_SHUTDOWN__: self._directive_shutdown,
             __E_CALL_FUNC__: self._directive_call_func,
             __E_CALL_METHOD__: self._directive_call_method,
             __E_GET_ATTRIBUTE__: self._directive_get_attribute,
@@ -176,12 +175,6 @@ class RequestHandler(object):
             del self._instances_keepalive[instance]
         return response
 
-    @staticmethod
-    def _directive_shutdown(directive_body):
-        """Directive for :py:meth:`stop`"""
-        message = directive_body[0]
-        raise StopTwinterpreter(message=message, exit_code=0)
-
     def __repr__(self):
         return '<%s[%s]>' % (self.__class__.__name__, self.kernel_server)
 
@@ -226,9 +219,6 @@ class RequestDispatcher(object):
             return result_body
         elif result_type == __E_EXCEPTION__:
             raise result_body
-        elif result_type == __E_SHUTDOWN__:
-            self.exit_code = result_body
-            return True
         elif result_type is None:
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         raise RuntimeError
