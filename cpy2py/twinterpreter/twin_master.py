@@ -437,7 +437,7 @@ class TwinMaster(object):
         if self._process is not None:
             # allow twin to shut down before killing it outright
             shutdown_time = time.time()
-            if self._process.poll() is None:
+            while self._process.poll() is None:
                 time.sleep(0.1)
                 if time.time() - shutdown_time > 5:
                     self._process.kill()
