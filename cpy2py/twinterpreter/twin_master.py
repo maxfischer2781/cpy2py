@@ -222,7 +222,8 @@ class MainDef(object):
 
     def bootstrap(self):
         assert self.main_module != self.FETCH_NAME and self.main_module != self.FETCH_PATH
-        sys.argv[1:] = self._argv[:]
+        if self.restore_argv:
+            sys.argv[1:] = self._argv[:]
         if self.main_module is None:
             self._bootstrap_none()
         elif os.path.exists(self.main_module):
@@ -388,12 +389,12 @@ class TwinMaster(object):
         """Create the twin's CLI args"""
         twin_args = []
         # twinterpreter invocation
-        if isinstance(self.twin_def.executable, stringabc):
+        if isinstance(self.executable, stringabc):
             # bare interpreter - /foo/bar/python
-            twin_args.append(self.twin_def.executable)
+            twin_args.append(self.executable)
         else:
             # invoked interpreter - [ssh foo@bar python] or [which python]
-            twin_args.extend(self.twin_def.executable)
+            twin_args.extend(self.executable)
         # preserve -O
         if not __debug__:
             twin_args.append('-O')
@@ -401,7 +402,7 @@ class TwinMaster(object):
         twin_args.extend([
             '-m', 'cpy2py.twinterpreter.bootstrap',
             '--peer-id', kernel_state.TWIN_ID,
-            '--twin-id', self.twin_def.twinterpreter_id,
+            '--twin-id', self.twinterpreter_id,
             '--master-id', kernel_state.MASTER_ID,
             '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
             '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
