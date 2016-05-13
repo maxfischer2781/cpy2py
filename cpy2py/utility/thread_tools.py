@@ -48,7 +48,7 @@ class ThreadGuard(object):
     def __init__(self, start=0.0, lock_type=Lock):
         if isinstance(start, stringabc):
             start = ast.literal_eval(start)
-        self._value = start
+        self.__wrapped__ = start
         self._lock = lock_type()
 
     # Developer note:
@@ -57,233 +57,233 @@ class ThreadGuard(object):
     # calling other.__radd__(self._value) on failure.
     def __add__(self, other):
         with self._lock:
-            return operator.__add__(self._value, other)
+            return operator.__add__(self.__wrapped__, other)
 
     def __sub__(self, other):
         with self._lock:
-            return operator.__sub__(self._value, other)
+            return operator.__sub__(self.__wrapped__, other)
 
     def __mul__(self, other):
         with self._lock:
-            return operator.__mul__(self._value, other)
+            return operator.__mul__(self.__wrapped__, other)
 
     # __div__ is py2 only
     if hasattr(operator, '__div__'):
         def __div__(self, other):  # nopep8
             with self._lock:
-                return operator.__div__(self._value, other)
+                return operator.__div__(self.__wrapped__, other)
 
     def __truediv__(self, other):
         with self._lock:
-            return operator.__truediv__(self._value, other)
+            return operator.__truediv__(self.__wrapped__, other)
 
     def __floordiv__(self, other):
         with self._lock:
-            return operator.__floordiv__(self._value, other)
+            return operator.__floordiv__(self.__wrapped__, other)
 
     def __mod__(self, other):
         with self._lock:
-            return operator.__mod__(self._value, other)
+            return operator.__mod__(self.__wrapped__, other)
 
     def __divmod__(self, other):
         with self._lock:
-            return divmod(self._value, other)
+            return divmod(self.__wrapped__, other)
 
     def __pow__(self, power, modulo=None):
         with self._lock:
-            return pow(self._value, power, modulo)
+            return pow(self.__wrapped__, power, modulo)
 
     def __lshift__(self, other):
         with self._lock:
-            return operator.__lshift__(self._value, other)
+            return operator.__lshift__(self.__wrapped__, other)
 
     def __rshift__(self, other):
         with self._lock:
-            return operator.__rshift__(self._value, other)
+            return operator.__rshift__(self.__wrapped__, other)
 
     def __and__(self, other):
         with self._lock:
-            return operator.__and__(self._value, other)
+            return operator.__and__(self.__wrapped__, other)
 
     def __xor__(self, other):
         with self._lock:
-            return operator.__xor__(self._value, other)
+            return operator.__xor__(self.__wrapped__, other)
 
     def __or__(self, other):
         with self._lock:
-            return operator.__or__(self._value, other)
+            return operator.__or__(self.__wrapped__, other)
 
     def __radd__(self, other):
         with self._lock:
-            return operator.__add__(other, self._value)
+            return operator.__add__(other, self.__wrapped__)
 
     def __rsub__(self, other):
         with self._lock:
-            return operator.__sub__(other, self._value)
+            return operator.__sub__(other, self.__wrapped__)
 
     def __rmul__(self, other):
         with self._lock:
-            return operator.__mul__(other, self._value)
+            return operator.__mul__(other, self.__wrapped__)
 
     if hasattr(operator, '__div__'):
         def __rdiv__(self, other):  # nopep8
             with self._lock:
-                return operator.__div__(other, self._value)
+                return operator.__div__(other, self.__wrapped__)
 
     def __rtruediv__(self, other):
         with self._lock:
-            return operator.__truediv__(other, self._value)
+            return operator.__truediv__(other, self.__wrapped__)
 
     def __rfloordiv__(self, other):
         with self._lock:
-            return operator.__floordiv__(other, self._value)
+            return operator.__floordiv__(other, self.__wrapped__)
 
     def __rmod__(self, other):
         with self._lock:
-            return operator.__mod__(other, self._value)
+            return operator.__mod__(other, self.__wrapped__)
 
     def __rdivmod__(self, other):
         with self._lock:
-            return divmod(other, self._value)
+            return divmod(other, self.__wrapped__)
 
     def __rpow__(self, other):
         with self._lock:
-            return operator.__pow__(other, self._value)
+            return operator.__pow__(other, self.__wrapped__)
 
     def __rlshift__(self, other):
         with self._lock:
-            return operator.__lshift__(other, self._value)
+            return operator.__lshift__(other, self.__wrapped__)
 
     def __rrshift__(self, other):
         with self._lock:
-            return operator.__rshift__(other, self._value)
+            return operator.__rshift__(other, self.__wrapped__)
 
     def __rand__(self, other):
         with self._lock:
-            return operator.__and__(other, self._value)
+            return operator.__and__(other, self.__wrapped__)
 
     def __rxor__(self, other):
         with self._lock:
-            return operator.__xor__(other, self._value)
+            return operator.__xor__(other, self.__wrapped__)
 
     def __ror__(self, other):
         with self._lock:
-            return operator.__or__(other, self._value)
+            return operator.__or__(other, self.__wrapped__)
 
     # inplace operations
     def __iadd__(self, other):
         with self._lock:
-            self._value += other
+            self.__wrapped__ += other
             return self
 
     def __isub__(self, other):
         with self._lock:
-            self._value -= other
+            self.__wrapped__ -= other
             return self
 
     def __imul__(self, other):
         with self._lock:
-            self._value *= other
+            self.__wrapped__ *= other
             return self
 
     if hasattr(operator, '__idiv__'):
         def __idiv__(self, other):  # nopep8
             with self._lock:
-                self._value = operator.__idiv__(self._value, other)
+                self.__wrapped__ = operator.__idiv__(self.__wrapped__, other)
                 return self
 
     def __itruediv__(self, other):
         with self._lock:
-            self._value = operator.__itruediv__(self._value, other)
+            self.__wrapped__ = operator.__itruediv__(self.__wrapped__, other)
             return self
 
     def __ifloordiv__(self, other):
         with self._lock:
-            self._value //= other
+            self.__wrapped__ //= other
             return self
 
     def __imod__(self, other):
         with self._lock:
-            self._value %= other
+            self.__wrapped__ %= other
             return self
 
     def __ipow__(self, power, modulo=None):
         with self._lock:
-            self._value = pow(self._value, power, modulo)
+            self.__wrapped__ = pow(self.__wrapped__, power, modulo)
             return self
 
     def __ilshift__(self, other):
         with self._lock:
-            self._value <<= other
+            self.__wrapped__ <<= other
             return self
 
     def __irshift__(self, other):
         with self._lock:
-            self._value >>= other
+            self.__wrapped__ >>= other
             return self
 
     def __iand__(self, other):
         with self._lock:
-            self._value &= other
+            self.__wrapped__ &= other
             return self
 
     def __ixor__(self, other):
         with self._lock:
-            self._value ^= other
+            self.__wrapped__ ^= other
             return self
 
     def __ior__(self, other):
         with self._lock:
-            self._value |= other
+            self.__wrapped__ |= other
             return self
 
     def __neg__(self):
         with self._lock:
-            return -self._value
+            return -self.__wrapped__
 
     def __pos__(self):
         with self._lock:
-            return +self._value
+            return +self.__wrapped__
 
     def __abs__(self):
         with self._lock:
-            return abs(self._value)
+            return abs(self.__wrapped__)
 
     def __invert__(self):
         with self._lock:
-            return ~self._value
+            return ~self.__wrapped__
 
     def __complex__(self):
         with self._lock:
-            return complex(self._value)
+            return complex(self.__wrapped__)
 
     def __int__(self):
         with self._lock:
-            return int(self._value)
+            return int(self.__wrapped__)
 
     def __float__(self):
         with self._lock:
-            return float(self._value)
+            return float(self.__wrapped__)
 
     def __long__(self):
         with self._lock:
-            return long_int(self._value)
+            return long_int(self.__wrapped__)
 
     def __round__(self):
         with self._lock:
-            return round(self._value)
+            return round(self.__wrapped__)
 
     def __index__(self):
         try:
             with self._lock:
-                return self._value.__index__()
+                return self.__wrapped__.__index__()
         except AttributeError:
             return NotImplemented
 
     def __enter__(self):
         self._lock.acquire()
         try:
-            _enter = self._value.__enter__
+            _enter = self.__wrapped__.__enter__
         except AttributeError:
             self._lock.release()
         else:
@@ -291,64 +291,64 @@ class ThreadGuard(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         try:
-            _exit = self._value.__exit__
+            _exit = self.__wrapped__.__exit__
             return _exit(exc_type, exc_val, exc_tb)
         finally:
             self._lock.release()
 
     def __str__(self):
         with self._lock:
-            return str(self._value)
+            return str(self.__wrapped__)
 
     def __unicode__(self):
         with self._lock:
-            return unicode_str(self._value)
+            return unicode_str(self.__wrapped__)
 
     def __repr__(self):
         with self._lock:
-            return '%s<%r>' % (self.__class__.__name__, self._value)
+            return '%s<%r>' % (self.__class__.__name__, self.__wrapped__)
 
     def __bytes__(self):
         with self._lock:
-            return bytes(self._value)
+            return bytes(self.__wrapped__)
 
     def __lt__(self, other):
         with self._lock:
-            return self._value < other
+            return self.__wrapped__ < other
 
     def __gt__(self, other):
         with self._lock:
-            return self._value > other
+            return self.__wrapped__ > other
 
     def __le__(self, other):
         with self._lock:
-            return self._value <= other
+            return self.__wrapped__ <= other
 
     def __ge__(self, other):
         with self._lock:
-            return self._value >= other
+            return self.__wrapped__ >= other
 
     def __eq__(self, other):
         with self._lock:
-            return self._value == other
+            return self.__wrapped__ == other
 
     def __ne__(self, other):
         with self._lock:
-            return self._value != other
+            return self.__wrapped__ != other
 
     def __hash__(self):
         with self._lock:
-            return hash(self._value)
+            return hash(self.__wrapped__)
 
     def __nonzero__(self):
         with self._lock:
-            return bool(self._value)
+            return bool(self.__wrapped__)
 
     __bool__ = __nonzero__
 
     def __call__(self, *args, **kwargs):
         with self._lock:
-            return self._value(*args, **kwargs)
+            return self.__wrapped__(*args, **kwargs)
 
 
 class ItemError(CPy2PyException):
