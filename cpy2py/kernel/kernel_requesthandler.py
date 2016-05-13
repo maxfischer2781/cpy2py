@@ -55,6 +55,16 @@ E_SYMBOL = {
 }
 
 
+class TerminationEvent(object):
+    def __init__(self, message='shutdown', exit_code=0):
+        self.message = message
+        self.exit_code = exit_code
+
+    @staticmethod
+    def __setstate__(state):
+        raise StopTwinterpreter(message=state['message'], exit_code=state['exit_code'])
+
+
 class RequestHandler(object):
     """
     Handler for requests between kernels
@@ -224,6 +234,14 @@ class RequestDispatcher(object):
         elif result_type is None:
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         raise RuntimeError
+
+    def _dispatch_event(self, request_type, *args):
+        """Forward a request to peer and return the result"""
+        try:
+            self.kernel_client.run_event((request_type, args))
+        except (ipyc_exceptions.IPyCTerminated, IOError):
+            raise TwinterpeterTerminated(twin_id=self.peer_id)
+        return True
 
     def dispatch_call(self, call, *call_args, **call_kwargs):
         """Execute a function call and return the result"""

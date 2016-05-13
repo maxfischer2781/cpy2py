@@ -87,7 +87,6 @@ class AsyncKernelClient(SingleThreadKernelClient):
                 del request
         except (ipyc_exceptions.IPyCTerminated, EOFError):
             self._logger.warning('[%s] Client Released', kernel_state.TWIN_ID)
-            self._terminate.set()
             self.stop_local()
             raise  # reraise for base.run to pickup termination event
 
@@ -98,6 +97,10 @@ class AsyncKernelClient(SingleThreadKernelClient):
             self._client_send((my_id, request_body))
         my_request[0].wait()
         return my_request[1]
+
+    def run_event(self, event_body):
+        with self._request_send_lock:
+            self._client_send((None, event_body))
 
     def stop(self):
         with self._request_send_lock:

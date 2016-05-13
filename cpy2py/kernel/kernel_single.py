@@ -154,6 +154,9 @@ class SingleThreadKernelClient(object):
         assert request_id == my_id, 'kernel messages order'
         return reply_body
 
+    def run_event(self, event_body):
+        self._client_send((None, event_body))
+
     def stop(self):
         """Shutdown all servers"""
         if self.request_dispatcher.shutdown_peer():
