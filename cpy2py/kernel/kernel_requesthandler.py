@@ -95,7 +95,7 @@ class RequestHandler(object):
         # run request
         try:
             if __debug__:
-                self._logger.warning('Directive %s', E_SYMBOL[directive_type])
+                self._logger.warning('[%s] Directive %s', kernel_state.TWIN_ID, E_SYMBOL[directive_type])
             response = directive_method(directive_body)
         except StopTwinterpreter as err:
             self.kernel_server.send_reply(request_id, (__E_SHUTDOWN__, err.exit_code))
@@ -106,7 +106,7 @@ class RequestHandler(object):
         # send everything else back to calling scope
         except Exception as err:  # pylint: disable=broad-except
             self.kernel_server.send_reply(request_id, (__E_EXCEPTION__, err))
-            self._logger.critical('TWIN KERNEL PAYLOAD EXCEPTION')
+            self._logger.critical('[%s] TWIN KERNEL PAYLOAD EXCEPTION', kernel_state.TWIN_ID)
             format_exception(self._logger, 3)
             if isinstance(err, (KeyboardInterrupt, SystemExit)):
                 raise StopTwinterpreter(message=err.__class__.__name__, exit_code=1)
