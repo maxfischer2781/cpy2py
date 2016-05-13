@@ -21,6 +21,7 @@ from threading import Lock
 from collections import deque
 import time
 import ast
+import operator
 
 from .compat import stringabc, inf, intern_str, unicode_str, long_int
 from .exceptions import CPy2PyException
@@ -50,35 +51,43 @@ class ThreadGuard(object):
         self._value = start
         self._lock = lock_type()
 
+    # Developer note:
+    # operations are implemented using operator.__add__(self._value, other)
+    # instead of self._value.__add__(other) as the later does *not* imply
+    # calling other.__radd__(self._value) on failure.
     def __add__(self, other):
         with self._lock:
-            return self._value + other
+            return operator.__add__(self._value, other)
 
     def __sub__(self, other):
         with self._lock:
-            return self._value - other
+            return operator.__sub__(self._value, other)
 
     def __mul__(self, other):
         with self._lock:
-            return self._value * other
+            return operator.__mul__(self._value, other)
 
-    def __div__(self, other):
+    # __div__ is py2 only
+    if hasattr(operator, '__div__'):
+        def __div__(self, other):
+            with self._lock:
+                return operator.__div__(self._value, other)
+
+    def __truediv__(self, other):
         with self._lock:
-            return self._value / other
-
-    __truediv__ = __div__
+            return operator.__truediv__(self._value, other)
 
     def __floordiv__(self, other):
         with self._lock:
-            return self._value // other
+            return operator.__floordiv__(self._value, other)
 
     def __mod__(self, other):
         with self._lock:
-            return self._value % other
+            return operator.__mod__(self._value, other)
 
     def __divmod__(self, other):
         with self._lock:
-            return self._value // other, self._value % other
+            return divmod(self._value, other)
 
     def __pow__(self, power, modulo=None):
         with self._lock:
@@ -86,77 +95,80 @@ class ThreadGuard(object):
 
     def __lshift__(self, other):
         with self._lock:
-            return self._value << other
+            return operator.__lshift__(self._value, other)
 
     def __rshift__(self, other):
         with self._lock:
-            return self._value >> other
+            return operator.__rshift__(self._value, other)
 
     def __and__(self, other):
         with self._lock:
-            return self._value & other
+            return operator.__and__(self._value, other)
 
     def __xor__(self, other):
         with self._lock:
-            return self._value ^ other
+            return operator.__xor__(self._value, other)
 
     def __or__(self, other):
         with self._lock:
-            return self._value | other
+            return operator.__or__(self._value, other)
 
     def __radd__(self, other):
         with self._lock:
-            return other + self._value
+            return operator.__add__(other, self._value)
 
     def __rsub__(self, other):
         with self._lock:
-            return other - self._value
+            return operator.__sub__(other, self._value)
 
     def __rmul__(self, other):
         with self._lock:
-            return other * self._value
+            return operator.__mul__(other, self._value)
 
-    def __rdiv__(self, other):
+    if hasattr(operator, '__div__'):
+        def __rdiv__(self, other):
+            with self._lock:
+                return operator.__div__(other, self._value)
+
+    def __rtruediv__(self, other):
         with self._lock:
-            return other / self._value
-
-    __rtruediv__ = __rdiv__
+            return operator.__truediv__(other, self._value)
 
     def __rfloordiv__(self, other):
         with self._lock:
-            return other // self._value
+            return operator.__floordiv__(other, self._value)
 
     def __rmod__(self, other):
         with self._lock:
-            return other % self._value
+            return operator.__mod__(other, self._value)
 
     def __rdivmod__(self, other):
         with self._lock:
-            return other // self._value, other % self._value
+            return divmod(other, self._value)
 
     def __rpow__(self, other):
         with self._lock:
-            return other ** self._value
+            return operator.__pow__(other, self._value)
 
     def __rlshift__(self, other):
         with self._lock:
-            return other << self._value
+            return operator.__lshift__(other, self._value)
 
     def __rrshift__(self, other):
         with self._lock:
-            return other >> self._value
+            return operator.__rshift__(other, self._value)
 
     def __rand__(self, other):
         with self._lock:
-            return other & self._value
+            return operator.__and__(other, self._value)
 
     def __rxor__(self, other):
         with self._lock:
-            return other ^ self._value
+            return operator.__xor__(other, self._value)
 
     def __ror__(self, other):
         with self._lock:
-            return other | self._value
+            return operator.__or__(other, self._value)
 
     # inplace operations
     def __iadd__(self, other):
@@ -174,12 +186,16 @@ class ThreadGuard(object):
             self._value *= other
             return self
 
-    def __idiv__(self, other):
-        with self._lock:
-            self._value /= other
-            return self
+    if hasattr(operator, '__idiv__'):
+        def __idiv__(self, other):
+            with self._lock:
+                self._value = operator.__idiv__(self._value, other)
+                return self
 
-    __itruediv__ = __idiv__
+    def __itruediv__(self, other):
+        with self._lock:
+            self._value = operator.__itruediv__(self._value, other)
+            return self
 
     def __ifloordiv__(self, other):
         with self._lock:
