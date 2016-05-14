@@ -259,7 +259,10 @@ class RequestDispatcher(object):
 
     def shutdown_peer(self, message='shutdown'):
         """Tell peer to shut down"""
-        return self._dispatch_event(TerminationEvent(message=message, exit_code=0))
+        try:
+            return self._dispatch_event(TerminationEvent(message=message, exit_code=0))
+        except TwinterpeterTerminated:
+            return True
 
     def stop(self):
         return self.kernel_client.stop()
