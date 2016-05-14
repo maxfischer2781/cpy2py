@@ -29,7 +29,7 @@ class TestStaticObject(unittest.TestCase):
         self.twinterpreter.start()
 
     def tearDown(self):
-        self.twinterpreter.stop()
+        self.twinterpreter.destroy()
         time.sleep(0.1)
 
     @staticmethod
