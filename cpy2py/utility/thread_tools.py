@@ -48,10 +48,16 @@ class ThreadGuard(object):
 
     :note: When invoked as a context manager, the underlying lock
            will be held until the context is exited.
+
+    :warning: It is not possible to call :py:func:`bytes` on a
+              guarded object without explicitly unwrapping it.
     """
     def __init__(self, start=0.0, lock_type=Lock):
         if isinstance(start, stringabc):
-            start = ast.literal_eval(start)
+            try:
+                start = ast.literal_eval(start)
+            except ValueError:
+                pass
         self.__wrapped__ = start
         self._lock = lock_type()
 
@@ -311,10 +317,6 @@ class ThreadGuard(object):
     def __repr__(self):
         with self._lock:
             return '%s<%r>' % (self.__class__.__name__, self.__wrapped__)
-
-    def __bytes__(self):
-        with self._lock:
-            return bytes(self.__wrapped__)
 
     def __lt__(self, other):
         with self._lock:
