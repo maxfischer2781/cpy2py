@@ -3,7 +3,7 @@ import random
 import unittest
 import operator
 
-from cpy2py.utility.compat import rangex
+from cpy2py.utility.compat import rangex, str_to_bytes, unicode_str
 from cpy2py.utility.thread_tools import ThreadGuard
 
 
@@ -56,8 +56,25 @@ class TestThreadGuard(unittest.TestCase):
                     tg_counter = ops(tg_counter, val)
                     self.assertEqual(counter, tg_counter, '%s %s %s %s' % (counter, tg_counter, op, val))
 
+    def test_counter_self_ops(self):
+        for op in [
+            '__neg__', '__pos__', '__abs__', '__invert__',
+            '__index__'
+        ]:
+            try:
+                ops = getattr(operator, op)
+            except AttributeError:
+                continue
+            else:
+                for val in (random.randint(-100, 100) for _ in rangex(5)):
+                    counter = val
+                    tg_counter = ThreadGuard(val)
+                    res = ops(counter)
+                    tg_res = ops(tg_counter)
+                    self.assertEqual(res, tg_res, '%s %s %s %s' % (res, tg_res, op, val))
+
     def test_counter_convert(self):
         counter = 100
         tg_counter = ThreadGuard(str(counter))
-        for conversion in (float, int, complex, bool, round, str):
+        for conversion in (float, int, complex, bool, round, str, hash, unicode_str):
             self.assertEqual(conversion(counter), conversion(tg_counter))
