@@ -10,7 +10,7 @@ class TestCheckOutput(unittest.TestCase):
     def test_output(self):
         for _ in rangex(20):
             val = random.random() * random.randint(0, 1000)
-            self.assertEqual('%3.1f' % val, check_output(['python', '-c', 'print(%3.1f)' % val]).strip())
+            self.assertEqual('%3.1f' % val, str(check_output(['python', '-c', 'print(%3.1f)' % val]).strip().decode()))
 
     def test_redirect(self):
         for _ in rangex(20):
