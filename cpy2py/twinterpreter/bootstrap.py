@@ -54,6 +54,8 @@ def dump_kernel(kernel_client, kernel_server):
 
 def load_kernel(kernel_pkl):
     """Load kernel client and server classes"""
+    if kernel_pkl is None:
+        return None
     return load_any(kernel_pkl)
 
 
@@ -151,33 +153,41 @@ def bootstrap_kernel():
     # run initializers before creating any resources
     # TwinMaster will run the finalizers directly
     run_initializer(settings.initializer)
-    server_ipyc = load_connector(settings.server_ipyc)
-    client_ipyc = load_connector(settings.client_ipyc)
-    # use custom kernels
-    if settings.kernel:
-        client, server = load_kernel(settings.kernel)
+    exit_code = run_kernel(
+        kernel=load_kernel(settings.kernel),
+        client_ipyc=load_connector(settings.client_ipyc),
+        server_ipyc=load_connector(settings.server_ipyc),
+        peer_id=settings.peer_id,
+        ipyc_pkl_protocol=settings.ipyc_pkl_protocol
+    )
+    logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
+        '[%s] %s.bootstrap_kernel exiting with %s', kernel_state.TWIN_ID, __name__, exit_code
+    )
+    sys.exit(exit_code)
+
+
+def run_kernel(kernel, client_ipyc, server_ipyc, peer_id, ipyc_pkl_protocol):
+    # start in opposite order as TwinMaster to avoid deadlocks
+    if kernel:
+        client, server = kernel
     else:
         client, server = kernel_single.CLIENT, kernel_single.SERVER
-    # start in opposite order as TwinMaster to avoid deadlocks
     kernel_server = server(
-        peer_id=settings.peer_id,
+        peer_id=peer_id,
         ipyc=server_ipyc,
-        pickle_protocol=settings.ipyc_pkl_protocol,
+        pickle_protocol=ipyc_pkl_protocol,
     )
     kernel_client = client(
-        peer_id=settings.peer_id,
+        peer_id=peer_id,
         ipyc=client_ipyc,
-        pickle_protocol=settings.ipyc_pkl_protocol,
+        pickle_protocol=ipyc_pkl_protocol,
     )
     exit_code = kernel_server.run()
     try:
         kernel_client.stop()
     except TwinterpeterTerminated:
         pass
-    logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
-        '[%s] %s.bootstrap_kernel exiting with %s', kernel_state.TWIN_ID, __name__, exit_code
-    )
-    sys.exit(exit_code)
+    return exit_code
 
 
 if __name__ == "__main__":
