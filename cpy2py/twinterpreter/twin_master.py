@@ -288,8 +288,10 @@ class TwinMaster(object):
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
 
-    def __new__(cls, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
-                restore_argv=False):
+    def __new__(
+            cls, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
+            restore_argv=False, ipyc=ipyc_fifo.DuplexFifoIPyC
+    ):
         twin_def = TwinDef(executable, twinterpreter_id, kernel)
         try:
             master = cls._master_store[twin_def.twinterpreter_id]
@@ -303,8 +305,10 @@ class TwinMaster(object):
                 "interpreter with same twinterpreter_id but different settings already exists"
             return master
 
-    def __init__(self, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
-                 restore_argv=False):
+    def __init__(
+            self, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
+            restore_argv=False, ipyc=ipyc_fifo.DuplexFifoIPyC
+    ):
         # avoid duplicate initialisation of singleton
         if self._initialized:
             return
@@ -318,6 +322,7 @@ class TwinMaster(object):
         self._kernel_server = None
         self._kernel_client = None
         self._server_thread = None
+        self.ipyc = ipyc
 
     @property
     def executable(self):
@@ -359,8 +364,8 @@ class TwinMaster(object):
             raise RuntimeError("Attempt to start TwinMaster after destroying it")
         if not self.is_alive:
             self._logger.warning('<%s> Starting Twin [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
-            my_server_ipyc = ipyc_fifo.DuplexFifoIPyC()
-            my_client_ipyc = ipyc_fifo.DuplexFifoIPyC()
+            my_server_ipyc = self.ipyc()
+            my_client_ipyc = self.ipyc()
             self._process = subprocess.Popen(
                 self._twin_args(my_client_ipyc=my_client_ipyc, my_server_ipyc=my_server_ipyc),
                 env=self._twin_env()

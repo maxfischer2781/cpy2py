@@ -23,11 +23,11 @@ from cpy2py.utility.compat import inf
 class DuplexFifoIPyC(object):
     """Duplex FIFO exporting file-like interface"""
     def __init__(self, fifo_dir_path=None, is_master=True):
+        self.is_master = is_master
         self._fifo_dir_path = fifo_dir_path
         if fifo_dir_path is None:
             self._fifo_dir_path = tempfile.mkdtemp()
             atexit.register(shutil.rmtree, self._fifo_dir_path)
-        self.is_master = is_master
         if is_master:
             self._fifo_read_path = os.path.join(self._fifo_dir_path, 'cpy2py_s2c.ipc')
             self._fifo_write_path = os.path.join(self._fifo_dir_path, 'cpy2py_c2s.ipc')
