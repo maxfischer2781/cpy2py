@@ -75,7 +75,7 @@ if bytes == str:
     str_to_bytes = str
 else:
     def str_to_bytes(bstr):
-        return bytes(bstr, 'ascii')
+        return bytes(bstr, 'utf-8')
 
 try:
     unicode_str = unicode
@@ -92,6 +92,11 @@ try:
 except NameError:
     intern_str = sys.intern
 
+try:
+    from StringIO import StringIO as BytesFile
+except ImportError:
+    from io import BytesIO as BytesFile
+
 inf = float('inf')
 
 __all__ = [
@@ -104,5 +109,6 @@ __all__ = [
     'inf',
     'intern_str',
     'unicode_str',
-    'long_int'
+    'long_int',
+    'BytesFile',
 ]
