@@ -161,7 +161,7 @@ def bootstrap_kernel():
         ipyc_pkl_protocol=settings.ipyc_pkl_protocol
     )
     logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
-        '[%s] %s.bootstrap_kernel exiting with %s', kernel_state.TWIN_ID, __name__, exit_code
+        '<%s> [%s] %s.bootstrap_kernel exiting with %s', kernel_state.TWIN_ID, settings.peer_id, __name__, exit_code
     )
     sys.exit(exit_code)
 

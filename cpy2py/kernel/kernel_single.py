@@ -81,22 +81,22 @@ class SingleThreadKernelServer(object):
         assert self._terminate.is_set(), 'Kernel already active'
         self._terminate.clear()
         exit_code = 1
-        self._logger.warning('[%s] Starting %s @ %s', kernel_state.TWIN_ID, self.__class__.__name__, time.asctime())
+        self._logger.warning('<%s> [%s] Starting %s @ %s', kernel_state.TWIN_ID, self.peer_id, self.__class__.__name__, time.asctime())
         try:
             self._serve_requests()
         except StopTwinterpreter as err:
-            self._logger.critical('[%s] TWIN KERNEL TERMINATED: %s', kernel_state.TWIN_ID, err)
+            self._logger.critical('<%s> [%s] TWIN KERNEL TERMINATED: %s', kernel_state.TWIN_ID, self.peer_id, err)
             exit_code = err.exit_code
         # cPickle may raise EOFError by itself
         except (ipyc_exceptions.IPyCTerminated, EOFError) as err:
-            self._logger.critical('[%s] TWIN KERNEL RELEASED: %s', kernel_state.TWIN_ID, err)
+            self._logger.critical('<%s> [%s] TWIN KERNEL RELEASED: %s', kernel_state.TWIN_ID, self.peer_id, err)
             exit_code = 0
         except Exception:  # pylint: disable=broad-except
-            self._logger.critical('[%s] TWIN KERNEL INTERNAL EXCEPTION', kernel_state.TWIN_ID)
+            self._logger.critical('<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION', kernel_state.TWIN_ID, self.peer_id)
             format_exception(self._logger, 3)
         finally:
             self._terminate.set()
-            self._logger.critical('[%s] TWIN KERNEL SHUTDOWN: %d', kernel_state.TWIN_ID, exit_code)
+            self._logger.critical('<%s> [%s] TWIN KERNEL SHUTDOWN: %d', kernel_state.TWIN_ID, self.peer_id, exit_code)
             self._ipyc.close()
             del kernel_state.KERNEL_SERVERS[self.peer_id]
         return exit_code
@@ -104,7 +104,7 @@ class SingleThreadKernelServer(object):
     def _serve_requests(self):
         while not self._terminate.is_set():
             if __debug__:
-                self._logger.warning('[%s] Server Listening', kernel_state.TWIN_ID)
+                self._logger.warning('<%s> [%s] Server Listening', kernel_state.TWIN_ID, self.peer_id)
             request_id, directive = self._server_recv()
             self.request_handler.serve_request(request_id, directive)
 
