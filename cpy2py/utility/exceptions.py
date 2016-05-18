@@ -37,7 +37,7 @@ def format_namespace(logger, namespace, namespace_name):
         return
     maxlen = max(len(var_name) for var_name in namespace)
     for var_name in sorted(namespace):
-        logger.critical('      %s = %s', var_name.ljust(maxlen), format_repr(namespace[var_name]))
+        logger.critical('      %s = %s', var_name.ljust(maxlen), format_repr(namespace.get(var_name, '<not accessible>')))
 
 
 def format_repr(obj, max_len=120):
@@ -98,8 +98,13 @@ def format_exception(logger, variable_depth=float('inf')):
             local_class = local_vars.get('self')
             format_namespace(logger, local_vars, 'local')
             if local_class is not None:
-                class_vars = getattr(local_class, '__dict__',
-                                     getattr(local_class, '__slots__', getattr(local_class, '_fields', None)))
+                try:
+                    class_vars = getattr(local_class, '__dict__')
+                except AttributeError:
+                    class_vars_name = getattr(local_class, '__slots__', getattr(local_class, '_fields', None))
+                    class_vars = dict(
+                        (name, getattr(local_class, name, '<not accessible>')) for name in class_vars_name
+                    )
                 format_namespace(logger, class_vars, 'self (%s)' % type(local_class))
         logger.critical('')
         trace_depth -= 1
