@@ -183,6 +183,11 @@ In general, twinterpreters get faster the shorter they have to wait between requ
 ``pypy`` twinterpreters benefit from a high number of requests, allowing their JIT to warm up.
 Python3 connections are the fastest, provided that both twinterpreters support pickle protocol 4.
 
+A notable fraction of time is spent on debugging output via :py:mod:`logging`.
+Even if no output is produced, :py:mod:`cpy2py` is optimized to a point where the *logging call* is noticeable.
+If needed, any per-call logging can be disabled by running python in optimized mode.
+See the python documentation on the :option:`-O` option and :envvar:`PYTHONOPTIMIZE` environment variable.
+
 You can benchmark the overhead yourself using the :py:mod:`cpy2py_benchmark` tools.
 
 ==================== ==================== ==================== ====================
