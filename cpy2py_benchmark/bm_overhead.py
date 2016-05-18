@@ -83,7 +83,7 @@ class TimingVector(object):
         if num == 0:
             return '0.0  s'
         e_power = 18
-        for t_power, prefix in enumerate('EPTGMk mμnpfa'):
+        for t_power, prefix in enumerate(u'EPTGMk mμnpfa'):
             power = e_power - t_power * 3
             p_num = num / (10 ** power)
             if 1E3 > p_num > 1.0:
