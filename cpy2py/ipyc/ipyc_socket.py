@@ -7,7 +7,7 @@ import collections
 import tempfile
 import errno
 
-from cpy2py.utility.compat import BytesFile, inf
+from cpy2py.utility.compat import BytesFile
 from cpy2py.utility.utils import random_str
 from cpy2py.kernel import kernel_state
 
@@ -74,22 +74,6 @@ class DuplexSocketIPyC(object):
         if self.server_socket:
             self.server_socket.close()
 
-    # file interface
-    def read(self, size=None):
-        """Read at most `size` bytes"""
-        if size is None:
-            raise NotImplementedError
-        else:
-            return self.client_socket.recv(size)
-
-    def readline(self):
-        """Read one entire line"""
-        raise NotImplementedError
-
-    def write(self, message):
-        """Write a string"""
-        return self.client_socket.send(message)
-
     # socket doesn't have lightweight file interface, use our own wrappers
     @property
     def writer(self):
@@ -101,7 +85,7 @@ class DuplexSocketIPyC(object):
 
     @property
     def connector(self):
-        """Pickle'able connector as (factory, args, kwargs)"""
+        """Pickle'able connector as ``(factory, args, kwargs)``"""
         # socket.AF_* is enum in Py3
         return self.__class__, (), {'family': int(self.family), 'address': self.address, 'is_master': False}
 
@@ -112,15 +96,33 @@ class DuplexSocketIPyC(object):
 class BufferedSocketFile(object):
     """
     File-like interface to a socket, buffered for use with :py:mod:`pickle`
+
+    On the one hand, this class serves to expose a subset of the file
+    interface on a socket: the methods used by :py:mod:`pickle`, namely
+    :py:meth:`read`, :py:meth:`readline` and :py:meth:`write`.
+    Additionally, these methods raise errors appropriate for the
+    :py:mod:`~cpy2py.ipyc` classes, e.g. :py:exc:`EOFError` when the socket
+    is closed.
+
+    On the other hand, it boxes pickles to reduce IO operations. Every pickle
+    is digested as one message (this is provided by :py:mod:`pickle`). Each
+    message is prepended by a head signaling its length.
+    Messages are sent and received as one entity. The file interfaces provide
+    data not from the raw socket, but from per-message buffers.
+
+    The message format is::
+
+       b'%(length)08X%(message)s'
+
+    i.e. size as an 8-character hex, followed by the message encoded in ASCII.
+    The header is sufficient for 4294967295 characters, or almost 4GB of data.
     """
-    #
     def __init__(self, client_socket):
         self.client_socket = client_socket
         self._read_buffer = None
         self._read_buffer_left = 0
 
     def read(self, size=None):
-        #print('read %s' % size)
         if self._read_buffer_left <= 0:
             self._read_message()
         if size is None or size <= 0:
@@ -145,7 +147,6 @@ class BufferedSocketFile(object):
             msg_len = b''
             while len(msg_len) < 8:
                 msg_len += self.client_socket.recv(8 - len(msg_len))
-            #print(msg_len)
             msg_len = int(msg_len, 16)
             msg_read = 0
             msg_buffer = []
@@ -160,7 +161,6 @@ class BufferedSocketFile(object):
             raise
 
     def _write_message(self, message):
-        #print('write %d' % len(message))
         self.client_socket.sendall(('%08X' % len(message)).encode('ascii'))
         self.client_socket.sendall(message)
 

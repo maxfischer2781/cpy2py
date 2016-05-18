@@ -70,22 +70,6 @@ class DuplexFifoIPyC(object):
                 break
         return file_obj.closed
 
-    # file interface
-    def read(self, size=None):
-        """Read at most `size` bytes"""
-        if size is None:
-            return self._fifo_read.read()
-        else:
-            return self._fifo_read.read(size)
-
-    def readline(self):
-        """Read one entire line"""
-        return self._fifo_read.readline()
-
-    def write(self, message):
-        """Write a string"""
-        return self._fifo_write.write(message)
-
     # direct file access
     @property
     def writer(self):
