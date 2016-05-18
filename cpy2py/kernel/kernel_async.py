@@ -21,6 +21,7 @@ that this comes at the cost of starting a new thread per request.
 from __future__ import print_function
 import threading
 
+from cpy2py.utility.exceptions import format_exception
 from cpy2py.ipyc import ipyc_exceptions
 from cpy2py.kernel import kernel_state
 from cpy2py.kernel.kernel_single import SingleThreadKernelClient, SingleThreadKernelServer
@@ -84,10 +85,16 @@ class AsyncKernelClient(SingleThreadKernelClient):
                 request = self._requests.pop(request_id)
                 request[1] = reply_body
                 request[0].set()
-                del request
+                del request_id, reply_body, request
         except (ipyc_exceptions.IPyCTerminated, EOFError, ValueError):
             self._logger.warning('<%s> [%s] Client Released', kernel_state.TWIN_ID, self.peer_id)
             self.stop_local()
+        except Exception as err:  # pylint: disable=broad-except
+            self._logger.critical(
+                '<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION: %s', kernel_state.TWIN_ID, self.peer_id, err
+            )
+            format_exception(self._logger, 3)
+            raise
 
     def run_request(self, request_body):
         my_id = threading.current_thread().ident

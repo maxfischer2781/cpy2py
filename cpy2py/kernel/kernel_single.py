@@ -91,8 +91,10 @@ class SingleThreadKernelServer(object):
         except (ipyc_exceptions.IPyCTerminated, EOFError) as err:
             self._logger.critical('<%s> [%s] TWIN KERNEL RELEASED: %s', kernel_state.TWIN_ID, self.peer_id, err)
             exit_code = 0
-        except Exception:  # pylint: disable=broad-except
-            self._logger.critical('<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION', kernel_state.TWIN_ID, self.peer_id)
+        except Exception as err:  # pylint: disable=broad-except
+            self._logger.critical(
+                '<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION: %s', kernel_state.TWIN_ID, self.peer_id, err
+            )
             format_exception(self._logger, 3)
         finally:
             self._terminate.set()
