@@ -23,7 +23,7 @@ import logging
 
 from cpy2py.kernel import kernel_single, kernel_state, kernel_async, kernel_multi
 from cpy2py.twinterpreter import bootstrap
-from cpy2py.ipyc import ipyc_fifo, ipyc_socket
+from cpy2py.ipyc import ipyc_fifo
 from cpy2py.utility import proc_tools
 from cpy2py.utility.compat import stringabc
 
@@ -307,7 +307,7 @@ class TwinMaster(object):
 
     def __init__(
             self, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
-            restore_argv=False, ipyc=ipyc_socket.DuplexSocketIPyC#ipyc_fifo.DuplexFifoIPyC
+            restore_argv=False, ipyc=ipyc_fifo.DuplexFifoIPyC
     ):
         # avoid duplicate initialisation of singleton
         if self._initialized:
