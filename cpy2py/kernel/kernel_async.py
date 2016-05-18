@@ -90,6 +90,7 @@ class AsyncKernelClient(SingleThreadKernelClient):
             self._logger.warning('<%s> [%s] Client Released', kernel_state.TWIN_ID, self.peer_id)
             self.stop_local()
         except Exception as err:  # pylint: disable=broad-except
+            # DEBUG: sometimes, request_id raises KeyError even though it's in _requests - MF@20160518
             if isinstance(err, KeyError):
                 self._logger.critical('Request: %r (%s)', request_id, type(request_id))
                 for key in self._requests:
