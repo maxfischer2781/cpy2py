@@ -120,8 +120,8 @@ class TwinMaster(object):
             self._logger.warning('<%s> Starting Twin [%s]', kernel_state.TWIN_ID, self.twinterpreter_id)
             my_server_ipyc = self.ipyc()
             my_client_ipyc = self.ipyc()
-            self._process = subprocess.Popen(
-                self._twin_args(my_client_ipyc=my_client_ipyc, my_server_ipyc=my_server_ipyc),
+            self._process = self.twin_def.spawn(
+                cli_args=self._twin_args(my_client_ipyc=my_client_ipyc, my_server_ipyc=my_server_ipyc),
                 env=self._twin_env()
             )
             self._kernel_client = self.twin_def.kernel_client(
@@ -147,13 +147,6 @@ class TwinMaster(object):
     def _twin_args(self, my_client_ipyc, my_server_ipyc):
         """Create the twin's CLI args"""
         twin_args = []
-        # twinterpreter invocation
-        if isinstance(self.executable, stringabc):
-            # bare interpreter - /foo/bar/python
-            twin_args.append(self.executable)
-        else:
-            # invoked interpreter - [ssh foo@bar python] or [which python]
-            twin_args.extend(self.executable)
         # preserve -O
         if not __debug__:
             twin_args.append('-O')

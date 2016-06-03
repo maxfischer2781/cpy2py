@@ -1,5 +1,7 @@
 import os
+import subprocess
 
+from cpy2py.utility.compat import stringabc
 from cpy2py.utility import proc_tools
 from cpy2py.kernel import kernel_single, kernel_async, kernel_multi
 
@@ -77,6 +79,27 @@ class TwinDef(object):
             except AttributeError:
                 raise ValueError("Expected 'kernel' to reference client and server")
         return client, server
+
+    def spawn(self, cli_args=None, env=None):
+        _spawn_args = []
+        if isinstance(self.executable, stringabc):
+            # bare interpreter - /foo/bar/python
+            _spawn_args.append(self.executable)
+        else:
+            # invoked interpreter - [ssh foo@bar python] or [which python]
+            _spawn_args.extend(self.executable)
+        if cli_args:
+            _spawn_args.extend(cli_args)
+        env = {} if env is None else env
+        return subprocess.Popen(
+            args=_spawn_args,
+            # do not redirect std streams
+            # this fakes the impression of having just one program running
+            stdin=None,
+            stdout=None,
+            stderr=None,
+            env=env,
+        )
 
     def __eq__(self, other):
         try:
