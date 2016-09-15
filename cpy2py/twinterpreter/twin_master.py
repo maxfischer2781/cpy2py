@@ -89,6 +89,11 @@ class TwinMaster(object):
         return self.twin_def.twinterpreter_id
 
     @property
+    def native(self):
+        """Whether the master defines its own controlling scope"""
+        return kernel_state.is_twinterpreter(self.twinterpreter_id)
+
+    @property
     def is_alive(self):
         """Whether the twinterpeter process is alive"""
         if self._process is not None:
