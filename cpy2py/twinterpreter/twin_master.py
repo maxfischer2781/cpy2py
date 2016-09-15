@@ -11,7 +11,6 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
-import subprocess
 import os
 import errno
 import threading
@@ -21,7 +20,6 @@ import logging
 from cpy2py.kernel import kernel_state
 from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import ipyc_fifo
-from cpy2py.utility.compat import stringabc
 
 from .twin_def import TwinDef
 from .twin_main import MainDef
