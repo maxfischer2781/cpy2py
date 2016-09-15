@@ -135,9 +135,10 @@ class MainDef(object):
         }
 
     def bootstrap(self):
-        assert self.main_module != self.FETCH_NAME and self.main_module != self.FETCH_PATH
+        # all of these are set by unpickling in a spawning child process
+        assert self.main_module != self.FETCH_NAME and self.main_module != self.FETCH_PATH and self._argv is not None,\
+            "Cannot bootstrap sys.argv in initial environment"
         if self.restore_argv:
-            assert self._argv is not None, "Cannot bootstrap sys.argv in initial environment"
             sys.argv[1:] = self._argv[:]
         if self.main_module is None:
             self._bootstrap_none()
