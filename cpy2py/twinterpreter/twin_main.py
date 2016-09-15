@@ -165,7 +165,7 @@ class MainDef(object):
         if not self.run_main and (mod_name == "__main__" or mod_name.endswith(".__main__")):
             return self._bootstrap_none()
         main_name = '__main__' if self.run_main else '__cpy2py_main__'
-        main_dict = runpy.run_module(mod_name, run_name=main_name, alter_sys=True)
+        main_dict = runpy.run_module(mod_name, run_name=main_name)
         self._bootstrap_set_main(main_dict)
 
     @staticmethod
