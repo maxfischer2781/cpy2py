@@ -110,7 +110,7 @@ class TwinMaster(object):
             else:
                 return True
         assert self._process == self._kernel_client == self._kernel_server,\
-            "Client, Server and Process must have been realease together"
+            "Client, Server and Process must have been realeased together"
         return False
 
     def start(self):
@@ -119,6 +119,8 @@ class TwinMaster(object):
 
         :returns: whether the twinterpeter is alive
         """
+        if self.native:
+            return True
         if self._master_store.get(self.twinterpreter_id) is not self:
             raise RuntimeError("Attempt to start TwinMaster after destroying it")
         if not self.is_alive:
@@ -219,5 +221,7 @@ class TwinMaster(object):
         :param call_kwargs: keyword arguments to `call`
         :returns: result of `call(*call_args, **call_kwargs)`
         """
+        if self.native:
+            return call(*call_args, **call_kwargs)
         assert self._kernel_client is not None
         return self._kernel_client.request_dispatcher.dispatch_call(call, *call_args, **call_kwargs)
