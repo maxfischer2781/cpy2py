@@ -59,6 +59,7 @@ an arbitrary callable in the twinterpreter.
 
 .. code:: python
 
+    from cpy2py import TwinMaster
     from my_module import my_function
     twinterpreter = TwinMaster('pypy')
     twinterpreter.start()

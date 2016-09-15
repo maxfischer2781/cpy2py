@@ -70,6 +70,9 @@ import sys
 import os
 import runpy
 import types
+import logging
+
+from cpy2py.kernel import kernel_state
 
 
 class MainDef(object):
@@ -82,6 +85,14 @@ class MainDef(object):
     :type run_main: bool
     :param restore_argv: whether to replicate the parent ``sys.argv``
     :type restore_argv: bool
+
+    When bootstrapping, two magic modules are created:
+
+    **__cpy2py_bootstrap__**
+      The bootstrapping module starting the cpy2py process.
+
+    **__cpy2py_main__**
+      The __main__ module loaded and started by cpy2py.
     """
     FETCH_PATH = "Use __main__ via absolute path"
     FETCH_NAME = "Use __main__ via module name"
@@ -91,6 +102,7 @@ class MainDef(object):
         self.run_main = run_main
         self._argv = None  # argv EXCLUDING first element (executable name)
         self.restore_argv = restore_argv
+        self._logger = logging.getLogger('__cpy2py__.main.%s' % kernel_state.TWIN_ID)
 
     def _resolve_main(self, main_module):
         if main_module is True:
@@ -134,11 +146,18 @@ class MainDef(object):
             '_argv': sys.argv[1:] if self.restore_argv else [],
         }
 
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self._logger = logging.getLogger('__cpy2py__.main.%s' % kernel_state.TWIN_ID)
+
     def bootstrap(self):
+        """Bootstrap the parent main environment into the current process"""
         # all of these are set by unpickling in a spawning child process
         assert self.main_module != self.FETCH_NAME and self.main_module != self.FETCH_PATH and self._argv is not None,\
             "Cannot bootstrap sys.argv in initial environment"
+        self._logger.warning('<%s> Bootstrapping __main__ via %r', kernel_state.TWIN_ID, self)
         if self.restore_argv:
+            self._logger.info('<%s> Restoring sys.argv', kernel_state.TWIN_ID)
             sys.argv[1:] = self._argv[:]
         if self.main_module is None:
             self._bootstrap_none()
@@ -147,8 +166,8 @@ class MainDef(object):
         else:
             self._bootstrap_name(str(self.main_module))
 
-    @staticmethod
-    def _bootstrap_none():
+    def _bootstrap_none(self):
+        self._logger.info('<%s> Not loading a __main__ module', kernel_state.TWIN_ID)
         sys.modules['__cpy2py_main__'] = sys.modules['__cpy2py_bootstrap__'] = sys.modules['__main__']
 
     def _bootstrap_path(self, main_path):
@@ -157,6 +176,7 @@ class MainDef(object):
         if os.path.splitext(os.path.basename(main_path))[0] in ('ipython', 'utrunner'):
             return self._bootstrap_none()
         main_name = '__main__' if self.run_main else '__cpy2py_main__'
+        self._logger.info('<%s> Loading __main__ module as %s from oath %r', kernel_state.TWIN_ID, main_name, main_path)
         main_dict = runpy.run_path(main_path, run_name=main_name)
         self._bootstrap_set_main(main_dict)
 
@@ -165,6 +185,7 @@ class MainDef(object):
         if not self.run_main and (mod_name == "__main__" or mod_name.endswith(".__main__")):
             return self._bootstrap_none()
         main_name = '__main__' if self.run_main else '__cpy2py_main__'
+        self._logger.info('<%s> Loading __main__ module as %s from name %r', kernel_state.TWIN_ID, main_name, mod_name)
         main_dict = runpy.run_module(mod_name, run_name=main_name)
         self._bootstrap_set_main(main_dict)
 
@@ -176,7 +197,9 @@ class MainDef(object):
         sys.modules['__main__'] = sys.modules['__cpy2py_main__'] = main_module
 
     def __repr__(self):
-        return "%s(main_module=%r, run_main=%r)" % (self.__class__.__name__, self.main_module, self.run_main)
+        return "%s(main_module=%r, run_main=%r, restore_argv=%r)" % (
+            self.__class__.__name__, self.main_module, self.run_main, self.restore_argv
+        )
 
     def __eq__(self, other):
         try:
