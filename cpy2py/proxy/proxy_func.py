@@ -10,6 +10,7 @@ def twinfunction(twinterpreter_id):
     :type twinterpreter_id: str
     """
     def decorator(func):
+        func.__twin_id__ = twinterpreter_id
         # native twin, never redirect
         if kernel_state.is_twinterpreter(twinterpreter_id):
             return func
