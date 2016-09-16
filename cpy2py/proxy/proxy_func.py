@@ -8,6 +8,9 @@ def twinfunction(twinterpreter_id):
 
     :param twinterpreter_id: identifier for the twin which executes the function
     :type twinterpreter_id: str
+
+    :note: The resulting proxy object does only pass on function calls. Other
+           operations, e.g. attribute assignment, only modify the proxy.
     """
     def decorator(func):
         func.__twin_id__ = twinterpreter_id
@@ -18,7 +21,8 @@ def twinfunction(twinterpreter_id):
         # - must dispatch to the proxy, otherwise pickling will fail
         # - lazily select the kernel on first call to allow late-binding
         # -- the funtion is proxied by the function_dispatch_proxy
-        # --
+        # -- on the first call, function_runner_factory fetches the kernel
+        # -- on subsequent calls, function_runner is used directly
 
         def function_runner_factory(*fargs, **fkwargs):
             def function_runner(*args, **kwargs):
@@ -28,7 +32,6 @@ def twinfunction(twinterpreter_id):
             return function_runner(*fargs, **fkwargs)
 
         def function_dispatch_proxy(*args, **kwargs):
-            print('dispatch')
             return function_dispatch_proxy.function_runner(*args, **kwargs)
         function_dispatch_proxy.function_runner = function_runner_factory
 
