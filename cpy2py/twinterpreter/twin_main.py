@@ -101,6 +101,8 @@ class MainDef(object):
         self.main_module = main_module
         self.run_main = run_main
         self._argv = None  # argv EXCLUDING first element (executable name)
+        # path[0] might get modified, but we fetch it now to stay consistent
+        self._main_path = os.path.abspath(sys.path[0])
         self.restore_argv = restore_argv
         self._logger = logging.getLogger('__cpy2py__.main.%s' % kernel_state.TWIN_ID)
 
@@ -116,8 +118,7 @@ class MainDef(object):
             return self._get_main_name()
         return main_module
 
-    @staticmethod
-    def _get_main_name():
+    def _get_main_name(self):
         """
         Get the module name of ``__main__``
 
@@ -131,10 +132,10 @@ class MainDef(object):
             pass
         try:
             package, name = main.__package__, os.path.splitext(os.path.basename(main.__file__))[0]
-            if package is None and os.path.abspath(os.path.dirname(main.__file__)) != os.path.abspath(os.getcwd()):
+            if package is None and os.path.abspath(os.path.dirname(main.__file__)) != os.path.abspath(self._main_path):
                 raise AttributeError
         except AttributeError:
-            raise ValueError("Cannot derive path if __main__ not run as module/package (see 'python -m')")
+            raise ValueError("Cannot derive module name if __main__ not run as module/package (see 'python -m')")
         else:
             return (package + '.' + name) if package else name
 
@@ -144,6 +145,7 @@ class MainDef(object):
             'run_main': self.run_main,
             'restore_argv': self.restore_argv,
             '_argv': sys.argv[1:] if self.restore_argv else [],
+            '_main_path': self._main_path,
         }
 
     def __setstate__(self, state):
@@ -156,6 +158,9 @@ class MainDef(object):
         assert self.main_module != self.FETCH_NAME and self.main_module != self.FETCH_PATH and self._argv is not None,\
             "Cannot bootstrap sys.argv in initial environment"
         self._logger.warning('<%s> Bootstrapping __main__ via %r', kernel_state.TWIN_ID, self)
+        # until now, path[0] is the cpy2py bootstrapper dir
+        # replace it with the dir that main resided in, if any
+        sys.path[0] = self._main_path
         if self.restore_argv:
             self._logger.info('<%s> Restoring sys.argv', kernel_state.TWIN_ID)
             sys.argv[1:] = self._argv[:]
