@@ -17,6 +17,7 @@ import base64
 import os
 import logging
 
+from cpy2py.meta import __version__ as cpy2py_version
 from cpy2py.utility.compat import pickle, str_to_bytes
 from cpy2py.kernel import kernel_single, kernel_state
 from cpy2py.kernel.kernel_exceptions import TwinterpeterTerminated
@@ -153,6 +154,9 @@ def bootstrap_kernel():
     # run initializers before creating any resources
     # TwinMaster will run the finalizers directly
     run_initializer(settings.initializer)
+    logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
+        '<%s> [%s] %s.bootstrap_kernel deploying cpy2py %s', kernel_state.TWIN_ID, settings.peer_id, __name__, cpy2py_version
+    )
     exit_code = run_kernel(
         kernel=load_kernel(settings.kernel),
         client_ipyc=load_connector(settings.client_ipyc),
