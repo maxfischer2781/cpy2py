@@ -164,6 +164,8 @@ Features
 Gotchas/Limitations
 -------------------
 
+* Importing functions and classes from `__main__` may fail if the module can only be imported via its path.
+
 * Calls across interpreters are blocking and not threadsafe.
   If recursion switches between twinterpreters, :py:class:`cpy2py.TwinMaster` must use the ``'async'`` kernel.
 
