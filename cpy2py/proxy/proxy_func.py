@@ -1,4 +1,4 @@
-from cpy2py.utility.utils import clone_function_meta
+from cpy2py.utility.proxy import clone_function_meta
 from cpy2py.kernel import kernel_state
 
 
