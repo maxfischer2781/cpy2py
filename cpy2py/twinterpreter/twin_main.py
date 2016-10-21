@@ -96,6 +96,10 @@ class MainDef(object):
     """
     FETCH_PATH = "Use __main__ via absolute path"
     FETCH_NAME = "Use __main__ via module name"
+    #: alias of application __main__ module
+    app_main_alias = '__cpy2py_main__'
+    #: alias of cpy2py __main__ module
+    cpy2py_main_alias = '__cpy2py_bootstrap__'
 
     def __init__(self, main_module=True, run_main=False, restore_argv=False):
         self.main_module = main_module
@@ -140,6 +144,12 @@ class MainDef(object):
             return (package + '.' + name) if package else name
 
     def __getstate__(self):
+        # Issue#12: Twinterpreters cannot reference __main__ objects
+        #           Twins refer to the main module via module name aliases, so
+        #           the master needs the same aliases. We create them before
+        #           spawning the first twin, which requires pickling us.
+        if self.app_main_alias not in sys.modules:
+            self._bootstrap_none()
         return {
             'main_module': self._resolve_main(self.main_module),
             'run_main': self.run_main,
@@ -172,15 +182,17 @@ class MainDef(object):
             self._bootstrap_name(str(self.main_module))
 
     def _bootstrap_none(self):
-        self._logger.info('<%s> Not loading a __main__ module', kernel_state.TWIN_ID)
-        sys.modules['__cpy2py_main__'] = sys.modules['__cpy2py_bootstrap__'] = sys.modules['__main__']
+        self._logger.info(
+            '<%s> Aliasing __main__ module to %r, %r', kernel_state.TWIN_ID, self.app_main_alias, self.cpy2py_main_alias
+        )
+        sys.modules[self.app_main_alias] = sys.modules[self.cpy2py_main_alias] = sys.modules['__main__']
 
     def _bootstrap_path(self, main_path):
         # ipython - see https://github.com/ipython/ipython/issues/4698
         # utrunner - PyCharm unittests
         if os.path.splitext(os.path.basename(main_path))[0] in ('ipython', 'utrunner'):
             return self._bootstrap_none()
-        main_name = '__main__' if self.run_main else '__cpy2py_main__'
+        main_name = '__main__' if self.run_main else self.app_main_alias
         self._logger.info('<%s> Loading __main__ module as %s from oath %r', kernel_state.TWIN_ID, main_name, main_path)
         main_dict = runpy.run_path(main_path, run_name=main_name)
         self._bootstrap_set_main(main_dict)
@@ -189,17 +201,16 @@ class MainDef(object):
         # guard against running __main__ files of packages
         if not self.run_main and (mod_name == "__main__" or mod_name.endswith(".__main__")):
             return self._bootstrap_none()
-        main_name = '__main__' if self.run_main else '__cpy2py_main__'
+        main_name = '__main__' if self.run_main else self.app_main_alias
         self._logger.info('<%s> Loading __main__ module as %s from name %r', kernel_state.TWIN_ID, main_name, mod_name)
         main_dict = runpy.run_module(mod_name, run_name=main_name)
         self._bootstrap_set_main(main_dict)
 
-    @staticmethod
-    def _bootstrap_set_main(main_dict):
-        sys.modules['__cpy2py_bootstrap__'] = sys.modules['__main__']
-        main_module = types.ModuleType('__cpy2py_main__')
+    def _bootstrap_set_main(self, main_dict):
+        sys.modules[self.cpy2py_main_alias] = sys.modules['__main__']
+        main_module = types.ModuleType(self.app_main_alias)
         main_module.__dict__.update(main_dict)
-        sys.modules['__main__'] = sys.modules['__cpy2py_main__'] = main_module
+        sys.modules['__main__'] = sys.modules[self.app_main_alias] = main_module
 
     def __repr__(self):
         return "%s(main_module=%r, run_main=%r, restore_argv=%r)" % (
