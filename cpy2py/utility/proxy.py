@@ -1,3 +1,8 @@
+"""
+Tools for creating proxies to objects
+"""
+
+
 def clone_function_meta(real_func, wrap_func):
     """Clone the public metadata of `real_func` to `wrap_func`"""
     wrap_func.__wrapped__ = real_func
