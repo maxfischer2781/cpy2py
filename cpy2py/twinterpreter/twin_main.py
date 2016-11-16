@@ -171,11 +171,11 @@ class MainDef(object):
             '_main_path': self._main_path,
         }
 
-    def __setstate__(self, state):
+    def __setstate__(self, state):  # pragma: no cover bootstrap
         self.__dict__ = state
         self._logger = logging.getLogger('__cpy2py__.main.%s' % kernel_state.TWIN_ID)
 
-    def bootstrap(self):
+    def bootstrap(self):  # pragma: no cover bootstrap
         """Bootstrap the parent main environment into the current process"""
         # all of these are set by unpickling in a spawning child process
         assert self.main_module != self.FETCH_NAME and self.main_module != self.FETCH_PATH and self._argv is not None,\
@@ -200,7 +200,7 @@ class MainDef(object):
         )
         sys.modules[self.app_main_alias] = sys.modules[self.cpy2py_main_alias] = sys.modules['__main__']
 
-    def _bootstrap_path(self, main_path):
+    def _bootstrap_path(self, main_path):  # pragma: no cover bootstrap
         # ipython - see https://github.com/ipython/ipython/issues/4698
         # utrunner - PyCharm unittests
         if os.path.splitext(os.path.basename(main_path))[0] in ('ipython', 'utrunner'):
@@ -210,7 +210,7 @@ class MainDef(object):
         main_dict = runpy.run_path(main_path, run_name=main_name)
         self._bootstrap_set_main(main_dict)
 
-    def _bootstrap_name(self, mod_name):
+    def _bootstrap_name(self, mod_name):  # pragma: no cover bootstrap
         # guard against running __main__ files of packages
         if not self.run_main and (mod_name == "__main__" or mod_name.endswith(".__main__")):
             return self._bootstrap_none()
@@ -219,7 +219,7 @@ class MainDef(object):
         main_dict = runpy.run_module(mod_name, run_name=main_name)
         self._bootstrap_set_main(main_dict)
 
-    def _bootstrap_set_main(self, main_dict):
+    def _bootstrap_set_main(self, main_dict):  # pragma: no cover bootstrap
         sys.modules[self.cpy2py_main_alias] = sys.modules['__main__']
         main_module = types.ModuleType(self.app_main_alias)
         main_module.__dict__.update(main_dict)

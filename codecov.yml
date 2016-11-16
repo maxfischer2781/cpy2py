@@ -5,4 +5,7 @@ coverage:
     - cpy2py_sphinx
     - cpy2py_dev_tools
     - cpy2py_benchmark
+    # bootstrapping - coverage not enabled yet
+    - cpy2py/twinterpreter/__init__.py
+    - cpy2py/twinterpreter/bootstrap.py
     - compat\.py
