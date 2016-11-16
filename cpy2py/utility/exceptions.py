@@ -49,10 +49,13 @@ def format_repr(obj, max_len=120):
     :type max_len: int
     :return: formatted object representation
     """
-    obj_repr = repr(obj)
-    if len(obj_repr) > max_len:
-        return obj_repr[:max_len - 3] + '...'
-    return obj_repr
+    try:
+        obj_repr = repr(obj)
+        if len(obj_repr) > max_len:
+            return obj_repr[:max_len - 3] + '...'
+        return obj_repr
+    except Exception:
+        return '<not representable>'
 
 
 def format_line(line_no, current_file):

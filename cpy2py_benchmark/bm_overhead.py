@@ -124,7 +124,7 @@ def main():
         '--interpreters',
         nargs='+',
         help='Interpreters to use. [%(default)s]',
-        default=['pypy', 'pypy3', 'python2.6', 'python2.7', 'python3.4']
+        default=['pypy', 'pypy3', 'python2.6', 'python2.7', 'python3.3', 'python3.4', 'python3.5']
     )
     cli.add_argument(
         '--kernels',

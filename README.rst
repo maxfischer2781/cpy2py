@@ -63,7 +63,9 @@ an arbitrary callable in the twinterpreter.
     from my_module import my_function
     twinterpreter = TwinMaster('pypy')
     twinterpreter.start()
-    twinterpreter.execute(my_function, 1, 2, 3, 'ka-pow!', doctor="who?")
+
+    if __name__ == "__main__":
+        twinterpreter.execute(my_function, 1, 2, 3, 'ka-pow!', doctor="who?")
 
 TwinObjects
 -----------
@@ -100,6 +102,28 @@ the stuff that's needed everywhere but really doesn't belong anywhere.
 :note: At the moment, you have to explicitly start a class's native
        twinterpreter before instantiating the class. Only the main
        interpreter is always available, of course.
+
+TwinFunctions
+-------------
+
+Instead of full-fletched objects, you can also define functions as twins.
+These are automatically called in their native twinterpreter.
+
+.. code:: python
+
+    from cpy2py import twinfunction
+
+    @twinfunction('pypy')
+    def superlooper(count=1000, add=3, start=0):
+        for _ in range(count):
+            start += add
+        return add
+
+    print(superlooper(int(1E6), 1))
+
+:note: A :py:func:`cpy2py.twinfunction` is a regular function wrapping a
+       callable. Unlike a :py:class:`cpy2py.TwinObject`, it will not pass
+       attribute assignments.
 
 Debugging
 ---------
@@ -163,6 +187,8 @@ Features
 
 Gotchas/Limitations
 -------------------
+
+* Importing functions and classes from `__main__` may fail if the module can only be imported via its path.
 
 * Calls across interpreters are blocking and not threadsafe.
   If recursion switches between twinterpreters, :py:class:`cpy2py.TwinMaster` must use the ``'async'`` kernel.

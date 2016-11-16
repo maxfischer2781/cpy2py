@@ -18,7 +18,7 @@ from cpy2py.proxy.proxy_meta import TwinMeta
 from cpy2py.proxy.proxy_twin import TwinProxy
 
 
-def _instance_id(instance):
+def instance_id(instance):
     """Create an instance identifier"""
     return '%X%X' % (id(instance), int(time.time() * 1000))
 
@@ -39,7 +39,7 @@ twinterpeter.
 def new_twin_object(cls, *args, **kwargs):  # pylint: disable=unused-argument
     """`__new__` for :py:class:`~.TwinObject` and derivatives"""
     self = object.__new__(cls)
-    object.__setattr__(self, '__instance_id__', _instance_id(self))
+    object.__setattr__(self, '__instance_id__', instance_id(self))
     # register our reference for lookup
     proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
     return self
