@@ -38,6 +38,7 @@ if __name__ == '__main__':
         (':py:\S*?:`~(.*?)`', '`\g<1>`'),
         (':py:\S*?:', ''),
         (':envvar:', ''),
+        (':option:', ''),
     ]:
         long_description = re.sub(directive_re, replacement_re, long_description)
 
