@@ -99,7 +99,9 @@ class RequestHandler(object):
         # run request
         try:
             if __debug__:
-                self._logger.warning('<%s> [%s] Directive %s', kernel_state.TWIN_ID, self.peer_id, E_SYMBOL[directive_type])
+                self._logger.warning(
+                    '<%s> [%s] Directive %s', kernel_state.TWIN_ID, self.peer_id, E_SYMBOL[directive_type]
+                )
             response = directive_method(directive_body)
         # catch internal errors to reraise them
         except CPy2PyException:

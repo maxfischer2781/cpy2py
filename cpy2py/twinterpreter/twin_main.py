@@ -172,7 +172,7 @@ class MainDef(object):
         }
 
     def __setstate__(self, state):  # pragma: no cover bootstrap
-        self.__dict__ = state
+        self.__dict__.update(state)
         self._logger = logging.getLogger('__cpy2py__.main.%s' % kernel_state.TWIN_ID)
 
     def bootstrap(self):  # pragma: no cover bootstrap

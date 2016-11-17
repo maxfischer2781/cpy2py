@@ -81,7 +81,9 @@ class SingleThreadKernelServer(object):
         assert self._terminate.is_set(), 'Kernel already active'
         self._terminate.clear()
         exit_code = 1
-        self._logger.warning('<%s> [%s] Starting %s @ %s', kernel_state.TWIN_ID, self.peer_id, self.__class__.__name__, time.asctime())
+        self._logger.warning(
+            '<%s> [%s] Starting %s @ %s', kernel_state.TWIN_ID, self.peer_id, self.__class__.__name__, time.asctime()
+        )
         try:
             self._serve_requests()
         except StopTwinterpreter as err:
