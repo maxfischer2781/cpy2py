@@ -31,33 +31,43 @@ import argparse
 # loops in PyPy
 @twinfunction('pypy')
 def prime_sieve(max_val):
+    """Sieve prime numbers"""
     start_time = time.time()
     primes = [1] * 2 + [0] * (max_val - 1)
     for value, factors in enumerate(primes):
         if factors == 0:
-            for multiple in xrange(value*value, max_val + 1, value):
+            for multiple in xrange(value * value, max_val + 1, value):
                 primes[multiple] += 1
-    return {'xy': [
-        [primes[idx] == 0 for idx in range(minidx, minidx + int(math.sqrt(max_val)))]
-        for minidx in range(0, max_val, int(math.sqrt(max_val)))
-        ], 'info': '%s in %.1fs' % (sys.executable, time.time() - start_time)}
+    return {
+        'xy_matrix': [
+            [primes[idx] == 0 for idx in range(minidx, minidx + int(math.sqrt(max_val)))]
+            for minidx in range(0, max_val, int(math.sqrt(max_val)))
+        ],
+        'info': '%s in %.1fs' % (sys.executable, time.time() - start_time)
+    }
 
 
 # matplotlib in CPython
 @twinfunction('python')
-def draw(xy, info='<None>'):
+def draw(xy_matrix, info='<None>'):
+    """Draw an XY matrix and attach some info"""
     from matplotlib import pyplot
     pyplot.copper()
-    pyplot.matshow(xy)
+    pyplot.matshow(xy_matrix)
     pyplot.xlabel(info, color="red")
     pyplot.show()
 
-if __name__ == '__main__':
-    CLI = argparse.ArgumentParser('function twin example')
-    CLI.add_argument('COUNT', help='size of computation', type=int, default=int(1E6), nargs='?')
-    options = CLI.parse_args()
+
+# native function not assigned to particular interpreter
+def main():
+    cli = argparse.ArgumentParser('function twin example')
+    cli.add_argument('COUNT', help='size of computation', type=int, default=int(1E6), nargs='?')
+    options = cli.parse_args()
     twins = [TwinMaster('python'), TwinMaster('pypy')]
     for twin in twins:
         twin.start()
-    data = prime_sieve(options.COUNT)
-    draw(**data)
+    # twins can be chained freely
+    draw(**prime_sieve(options.COUNT))
+
+if __name__ == '__main__':
+    main()
