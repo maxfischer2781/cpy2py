@@ -73,7 +73,7 @@ TwinObjects
 The real power of :py:mod:`cpy2py` are Twins - objects living in one
 twinterpreter and being represented by proxies in any other interpeter.
 Using twins, you can seamlessly split your application across multiple
-twins.
+twinterpreters.
 
 You create twins by inheriting from
 :py:class:`cpy2py.TwinObject` instead of :py:class:`object` and
@@ -136,7 +136,6 @@ needs.
 Note that if python is run with the `-O` flag, several logging calls are
 skipped entirely to improve performance.
 
-
 For small scale debugging, one can set the environment variable
 :envvar:`CPY2PY_DEBUG`. If it is defined and not empty, logging output
 is written to `stderr`. In addition, if it names a valid :py:mod:`logging`
@@ -179,7 +178,7 @@ Features
 
   * Pure python, no dependencies means perfect portability.
 
-  * Any interpeter compatible with python 2.6 to 3.5 is supported.
+  * Any interpreter compatible with python 2.6 to 3.7 is supported.
 
   * Virtual Environments work out of the box.
 
@@ -190,12 +189,13 @@ Gotchas/Limitations
 
 * Importing functions and classes from `__main__` may fail if the module can only be imported via its path.
 
-* Calls across interpreters are blocking and not threadsafe.
+* By default, calls across interpreters are blocking and not threadsafe.
   If recursion switches between twinterpreters, :py:class:`cpy2py.TwinMaster` must use the ``'async'`` kernel.
 
 * Module level settings are not synchronized.
   For example, configuration of :py:mod:`logging` is not applied to twinterpreters.
-  Use :py:class:`~cpy2py.twinterpreter.group_state.TwinGroupState` for initialisation, or write modules aware of twinterpreters.
+  Use :py:class:`~cpy2py.twinterpreter.group_state.TwinGroupState` for initialisation,
+  write modules aware of twinterpreters, or use immutable module-level initializers.
 
 * A :py:mod:`weakref` to objects only takes local references into account, not cross-interpreter references.
 
