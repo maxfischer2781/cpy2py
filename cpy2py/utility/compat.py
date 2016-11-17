@@ -14,7 +14,7 @@
 """
 Compatibility for different python versions/interpeters
 """
-# pylint: disable=invalid-name,undefined-variable
+# pylint: disable=invalid-name,undefined-variable,redefined-builtin
 import sys
 import logging as _logging
 import subprocess as _subprocess
@@ -22,16 +22,18 @@ import subprocess as _subprocess
 PY3 = sys.version_info[0] == 3
 
 # pickle
-if PY3:
-    import pickle
-else:
+try:
     import cPickle as pickle
+except ImportError:
+    import pickle
 
 # range/xrange
-try:
-    rangex = xrange
-except NameError:
-    rangex = range
+if sys.version_info < (3, 3):
+    import backports.range  # py2.X requires range backport
+    range = backports.range.range
+else:
+    import builtins
+    range = builtins.range
 
 # NullHandler
 try:
@@ -101,7 +103,7 @@ inf = float('inf')
 
 __all__ = [
     'pickle',
-    'rangex',
+    'range',
     'NullHandler',
     'check_output',
     'stringabc',

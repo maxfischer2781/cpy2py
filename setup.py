@@ -30,6 +30,8 @@ if __name__ == '__main__':
         import argparse
     except ImportError:
         install_requires.append('argparse')
+    if sys.version_info < (3, 3):
+        install_requires.append('backports.range')
 
     # use readme for long descripion
     with codecs.open(os.path.join(repo_base, 'README.rst'), encoding='utf-8') as f:

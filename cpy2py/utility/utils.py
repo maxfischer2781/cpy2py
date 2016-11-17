@@ -13,7 +13,7 @@
 # - # limitations under the License.
 import random
 
-from .compat import rangex
+from .compat import range
 
 
 _UPPERCASE_ORD = (ord('A'), ord('Z'))
@@ -24,5 +24,5 @@ def random_str(length=16, upper_chars=0.5):
     return ''.join(
         chr(random.randint(*_UPPERCASE_ORD) if random.random() < upper_chars else random.randint(*_LOWERCASE_ORD))
         for _ in
-        rangex(length)
+        range(length)
     )

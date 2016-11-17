@@ -27,7 +27,7 @@ try:
 except ImportError:
     from _thread import error as thread_error
 
-from .compat import stringabc, inf, intern_str, unicode_str, long_int, rangex
+from .compat import stringabc, inf, intern_str, unicode_str, long_int, range
 from .exceptions import CPy2PyException
 
 
@@ -400,7 +400,7 @@ class FifoQueue(object):
         """Put a single item in the queue"""
         with self._queue_mutex:
             self._queue_content.append(item)
-            for w_idx in rangex(len(self._waiters)):
+            for w_idx in range(len(self._waiters)):
                 try:
                     self._waiters[w_idx].release()
                 except (ThreadError, RuntimeError, thread_error):

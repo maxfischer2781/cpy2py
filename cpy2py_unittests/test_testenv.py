@@ -1,8 +1,7 @@
 import unittest
-import time
 
 from cpy2py import TwinObject, kernel_state
-from cpy2py.utility.compat import rangex
+from cpy2py.utility.compat import range
 from cpy2py_unittests.utility import TestEnvironment
 
 
@@ -16,7 +15,7 @@ class VEnvObject(TwinObject):
 
     def do_stuff(self, count):
         val = self.numeric_value
-        for _ in rangex(int(count)):
+        for _ in range(int(count)):
             val *= self.numeric_value
             val %= 100
         return val

@@ -3,11 +3,11 @@ import random
 import time
 
 from cpy2py import kernel_state, TwinMaster, TwinObject, localmethod
-from cpy2py.utility.compat import rangex
+from cpy2py.utility.compat import range
 
 RND_COUNT = 500  # should be enough to avoid creating the same numbers
-random_module_numbers = [random.random() for _ in rangex(RND_COUNT)]
-random_global_numbers = [random.random() for _ in rangex(RND_COUNT)]
+random_module_numbers = [random.random() for _ in range(RND_COUNT)]
+random_global_numbers = [random.random() for _ in range(RND_COUNT)]
 
 
 class ScopedObject(TwinObject):
