@@ -52,4 +52,4 @@ if _os.environ.get('CPY2PY_DEBUG'):
 else:
     _base_logger.addHandler(_NullHandler())
 
-__all__ = ['TwinObject', 'TwinMaster', 'kernel_state', '__version__', 'localmethod']
+__all__ = ['TwinObject', 'TwinMaster', 'kernel_state', '__version__', 'localmethod', 'twinfunction']
