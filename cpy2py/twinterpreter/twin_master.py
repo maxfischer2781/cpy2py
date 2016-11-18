@@ -131,6 +131,7 @@ class TwinMaster(object):
                 cli_args=self._twin_args(my_client_ipyc=my_client_ipyc, my_server_ipyc=my_server_ipyc),
                 env=self._twin_env()
             )
+            time.sleep(0.1)  # sleep while child initializes
             if self._process.poll() is not None:
                 raise twin_exceptions.TwinterpreterProcessError(
                     'Twinterpreter process failed at start with %s' % self._process.poll()
