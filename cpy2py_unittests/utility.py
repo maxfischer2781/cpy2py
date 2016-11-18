@@ -62,7 +62,7 @@ class TestEnvironment(cpy2py.TwinObject):
             subprocess.check_call([
                 os.path.join(venv_dir, 'bin', 'pip'),
                 'install', requirement,
-                '--upgrade',  # '--user'
+                '--upgrade',
             ])
         # setup twin master
         self.twin_masters[parent_def.twinterpreter_id] = twin_master.TwinMaster(
