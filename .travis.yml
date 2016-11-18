@@ -32,7 +32,7 @@ before_script:
   - curl https://bootstrap.pypa.io/get-pip.py > get-pip.py
   - pypy get-pip.py || pypy get-pip.py --user
   - pypy -m pip install coverage || pypy -m pip install --user coverage
-  - pypy -m pip install backports.range || pypy -m pip install --user backports.range
+  - pypy setup.py install || pypy setup.py install --user
   - export COVERAGE_PROCESS_START=$(pwd)/.coveragerc
   - echo $TRAVIS_PYTHON_VERSION && which python && which pypy && python -c 'import os, sys; print(os.path.basename(sys.executable))'
 script:
