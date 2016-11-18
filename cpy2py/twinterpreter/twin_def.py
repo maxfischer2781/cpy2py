@@ -94,6 +94,16 @@ class TwinDef(object):
         return client, server
 
     def spawn(self, cli_args=None, env=None):
+        """
+        Spawn the Twinterpreter process
+
+        :param cli_args: command line arguments to pass to process
+        :type cli_args: list[str] or None
+        :param env: environment to pass to process
+        :type env: dict or None
+        :returns: the spawned process
+        :rtype: :py:class:`subprocess.Popen`
+        """
         _spawn_args = []
         if isinstance(self.executable, stringabc):
             # bare interpreter - /foo/bar/python
@@ -101,7 +111,7 @@ class TwinDef(object):
         else:
             # invoked interpreter - [ssh foo@bar python] or [which python]
             _spawn_args.extend(self.executable)
-        if cli_args:
+        if cli_args is not None:
             _spawn_args.extend(cli_args)
         env = {} if env is None else env
         return subprocess.Popen(

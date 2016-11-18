@@ -11,6 +11,7 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
+from __future__ import absolute_import
 import os
 import errno
 import threading
@@ -23,6 +24,7 @@ from cpy2py.ipyc import ipyc_fifo
 
 from .twin_def import TwinDef
 from .twin_main import MainDef
+from . import twin_exceptions
 
 
 class TwinMaster(object):
@@ -129,6 +131,10 @@ class TwinMaster(object):
                 cli_args=self._twin_args(my_client_ipyc=my_client_ipyc, my_server_ipyc=my_server_ipyc),
                 env=self._twin_env()
             )
+            if self._process.poll() is not None:
+                raise twin_exceptions.TwinterpreterProcessError(
+                    'Twinterpreter process failed at start with %s' % self._process.poll()
+                )
             self._kernel_client = self.twin_def.kernel_client(
                 self.twin_def.twinterpreter_id,
                 ipyc=my_client_ipyc,
