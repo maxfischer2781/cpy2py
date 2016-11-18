@@ -1,6 +1,7 @@
 """
 Utilities for running unittests
 """
+from __future__ import print_function
 import os
 import errno
 import tempfile
@@ -8,6 +9,7 @@ import subprocess
 import atexit
 import shutil
 import time
+import sys
 
 import cpy2py
 from cpy2py.twinterpreter import twin_master
@@ -41,12 +43,14 @@ class TestEnvironment(cpy2py.TwinObject):
         """
         parent_def = twin_master.TwinDef(executable=executable, twinterpreter_id=twinterpreter_id, kernel=kernel)
         assert parent_def.twinterpreter_id not in self.twin_masters, "Collision in twinterpreter ids"
+        print('creating virtualenv:', parent_def, 'requires:', requirements, file=sys.stderr)
         # create virtual environment
         venv_dir = self._get_venv_dir(parent_def.twinterpreter_id)
         subprocess.check_call([
             'virtualenv',
+            '--no-site-packages',
             '-p', parent_def.executable,
-            venv_dir
+            venv_dir,
         ])
         # add requirements
         pip_requirements = [os.path.dirname(os.path.dirname(os.path.abspath(cpy2py.__file__))), 'coverage']
@@ -58,6 +62,7 @@ class TestEnvironment(cpy2py.TwinObject):
             subprocess.check_call([
                 os.path.join(venv_dir, 'bin', 'pip'),
                 'install', requirement,
+                '--upgrade',  # '--user'
             ])
         # setup twin master
         self.twin_masters[parent_def.twinterpreter_id] = twin_master.TwinMaster(
