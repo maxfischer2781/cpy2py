@@ -2,7 +2,7 @@ from __future__ import print_function
 import random
 import unittest
 
-from cpy2py.utility.compat import range, check_output, stringabc, unicode_str, str_to_bytes
+from cpy2py.utility.compat import range, check_output, stringabc, unicode_str, str_to_bytes, long_int
 from subprocess import CalledProcessError, STDOUT
 
 
@@ -62,3 +62,16 @@ class TestUnicode(unittest.TestCase):
         for num in range(0, 5000):
             self.assertIsInstance(unicode_str(u'%X' % num), unicode_str)
             self.assertEqual(unicode_str(u'%X' % num), u'%X' % num)
+
+
+class TestLongint(unittest.TestCase):
+    def test_value(self):
+        """Large integer type"""
+        self.assertIsInstance(int(1E128), long_int)
+        self.assertIsInstance(int(-1E128), long_int)
+
+    def test_convert(self):
+        """Large integer conversion"""
+        for pow2 in range(32):
+            self.assertIsInstance(long_int(2**pow2 - 1), long_int)
+            self.assertIsInstance(long_int(-(2**pow2 - 1)), long_int)
