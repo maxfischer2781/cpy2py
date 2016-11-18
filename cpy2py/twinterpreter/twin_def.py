@@ -124,6 +124,14 @@ class TwinDef(object):
             env=env,
         )
 
+    def __repr__(self):
+        return '%s(executable=%r, twinterpreter_id=%r, kernel=%r)' % (
+            self.__class__.__name__,
+            self.executable,
+            self.twinterpreter_id,
+            self.kernel
+        )
+
     def __eq__(self, other):
         try:
             return self.executable == other.executable\
