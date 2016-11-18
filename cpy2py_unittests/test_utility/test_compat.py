@@ -41,13 +41,13 @@ class TestBytes(unittest.TestCase):
         """String literal converted to bytes"""
         for num in range(0, 5000):
             self.assertIsInstance(str_to_bytes('%X' % num), bytes)
-            self.assertEqual(str_to_bytes('%X' % num), b'%X' % num)
+            self.assertEqual(str_to_bytes('%X' % num), ('%X' % num).encode())
 
     def test_unicode(self):
         """Unicode literal converted to bytes"""
         for num in range(0, 5000):
             self.assertIsInstance(str_to_bytes(u'%X' % num), bytes)
-            self.assertEqual(str_to_bytes(u'%X' % num), b'%X' % num)
+            self.assertEqual(str_to_bytes(u'%X' % num), ('%X' % num).encode())
 
 
 class TestUnicode(unittest.TestCase):
