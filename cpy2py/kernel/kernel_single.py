@@ -19,6 +19,7 @@ and will thus require minimal overhead. However, this type of kernel
 operates *strictly* singlethreaded - no more than one request may be
 served at a time. This makes recursion across twinterpreters impossible.
 """
+from __future__ import print_function
 import sys
 import os
 import time
@@ -87,17 +88,26 @@ class SingleThreadKernelServer(object):
         try:
             self._serve_requests()
         except StopTwinterpreter as err:
+            # actively shutting down
             self._logger.critical('<%s> [%s] TWIN KERNEL TERMINATED: %s', kernel_state.TWIN_ID, self.peer_id, err)
             exit_code = err.exit_code
         # cPickle may raise EOFError by itself
         except (ipyc_exceptions.IPyCTerminated, EOFError) as err:
+            # regular shutdown by master
             self._logger.critical('<%s> [%s] TWIN KERNEL RELEASED: %s', kernel_state.TWIN_ID, self.peer_id, err)
             exit_code = 0
         except Exception as err:  # pylint: disable=broad-except
+            # unexpected shutdown
+            # provide extended traceback if requested
             self._logger.critical(
                 '<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION: %s', kernel_state.TWIN_ID, self.peer_id, err
             )
             format_exception(self._logger, 3)
+            # emulate regular python exit
+            import traceback
+            exit_code = 1
+            traceback.print_exc(file=sys.stderr)
+            print('TwinError: unhandled exception in', kernel_state.TWIN_ID, file=sys.stderr)
         finally:
             self._terminate.set()
             self._logger.critical('<%s> [%s] TWIN KERNEL SHUTDOWN: %d', kernel_state.TWIN_ID, self.peer_id, exit_code)
