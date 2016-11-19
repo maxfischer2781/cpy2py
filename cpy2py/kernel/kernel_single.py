@@ -26,7 +26,6 @@ import time
 import logging
 import threading
 
-from cpy2py.utility.compat import pickle
 from cpy2py.kernel import kernel_state
 
 from cpy2py.utility.exceptions import format_exception
