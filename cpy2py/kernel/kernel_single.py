@@ -38,11 +38,9 @@ from cpy2py.kernel.kernel_requesthandler import RequestDispatcher, RequestHandle
 
 def _connect_ipyc(ipyc, pickle_protocol):
     """Connect pickle/unpickle trackers to a duplex IPyC"""
-    pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
-    pickler.persistent_id = proxy_tracker.persistent_twin_id
+    pickler = proxy_tracker.twin_pickler(file=ipyc.writer, protocol=pickle_protocol)
     send = pickler.dump
-    unpickler = pickle.Unpickler(ipyc.reader)
-    unpickler.persistent_load = proxy_tracker.persistent_twin_load
+    unpickler = proxy_tracker.twin_unpickler(file=ipyc.reader)
     recv = unpickler.load
     return send, recv
 
