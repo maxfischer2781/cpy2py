@@ -13,22 +13,22 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 r"""
-Example for dispatching functions to specific interpreters
+Dispatching functions to specific Twinterpreters
+================================================
 
 This example uses two functions, which are assigned to specific interpreters -
 `pypy` and the default `python`. The `pypy` function is used to speed up a
-nested loop of O(N\ :sup:2\ ) complexity. At the same time, the `python`
+nested loop of O(N\ :sup:`2`\ ) complexity. At the same time, the `python`
 function uses the :py:mod:`matplotlib` module, which is not available in
 other interpreters.
-"""
+"""  # end intro
 from cpy2py import TwinMaster, twinfunction
 import sys
 import time
 import math
-import argparse
 
 
-# loops in PyPy
+# extensive code run in PyPy for optimizations
 @twinfunction('pypy')
 def prime_sieve(max_val):
     """Sieve prime numbers"""
@@ -60,14 +60,19 @@ def draw(xy_matrix, info='<None>'):
 
 # native function not assigned to particular interpreter
 def main():
+    """Find and draw prime numbers"""
+    import argparse
     cli = argparse.ArgumentParser('function twin example')
     cli.add_argument('COUNT', help='size of computation', type=int, default=int(1E6), nargs='?')
     options = cli.parse_args()
+    # Twinterpreters must be started explicitly
     twins = [TwinMaster('python'), TwinMaster('pypy')]
     for twin in twins:
         twin.start()
-    # twins can be chained freely
+    # twins can be chained directly
     draw(**prime_sieve(options.COUNT))
 
+
+# protect main thread from executing again in other interpreters
 if __name__ == '__main__':
     main()

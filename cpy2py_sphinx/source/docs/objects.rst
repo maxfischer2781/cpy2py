@@ -76,23 +76,40 @@ It can be a string, in which case it must name a twinterpeter, e.g. `"pypy"` or 
 Alternatively, it can be a magic CPy2Py key, e.g. to always use the main twinterpeter.
 The corresponding twinterpeter must be running whenever an instance is created or used.
 
+Choosing a Twinterpreter
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+A :py:class:`TwinObject` has the same interface in every twinterpreter -
+it is executed only in its native twinterpreter, however.
+The choice of twinterpreter is dictated by the required execution environment.
+
+Objects that perform complex, extensive computations can benefit greatly from the `pypy` interpreter.
+Its JIT and optimizations can provide several factors of speedup.
+
+When interfacing with C libraries, objects ideally reside in the normal `python` interpreter.
+This also includes objects that rely on functions or objects written in `cython`.
+
+Objects which mainly exist to be passed around ideally reside in the main twinterpreter.
+In turn, the main twinterpreter should be chosen to minimize passing objects between twinterpreters.
+
 Working with :py:class:`object`
 -------------------------------
 
 Using plain :py:class:`object` classes with CPy2Py is fine in principle.
 They will behave as usual and may be used in any twinterpeter.
 Their behaviour is only affected when they are explicitly or implicitly passed between twinterpreters.
+Usually, this happens when using them as arguments to methods of a :py:class:`TwinObject`.
 
 .. code:: python
 
     class TranslatorObject(TwinObject):
         __twin_id__ = 'pypy'  # makes class native to pypy twinterpeter
 
-        def make_str(self, other):  # other is passed implicitly to native twinterpeter
+        def make_str(self, other):  # other is passed implicitly to pypy twinterpeter
             return '%s got %s' % (self, other)
 
         def pass_on(self, other):
-            return other  # other is passed on twice, possibly creating a different object
+            return other  # other is back again, possibly creating a different object
 
         def insert_at(self, other, item, at):
             other[at] = item  # modify cloned other inplace

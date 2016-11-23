@@ -20,10 +20,20 @@
 Welcome to CPy2Py's documentation!
 ==================================
 
-The following overview pages are available:
+To start with :py:mod:`cpy2py`, you should start with the overview pages:
 
-* :doc:`docs/README`
+* A quick overview of features is available in the :doc:`README <docs/README>`.
+* Key terms are listed in the :doc:`Glossary <docs/definitions>`
+
+Since the API is still being heavily extended, there is not guide or tutorial.
+Instead, refer to the examples for various features:
+
+* :doc:`examples/example_function`
+
+The working principles and usage are described in the following topical pages:
+
 * :doc:`docs/objects`
+* :doc:`docs/functions`
 
 
 Indices and tables
