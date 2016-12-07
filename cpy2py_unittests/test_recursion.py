@@ -3,7 +3,7 @@ import unittest
 import time
 
 from cpy2py import kernel_state, TwinMaster, TwinObject
-from cpy2py.utility.compat import rangex
+from cpy2py.utility.compat import range
 
 
 class PyPyng(TwinObject):
@@ -48,19 +48,19 @@ class TestPingPongCall(unittest.TestCase):
     def test_bounce_any(self):
         pypy_instance = PyPyng()
         py_instance = Pyng()
-        for bounces in rangex(1, 20, 2):
+        for bounces in range(1, 20, 2):
             self.assertEqual(py_instance.__class__.__name__, pypy_instance.play(py_instance, bounces))
             self.assertEqual(pypy_instance.__class__.__name__, py_instance.play(pypy_instance, bounces))
-        for bounces in rangex(0, 20, 2):
+        for bounces in range(0, 20, 2):
             self.assertEqual(pypy_instance.__class__.__name__, pypy_instance.play(py_instance, bounces))
             self.assertEqual(py_instance.__class__.__name__, py_instance.play(pypy_instance, bounces))
 
     def test_bounce_lots(self):
         pypy_instance = PyPyng()
         py_instance = Pyng()
-        for bounces in rangex(1, 100, 20):
+        for bounces in range(1, 100, 20):
             self.assertEqual(py_instance.__class__.__name__, pypy_instance.play(py_instance, bounces))
             self.assertEqual(pypy_instance.__class__.__name__, py_instance.play(pypy_instance, bounces))
-        for bounces in rangex(0, 100, 20):
+        for bounces in range(0, 100, 20):
             self.assertEqual(pypy_instance.__class__.__name__, pypy_instance.play(py_instance, bounces))
             self.assertEqual(py_instance.__class__.__name__, py_instance.play(pypy_instance, bounces))

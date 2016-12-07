@@ -11,7 +11,15 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
-"""
-Meta Information on the project
-"""
-__version__ = "0.17.1"
+# pylint: disable=too-many-ancestors,non-parent-init-called,super-init-not-called
+import cpy2py.utility.exceptions
+
+
+class TwinterpreterException(cpy2py.utility.exceptions.CPy2PyException):
+    """Exceptions relating to Twinterpreter"""
+    pass
+
+
+class TwinterpreterProcessError(TwinterpreterException):
+    """Error relating to a Twinterpreter process"""
+    pass

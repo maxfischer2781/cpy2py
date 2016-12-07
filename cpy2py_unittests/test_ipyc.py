@@ -2,7 +2,7 @@ import unittest
 import time
 
 from cpy2py import kernel_state, TwinMaster, TwinObject
-from cpy2py.utility.compat import rangex
+from cpy2py.utility.compat import range
 from cpy2py.ipyc import ipyc_fifo, ipyc_socket
 
 
@@ -27,9 +27,9 @@ class TestIpycDefault(unittest.TestCase):
         self.assertEqual((True, 0), my_instance.mod(5))
 
     def test_lots(self):
-        for reps in rangex(1, 51, 10):
+        for reps in range(1, 51, 10):
             my_instance = PrimitiveObject()
-            for _ in rangex(reps):
+            for _ in range(reps):
                 self.assertEqual((True, 0), my_instance.mod(5))
             del my_instance
 

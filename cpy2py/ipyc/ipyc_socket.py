@@ -103,7 +103,9 @@ class DuplexSocketIPyC(object):
         return self.__class__, (), {'family': int(self.family), 'address': self.address, 'is_master': False}
 
     def __repr__(self):
-        return '%s(family=%r, address=%r, is_master=%s)' % (self.__class__.__name__, self.family, self.address, self.is_master)
+        return '%s(family=%r, address=%r, is_master=%s)' % (
+            self.__class__.__name__, self.family, self.address, self.is_master
+        )
 
 
 class BufferedSocketFile(object):

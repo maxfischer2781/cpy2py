@@ -28,6 +28,8 @@ The objects available at the toplevel should be all you ever need:
 
 * :py:class:`~cpy2py.proxy.proxy_object.TwinObject` lets you create objects across interpreters.
 
+* :py:class:`~cpy2py.proxy.proxy_object.twinfunction` lets you run functions in a specific interpreter.
+
 * :py:mod:`~cpy2py.twinterpreter.kernel_state` exposes all meta information you need.
 """
 import logging as _logging
@@ -52,4 +54,4 @@ if _os.environ.get('CPY2PY_DEBUG'):
 else:
     _base_logger.addHandler(_NullHandler())
 
-__all__ = ['TwinObject', 'TwinMaster', 'kernel_state', '__version__', 'localmethod']
+__all__ = ['TwinObject', 'TwinMaster', 'kernel_state', '__version__', 'localmethod', 'twinfunction']

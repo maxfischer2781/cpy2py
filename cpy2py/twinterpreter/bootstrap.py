@@ -155,7 +155,11 @@ def bootstrap_kernel():
     # TwinMaster will run the finalizers directly
     run_initializer(settings.initializer)
     logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
-        '<%s> [%s] %s.bootstrap_kernel deploying cpy2py %s', kernel_state.TWIN_ID, settings.peer_id, 'cpy2py.twinterpreter', cpy2py_version
+        '<%s> [%s] %s.bootstrap_kernel deploying cpy2py %s',
+        kernel_state.TWIN_ID,
+        settings.peer_id,
+        'cpy2py.twinterpreter',
+        cpy2py_version
     )
     exit_code = run_kernel(
         kernel=load_kernel(settings.kernel),
@@ -165,7 +169,11 @@ def bootstrap_kernel():
         ipyc_pkl_protocol=settings.ipyc_pkl_protocol
     )
     logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
-        '<%s> [%s] %s.bootstrap_kernel exiting with %s', kernel_state.TWIN_ID, settings.peer_id, 'cpy2py.twinterpreter', exit_code
+        '<%s> [%s] %s.bootstrap_kernel exiting with %s',
+        kernel_state.TWIN_ID,
+        settings.peer_id,
+        'cpy2py.twinterpreter',
+        exit_code
     )
     sys.exit(exit_code)
 

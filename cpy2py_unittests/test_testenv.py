@@ -1,8 +1,7 @@
 import unittest
-import time
 
 from cpy2py import TwinObject, kernel_state
-from cpy2py.utility.compat import rangex
+from cpy2py.utility.compat import range
 from cpy2py_unittests.utility import TestEnvironment
 
 
@@ -16,7 +15,7 @@ class VEnvObject(TwinObject):
 
     def do_stuff(self, count):
         val = self.numeric_value
-        for _ in rangex(int(count)):
+        for _ in range(int(count)):
             val *= self.numeric_value
             val %= 100
         return val
@@ -27,6 +26,7 @@ class VEnvObject(TwinObject):
 
 
 class TestObjectPrimitives(unittest.TestCase):
+    """Test object in virtualenv"""
     def setUp(self):
         self.test_env = TestEnvironment()
         self.test_env.add_venv_master(executable='pypy', twinterpreter_id='pypy_venv_test_testenv')
@@ -36,11 +36,13 @@ class TestObjectPrimitives(unittest.TestCase):
         self.test_env.destroy_env()
 
     def test_scope(self):
+        """Test interpreter of object"""
         instance = VEnvObject()
         self.assertEqual(instance.get_kernel_id(), 'pypy_venv_test_testenv')
         self.assertNotEqual(instance.get_kernel_id(), kernel_state.TWIN_ID)
 
     def test_method_call(self):
+        """Test method result"""
         instance = VEnvObject(2)
         self.assertEqual(instance.do_stuff(1E6), 52)
         instance = VEnvObject(3)

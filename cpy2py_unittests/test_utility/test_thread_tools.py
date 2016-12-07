@@ -3,7 +3,7 @@ import random
 import unittest
 import operator
 
-from cpy2py.utility.compat import rangex, str_to_bytes, unicode_str
+from cpy2py.utility.compat import range, unicode_str
 from cpy2py.utility.thread_tools import ThreadGuard
 
 
@@ -22,7 +22,7 @@ class TestThreadGuard(unittest.TestCase):
             except AttributeError:
                 continue
             else:
-                for val in (random.randint(-100, 100) for _ in rangex(5)):
+                for val in (random.randint(-100, 100) for _ in range(5)):
                     if val == 0:  # zero division
                         val = 1
                     if op in ('__lshift__', '__rshift__'):
@@ -47,7 +47,7 @@ class TestThreadGuard(unittest.TestCase):
             else:
                 counter = 100
                 tg_counter = ThreadGuard(str(counter))
-                for val in (random.randint(-100, 100) for _ in rangex(5)):
+                for val in (random.randint(-100, 100) for _ in range(5)):
                     if val == 0:  # zero division
                         val = 1
                     if op in ('__ilshift__', '__irshift__', '__ipow__'):
@@ -66,7 +66,7 @@ class TestThreadGuard(unittest.TestCase):
             except AttributeError:
                 continue
             else:
-                for val in (random.randint(-100, 100) for _ in rangex(5)):
+                for val in (random.randint(-100, 100) for _ in range(5)):
                     counter = val
                     tg_counter = ThreadGuard(val)
                     res = ops(counter)

@@ -19,7 +19,7 @@ import sys
 import os
 
 from cpy2py import TwinMaster
-from cpy2py.utility.compat import rangex
+from cpy2py.utility.compat import range
 from cpy2py.utility.proc_tools import get_executable_path
 import argparse
 
@@ -98,7 +98,7 @@ def time_overhead(executable, count, total, call, reply, kernel):
     # prepare kernel
     twinterpreter = TwinMaster(executable=executable, twinterpreter_id='other', kernel=kernel)
     twinterpreter.start()
-    for _ in rangex(count):
+    for _ in range(count):
         # test
         start_time = time.time()
         twin_time = twinterpreter.execute(time.time)
@@ -159,7 +159,7 @@ def main():
             results[name][interpreter] = {}
             for kernel, kname in kernels:
                 total, call, reply = TimingVector(), TimingVector(), TimingVector()
-                for idx in rangex(tries):
+                for idx in range(tries):
                     sys.stdout.write(' '.join((
                         # what
                         'Test',

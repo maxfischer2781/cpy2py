@@ -30,6 +30,8 @@ if __name__ == '__main__':
         import argparse
     except ImportError:
         install_requires.append('argparse')
+    if sys.version_info < (3, 3):
+        install_requires.append('backports.range')
 
     # use readme for long descripion
     with codecs.open(os.path.join(repo_base, 'README.rst'), encoding='utf-8') as f:
@@ -38,6 +40,7 @@ if __name__ == '__main__':
         (':py:\S*?:`~(.*?)`', '`\g<1>`'),
         (':py:\S*?:', ''),
         (':envvar:', ''),
+        (':option:', ''),
     ]:
         long_description = re.sub(directive_re, replacement_re, long_description)
 
@@ -89,4 +92,6 @@ if __name__ == '__main__':
         },
         # unit tests
         test_suite='cpy2py_unittests',
+        # use unittest backport to have subTest etc.
+        tests_require=['unittest2'] if sys.version_info < (3, 4) else [],
     )

@@ -19,13 +19,13 @@ and will thus require minimal overhead. However, this type of kernel
 operates *strictly* singlethreaded - no more than one request may be
 served at a time. This makes recursion across twinterpreters impossible.
 """
+from __future__ import print_function
 import sys
 import os
 import time
 import logging
 import threading
 
-from cpy2py.utility.compat import pickle
 from cpy2py.kernel import kernel_state
 
 from cpy2py.utility.exceptions import format_exception
@@ -37,11 +37,9 @@ from cpy2py.kernel.kernel_requesthandler import RequestDispatcher, RequestHandle
 
 def _connect_ipyc(ipyc, pickle_protocol):
     """Connect pickle/unpickle trackers to a duplex IPyC"""
-    pickler = pickle.Pickler(ipyc.writer, pickle_protocol)
-    pickler.persistent_id = proxy_tracker.persistent_twin_id
+    pickler = proxy_tracker.twin_pickler(ipyc.writer, pickle_protocol)
     send = pickler.dump
-    unpickler = pickle.Unpickler(ipyc.reader)
-    unpickler.persistent_load = proxy_tracker.persistent_twin_load
+    unpickler = proxy_tracker.twin_unpickler(ipyc.reader)
     recv = unpickler.load
     return send, recv
 
@@ -81,21 +79,32 @@ class SingleThreadKernelServer(object):
         assert self._terminate.is_set(), 'Kernel already active'
         self._terminate.clear()
         exit_code = 1
-        self._logger.warning('<%s> [%s] Starting %s @ %s', kernel_state.TWIN_ID, self.peer_id, self.__class__.__name__, time.asctime())
+        self._logger.warning(
+            '<%s> [%s] Starting %s @ %s', kernel_state.TWIN_ID, self.peer_id, self.__class__.__name__, time.asctime()
+        )
         try:
             self._serve_requests()
         except StopTwinterpreter as err:
+            # actively shutting down
             self._logger.critical('<%s> [%s] TWIN KERNEL TERMINATED: %s', kernel_state.TWIN_ID, self.peer_id, err)
             exit_code = err.exit_code
         # cPickle may raise EOFError by itself
         except (ipyc_exceptions.IPyCTerminated, EOFError) as err:
+            # regular shutdown by master
             self._logger.critical('<%s> [%s] TWIN KERNEL RELEASED: %s', kernel_state.TWIN_ID, self.peer_id, err)
             exit_code = 0
         except Exception as err:  # pylint: disable=broad-except
+            # unexpected shutdown
+            # provide extended traceback if requested
             self._logger.critical(
                 '<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION: %s', kernel_state.TWIN_ID, self.peer_id, err
             )
             format_exception(self._logger, 3)
+            # emulate regular python exit
+            import traceback
+            exit_code = 1
+            traceback.print_exc(file=sys.stderr)
+            print('TwinError: unhandled exception in', kernel_state.TWIN_ID, file=sys.stderr)
         finally:
             self._terminate.set()
             self._logger.critical('<%s> [%s] TWIN KERNEL SHUTDOWN: %d', kernel_state.TWIN_ID, self.peer_id, exit_code)
