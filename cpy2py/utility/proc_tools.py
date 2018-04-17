@@ -11,6 +11,9 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
+"""
+Helpers to inspect other interpreters based on their executable
+"""
 import os
 import errno
 import ast
@@ -35,11 +38,11 @@ def get_executable_path(command):
     # explicit path
     if os.path.dirname(command):
         if not os.path.exists(command):
-            raise OSError(errno.ENOENT, 'No such file or directory')
+            raise OSError(errno.ENOENT, 'No such file or directory: %r' % command)
         if is_executable(command):
             return command
         else:
-            raise OSError(errno.EACCES, 'Permission denied')
+            raise OSError(errno.EACCES, 'Permission denied for executable: %r' % command)
     # windows default command extensions
     path_exts = os.environ.get('PATHEXT', '').split(os.pathsep)
     # path lookup
@@ -48,7 +51,7 @@ def get_executable_path(command):
         for path_ext in path_exts:
             if is_executable(exe_path + path_ext):
                 return exe_path + path_ext
-    raise OSError(errno.ENOENT, 'No such file or directory')
+    raise OSError(errno.ENOENT, 'No such file or directory: %r' % command)
 
 
 def get_highest_pickle_protocol(python_executable):
