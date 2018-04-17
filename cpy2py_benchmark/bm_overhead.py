@@ -20,7 +20,7 @@ import os
 
 from cpy2py import TwinMaster
 from cpy2py.utility.compat import range
-from cpy2py.utility.proc_tools import get_executable_path
+from cpy2py.utility.twinspect import exepath
 import argparse
 
 
@@ -136,7 +136,7 @@ def main():
     interpreters = []
     for interpreter in settings.interpreters:
         try:
-            _ = get_executable_path(interpreter)
+            _ = exepath(interpreter)
             interpreters.append(interpreter)
         except OSError as err:
             print("Ignoring interpreter:", interpreter, err.__class__.__name__, err)

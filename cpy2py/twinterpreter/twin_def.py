@@ -15,7 +15,7 @@ import os
 import subprocess
 
 from cpy2py.utility.compat import stringabc
-from cpy2py.utility import proc_tools
+from cpy2py.utility import twinspect
 from cpy2py.kernel import kernel_single, kernel_async, kernel_multi
 
 
@@ -67,14 +67,14 @@ class TwinDef(object):
             "At least one of 'executable' and 'twinterpreter_id' must be set"
         if twinterpreter_id is None:
             twinterpreter_id = os.path.basename(executable)
-            executable = proc_tools.get_executable_path(executable)
+            executable = twinspect.exepath(executable)
         elif executable is None:
-            executable = proc_tools.get_executable_path(twinterpreter_id)
+            executable = twinspect.exepath(twinterpreter_id)
         else:
-            executable = proc_tools.get_executable_path(executable)
+            executable = twinspect.exepath(executable)
         self.executable = executable
         self.twinterpreter_id = twinterpreter_id
-        self.pickle_protocol = proc_tools.get_best_pickle_protocol(self.executable)
+        self.pickle_protocol = twinspect.get_best_pickle_protocol(self.executable)
         self.kernel_client, self.kernel_server = self._resolve_kernel_arg(kernel)
 
     @property

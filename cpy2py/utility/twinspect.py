@@ -15,6 +15,7 @@
 Helpers to inspect other interpreters based on their executable
 """
 import os
+import os.path
 import errno
 import ast
 
@@ -26,7 +27,7 @@ def is_executable(path):
     return os.access(path, os.X_OK)
 
 
-def get_executable_path(command):
+def exepath(command):
     """
     Return the canonical path to `command` that is used when executing it
 
