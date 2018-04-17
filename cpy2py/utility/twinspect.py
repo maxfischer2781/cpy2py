@@ -28,7 +28,7 @@ def is_executable(path):
 
 def get_executable_path(command):
     """
-    Lookup the path to `command`
+    Return the canonical path to `command` that is used when executing it
 
     :param command: name or path of command
     :type command: str
@@ -40,7 +40,7 @@ def get_executable_path(command):
         if not os.path.exists(command):
             raise OSError(errno.ENOENT, 'No such file or directory: %r' % command)
         if is_executable(command):
-            return command
+            return os.path.realpath(command)
         else:
             raise OSError(errno.EACCES, 'Permission denied for executable: %r' % command)
     # windows default command extensions
@@ -50,7 +50,7 @@ def get_executable_path(command):
         exe_path = os.path.join(path_dir, command)
         for path_ext in path_exts:
             if is_executable(exe_path + path_ext):
-                return exe_path + path_ext
+                return os.path.realpath(exe_path + path_ext)
     raise OSError(errno.ENOENT, 'No such file or directory: %r' % command)
 
 
