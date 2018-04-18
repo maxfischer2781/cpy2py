@@ -29,7 +29,7 @@ def is_executable(path):
 
 def exepath(command):
     """
-    Return the canonical path to `command` that is used when executing it
+    Return the canonical path to ``command`` that is used when executing it
 
     :param command: name or path of command
     :type command: str
