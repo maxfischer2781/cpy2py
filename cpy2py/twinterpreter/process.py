@@ -19,7 +19,7 @@ from cpy2py.utility import twinspect
 from cpy2py.kernel import kernel_single, kernel_async, kernel_multi
 
 
-class TwinDef(object):
+class TwinProcess(object):
     """
     Definition of how a twinterpreter operates
 

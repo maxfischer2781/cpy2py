@@ -22,9 +22,9 @@ from cpy2py.kernel import kernel_state
 from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import ipyc_fifo
 
-from .twin_def import TwinDef
-from .twin_main import MainDef
-from . import twin_exceptions
+from .process import TwinProcess
+from .main_module import TwinMainModule
+from . import exceptions
 
 
 class TwinMaster(object):
@@ -35,7 +35,7 @@ class TwinMaster(object):
     use any twinterpeters, a corresponding TwinMaster must be created and its
     :py:meth:`TwinMaster.start` method called.
 
-    :see: :py:class:`~.TwinDef` and :py:class:`~.MainDef` for parameters and their meaning.
+    :see: :py:class:`~.TwinProcess` and :py:class:`~.TwinMainModule` for parameters and their meaning.
     """
     _initialized = False
 
@@ -46,7 +46,7 @@ class TwinMaster(object):
             cls, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
             restore_argv=False, ipyc=ipyc_fifo.DuplexFifoIPyC
     ):
-        twin_def = TwinDef(executable, twinterpreter_id, kernel)
+        twin_def = TwinProcess(executable, twinterpreter_id, kernel)
         try:
             master = cls._master_store[twin_def.twinterpreter_id]
         except KeyError:
@@ -54,7 +54,7 @@ class TwinMaster(object):
             cls._master_store[twin_def.twinterpreter_id] = self
             return self
         else:
-            main_def = MainDef(main_module, run_main, restore_argv)
+            main_def = TwinMainModule(main_module, run_main, restore_argv)
             assert master.twin_def == twin_def and master.main_def == main_def, \
                 "interpreter with same twinterpreter_id but different settings already exists"
             return master
@@ -67,8 +67,8 @@ class TwinMaster(object):
         if self._initialized:
             return
         self._initialized = True
-        self.twin_def = TwinDef(executable, twinterpreter_id, kernel)
-        self.main_def = MainDef(main_module, run_main, restore_argv)
+        self.twin_def = TwinProcess(executable, twinterpreter_id, kernel)
+        self.main_def = TwinMainModule(main_module, run_main, restore_argv)
         self._logger = logging.getLogger(
             '__cpy2py__.twin.%s_to_%s.master' % (kernel_state.TWIN_ID, self.twinterpreter_id)
         )
@@ -133,7 +133,7 @@ class TwinMaster(object):
             )
             time.sleep(0.1)  # sleep while child initializes
             if self._process.poll() is not None:
-                raise twin_exceptions.TwinterpreterProcessError(
+                raise exceptions.TwinterpreterProcessError(
                     'Twinterpreter process failed at start with %s' % self._process.poll()
                 )
             self._kernel_client = self.twin_def.kernel_client(

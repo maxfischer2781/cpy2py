@@ -12,7 +12,7 @@ import time
 import sys
 
 import cpy2py
-from cpy2py.twinterpreter import twin_master
+from cpy2py.twinterpreter import master
 from cpy2py.utility.compat import stringabc
 
 
@@ -35,13 +35,13 @@ class TestEnvironment(cpy2py.TwinObject):
         """
         Add a python virtual environment and twin master
 
-        :param executable: see :py:class:`~cpy2py.twinterpreter.twin_master.TwinDef`
-        :param twinterpreter_id: see :py:class:`~cpy2py.twinterpreter.twin_master.TwinDef`
+        :param executable: see :py:class:`~cpy2py.twinterpreter.twin_master.TwinProcess`
+        :param twinterpreter_id: see :py:class:`~cpy2py.twinterpreter.twin_master.TwinProcess`
         :param requirements: package to install; :py:mod:`~cpy2py` is always added as the current version
         :type requirements: None or list[str]
         :return:
         """
-        parent_def = twin_master.TwinDef(executable=executable, twinterpreter_id=twinterpreter_id, kernel=kernel)
+        parent_def = master.TwinProcess(executable=executable, twinterpreter_id=twinterpreter_id, kernel=kernel)
         assert parent_def.twinterpreter_id not in self.twin_masters, "Collision in twinterpreter ids"
         print('creating virtualenv:', parent_def, 'requires:', requirements, file=sys.stderr)
         # create virtual environment
@@ -68,7 +68,7 @@ class TestEnvironment(cpy2py.TwinObject):
                 '--upgrade',
             ])
         # setup twin master
-        self.twin_masters[parent_def.twinterpreter_id] = twin_master.TwinMaster(
+        self.twin_masters[parent_def.twinterpreter_id] = master.TwinMaster(
             executable=os.path.join(venv_dir, 'bin', 'python'),
             twinterpreter_id=parent_def.twinterpreter_id
         )
