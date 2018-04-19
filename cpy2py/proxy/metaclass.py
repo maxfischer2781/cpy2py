@@ -13,7 +13,7 @@
 # - # limitations under the License.
 from __future__ import print_function
 import types
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state
 
 from cpy2py.proxy.proxy import InstanceProxy, UnboundedMethodProxy
 
@@ -67,7 +67,7 @@ class TwinMeta(type):
                 else:
                     break
             else:
-                twin_id = kernel_state.MASTER_ID
+                twin_id = state.MASTER_ID
             class_dict['__twin_id__'] = twin_id
         # enable persistent dump/load without pickle
         class_dict['__import_mod_name__'] = (class_dict['__module__'], name)
@@ -78,7 +78,7 @@ class TwinMeta(type):
         proxy_class = mcs.__get_proxy_class__(real_class=real_class)
         mcs.register_proxy(real_class=real_class, proxy_class=proxy_class)
         # return the appropriate object or proxy for the current twin
-        if kernel_state.is_twinterpreter(class_dict['__twin_id__']):
+        if state.is_twinterpreter(class_dict['__twin_id__']):
             return real_class
         else:
             return proxy_class
@@ -155,21 +155,21 @@ class TwinMeta(type):
     # class attributes
     def __getattr__(cls, name):
         if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
-            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            kernel = state.get_kernel(cls.__twin_id__)
             return kernel.get_attribute(cls, name)
         else:
             type.__getattribute__(cls, name)
 
     def __setattr__(cls, name, value):
         if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
-            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            kernel = state.get_kernel(cls.__twin_id__)
             return kernel.set_attribute(cls, name, value)
         else:
             type.__setattr__(cls, name, value)
 
     def __delattr__(cls, name):
         if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
-            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            kernel = state.get_kernel(cls.__twin_id__)
             return kernel.del_attribute(cls, name)
         else:
             type.__setattr__(cls, name)

@@ -2,7 +2,7 @@ import sys
 import unittest
 import time
 
-from cpy2py import kernel_state, TwinMaster, TwinObject
+from cpy2py import state, TwinMaster, TwinObject
 from cpy2py.utility.compat import range
 
 
@@ -21,7 +21,7 @@ class PyPyng(TwinObject):
 
 
 class Pyng(PyPyng):
-    __twin_id__ = kernel_state.MASTER_ID
+    __twin_id__ = state.MASTER_ID
 
 
 class TestPingPongCall(unittest.TestCase):

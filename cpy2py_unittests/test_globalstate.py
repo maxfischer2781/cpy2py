@@ -2,7 +2,7 @@ import unittest
 import random
 import time
 
-from cpy2py import kernel_state, TwinMaster, TwinObject, localmethod
+from cpy2py import state, TwinMaster, TwinObject, localmethod
 from cpy2py.utility.compat import range
 
 RND_COUNT = 500  # should be enough to avoid creating the same numbers
@@ -37,7 +37,7 @@ def set_global_module_state(rgn):
 
 class TestGlobalState(unittest.TestCase):
     def setUp(self):
-        kernel_state.TWIN_GROUP_STATE.add_finalizer(set_global_module_state, random_global_numbers)
+        state.TWIN_GROUP_STATE.add_finalizer(set_global_module_state, random_global_numbers)
         self.twinterpreter = TwinMaster('pypy')
         self.twinterpreter.start()
 

@@ -85,7 +85,7 @@ import runpy
 import types
 import logging
 
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state as kernel_state
 
 
 class TwinMainModule(object):

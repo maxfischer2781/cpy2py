@@ -23,7 +23,7 @@ import threading
 import random
 
 from cpy2py.utility.thread_tools import FifoQueue, ItemError, ThreadGuard
-from .kernel_async import AsyncKernelClient, AsyncKernelServer
+from cpy2py.kernel.flavours.async import AsyncKernelClient, AsyncKernelServer
 
 
 class MultiThreadKernelServer(AsyncKernelServer):

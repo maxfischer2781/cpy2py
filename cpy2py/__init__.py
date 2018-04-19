@@ -40,7 +40,7 @@ from cpy2py.utility.compat import NullHandler as _NullHandler
 from cpy2py.proxy.baseclass import TwinObject, localmethod
 from cpy2py.proxy.function import twinfunction
 from cpy2py.twinterpreter.master import TwinMaster
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state as kernel_state
 
 
 _base_logger = _logging.getLogger('__cpy2py__')

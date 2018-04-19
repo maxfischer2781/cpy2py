@@ -2,7 +2,7 @@ import unittest
 import time
 import random
 
-from cpy2py import TwinMaster, TwinObject, kernel_state
+from cpy2py import TwinMaster, TwinObject, state
 
 
 class StaticObject(TwinObject):
@@ -20,7 +20,7 @@ class StaticObject(TwinObject):
 
     @classmethod
     def cls_scope(cls):
-        return kernel_state.TWIN_ID
+        return state.TWIN_ID
 
 
 class TestStaticObject(unittest.TestCase):

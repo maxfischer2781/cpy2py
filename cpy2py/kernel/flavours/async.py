@@ -23,8 +23,8 @@ import threading
 
 from cpy2py.utility.exceptions import format_exception
 from cpy2py.ipyc import ipyc_exceptions
-from cpy2py.kernel import kernel_state
-from cpy2py.kernel.kernel_single import SingleThreadKernelClient, SingleThreadKernelServer
+from cpy2py.kernel import state
+from cpy2py.kernel.flavours.single import SingleThreadKernelClient, SingleThreadKernelServer
 
 
 class AsyncKernelServer(SingleThreadKernelServer):
@@ -45,7 +45,7 @@ class AsyncKernelServer(SingleThreadKernelServer):
     def _serve_requests(self):
         while not self._terminate.is_set():
             if __debug__:
-                self._logger.warning('<%s> [%s] Server Listening', kernel_state.TWIN_ID, self.peer_id)
+                self._logger.warning('<%s> [%s] Server Listening', state.TWIN_ID, self.peer_id)
             request_id, directive = self._server_recv()
             if self._except_callback is not None:
                 raise self._except_callback  # pylint: disable=raising-bad-type
@@ -80,14 +80,14 @@ class AsyncKernelClient(SingleThreadKernelClient):
         try:
             while not self._terminate.is_set():
                 if __debug__:
-                    self._logger.warning('<%s> [%s] Client Listening', kernel_state.TWIN_ID, self.peer_id)
+                    self._logger.warning('<%s> [%s] Client Listening', state.TWIN_ID, self.peer_id)
                 request_id, reply_body = self._client_recv()
                 request = self._requests.pop(request_id)
                 request[1] = reply_body
                 request[0].set()
                 del request_id, reply_body, request
         except (ipyc_exceptions.IPyCTerminated, EOFError, ValueError):
-            self._logger.warning('<%s> [%s] Client Released', kernel_state.TWIN_ID, self.peer_id)
+            self._logger.warning('<%s> [%s] Client Released', state.TWIN_ID, self.peer_id)
             self.stop_local()
         except Exception as err:  # pylint: disable=broad-except
             # DEBUG: sometimes, request_id raises KeyError even though it's in _requests - MF@20160518
@@ -96,7 +96,7 @@ class AsyncKernelClient(SingleThreadKernelClient):
                 for key in self._requests:
                     self._logger.critical('Await  : %r (%s)', key, type(key))
             self._logger.critical(
-                '<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION: %s', kernel_state.TWIN_ID, self.peer_id, err
+                '<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION: %s', state.TWIN_ID, self.peer_id, err
             )
             format_exception(self._logger, 3)
             raise

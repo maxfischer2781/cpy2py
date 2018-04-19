@@ -14,8 +14,8 @@
 """
 Proxies for entities in other twinterpreters
 """
-from cpy2py.kernel.kernel_exceptions import TwinterpeterUnavailable
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel.exceptions import TwinterpeterUnavailable
+from cpy2py.kernel import state
 
 from cpy2py.proxy import tracker
 
@@ -40,7 +40,7 @@ class UnboundedMethodProxy(object):
     def __get__(self, instance, owner):
         if instance is None:
             subject = owner
-            kernel = kernel_state.get_kernel(subject.__twin_id__)
+            kernel = state.get_kernel(subject.__twin_id__)
         else:
             subject = instance
             kernel = subject.__kernel__
@@ -69,7 +69,7 @@ class InstanceProxy(object):
 
     def __new__(cls, *args, **kwargs):
         self = object.__new__(cls)
-        __kernel__ = kernel_state.get_kernel(self.__twin_id__)
+        __kernel__ = state.get_kernel(self.__twin_id__)
         object.__setattr__(self, '__kernel__', __kernel__)
         try:
             # native instance exists, but no proxy yet
