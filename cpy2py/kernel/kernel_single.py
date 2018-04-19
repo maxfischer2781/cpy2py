@@ -31,15 +31,15 @@ from cpy2py.kernel import kernel_state
 from cpy2py.utility.exceptions import format_exception
 from cpy2py.ipyc import ipyc_exceptions
 from cpy2py.kernel.kernel_exceptions import StopTwinterpreter
-from cpy2py.proxy import proxy_tracker
+from cpy2py.proxy import tracker
 from cpy2py.kernel.kernel_requesthandler import RequestDispatcher, RequestHandler
 
 
 def _connect_ipyc(ipyc, pickle_protocol):
     """Connect pickle/unpickle trackers to a duplex IPyC"""
-    pickler = proxy_tracker.twin_pickler(ipyc.writer, pickle_protocol)
+    pickler = tracker.twin_pickler(ipyc.writer, pickle_protocol)
     send = pickler.dump
-    unpickler = proxy_tracker.twin_unpickler(ipyc.reader)
+    unpickler = tracker.twin_unpickler(ipyc.reader)
     recv = unpickler.load
     return send, recv
 

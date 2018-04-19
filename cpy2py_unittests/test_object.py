@@ -2,7 +2,7 @@ import unittest
 import time
 
 from cpy2py import TwinMaster, TwinObject
-import cpy2py.proxy.proxy_twin  # proxy type check
+import cpy2py.proxy.proxy  # proxy type check
 
 
 class PrimitiveObject(TwinObject):
@@ -36,7 +36,7 @@ class TestObjectPrimitives(unittest.TestCase):
 
     def test_init(self):
         instance = PrimitiveObject()
-        self.assertTrue(isinstance(instance, cpy2py.proxy.proxy_twin.TwinProxy))
+        self.assertTrue(isinstance(instance, cpy2py.proxy.proxy.InstanceProxy))
 
     def test_class_attribute(self):
         instance = PrimitiveObject()

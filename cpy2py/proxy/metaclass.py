@@ -15,7 +15,7 @@ from __future__ import print_function
 import types
 from cpy2py.kernel import kernel_state
 
-from cpy2py.proxy.proxy_twin import TwinProxy, ProxyMethod
+from cpy2py.proxy.proxy import InstanceProxy, UnboundedMethodProxy
 
 
 class TwinMeta(type):
@@ -103,13 +103,13 @@ class TwinMeta(type):
                 del proxy_dict[aname]
             # methods must be proxy'd
             elif isinstance(proxy_dict[aname], types.FunctionType):
-                proxy_dict[aname] = ProxyMethod(proxy_dict[aname])
+                proxy_dict[aname] = UnboundedMethodProxy(proxy_dict[aname])
             elif isinstance(proxy_dict[aname], (classmethod, staticmethod)):
                 try:
                     real_func = proxy_dict[aname].__func__
                 except AttributeError:  # py2.6
                     real_func = proxy_dict[aname].__get__(None, object)
-                proxy_dict[aname] = ProxyMethod(real_func)
+                proxy_dict[aname] = UnboundedMethodProxy(real_func)
             # remove non-magic attributes so they don't shadow the real ones
             elif aname not in mcs.__proxy_inherits_attributes__:
                 del proxy_dict[aname]
@@ -141,12 +141,12 @@ class TwinMeta(type):
     @classmethod
     def register_proxy(mcs, real_class, proxy_class):
         """
-        Register a class acting as :py:class:`~.TwinProxy` for a real class
+        Register a class acting as :py:class:`~.InstanceProxy` for a real class
 
         :param real_class: a normal, non-cpy2py class
         :type real_class: object or :py:class:`~cpy2py.proxy.proxy_object.TwinObject`
-        :param proxy_class: a proxy class similar to :py:class:`~.TwinProxy`
-        :type proxy_class: object or :py:class:`~.TwinProxy`
+        :param proxy_class: a proxy class similar to :py:class:`~.InstanceProxy`
+        :type proxy_class: object or :py:class:`~.InstanceProxy`
         """
         # TODO: weakref any of these? - MF@20160401
         mcs.__real_class_store__[proxy_class] = real_class
@@ -175,4 +175,4 @@ class TwinMeta(type):
             type.__setattr__(cls, name)
 
 
-TwinMeta.register_proxy(object, TwinProxy)
+TwinMeta.register_proxy(object, InstanceProxy)
