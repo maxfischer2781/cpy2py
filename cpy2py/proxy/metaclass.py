@@ -13,9 +13,9 @@
 # - # limitations under the License.
 from __future__ import print_function
 import types
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state
 
-from cpy2py.proxy.proxy_twin import TwinProxy, ProxyMethod
+from cpy2py.proxy.proxy import InstanceProxy, UnboundedMethodProxy
 
 
 class TwinMeta(type):
@@ -67,7 +67,7 @@ class TwinMeta(type):
                 else:
                     break
             else:
-                twin_id = kernel_state.MASTER_ID
+                twin_id = state.MASTER_ID
             class_dict['__twin_id__'] = twin_id
         # enable persistent dump/load without pickle
         class_dict['__import_mod_name__'] = (class_dict['__module__'], name)
@@ -78,7 +78,7 @@ class TwinMeta(type):
         proxy_class = mcs.__get_proxy_class__(real_class=real_class)
         mcs.register_proxy(real_class=real_class, proxy_class=proxy_class)
         # return the appropriate object or proxy for the current twin
-        if kernel_state.is_twinterpreter(class_dict['__twin_id__']):
+        if state.is_twinterpreter(class_dict['__twin_id__']):
             return real_class
         else:
             return proxy_class
@@ -103,13 +103,13 @@ class TwinMeta(type):
                 del proxy_dict[aname]
             # methods must be proxy'd
             elif isinstance(proxy_dict[aname], types.FunctionType):
-                proxy_dict[aname] = ProxyMethod(proxy_dict[aname])
+                proxy_dict[aname] = UnboundedMethodProxy(proxy_dict[aname])
             elif isinstance(proxy_dict[aname], (classmethod, staticmethod)):
                 try:
                     real_func = proxy_dict[aname].__func__
                 except AttributeError:  # py2.6
                     real_func = proxy_dict[aname].__get__(None, object)
-                proxy_dict[aname] = ProxyMethod(real_func)
+                proxy_dict[aname] = UnboundedMethodProxy(real_func)
             # remove non-magic attributes so they don't shadow the real ones
             elif aname not in mcs.__proxy_inherits_attributes__:
                 del proxy_dict[aname]
@@ -141,12 +141,12 @@ class TwinMeta(type):
     @classmethod
     def register_proxy(mcs, real_class, proxy_class):
         """
-        Register a class acting as :py:class:`~.TwinProxy` for a real class
+        Register a class acting as :py:class:`~.InstanceProxy` for a real class
 
         :param real_class: a normal, non-cpy2py class
         :type real_class: object or :py:class:`~cpy2py.proxy.proxy_object.TwinObject`
-        :param proxy_class: a proxy class similar to :py:class:`~.TwinProxy`
-        :type proxy_class: object or :py:class:`~.TwinProxy`
+        :param proxy_class: a proxy class similar to :py:class:`~.InstanceProxy`
+        :type proxy_class: object or :py:class:`~.InstanceProxy`
         """
         # TODO: weakref any of these? - MF@20160401
         mcs.__real_class_store__[proxy_class] = real_class
@@ -155,24 +155,24 @@ class TwinMeta(type):
     # class attributes
     def __getattr__(cls, name):
         if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
-            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            kernel = state.get_kernel(cls.__twin_id__)
             return kernel.get_attribute(cls, name)
         else:
             type.__getattribute__(cls, name)
 
     def __setattr__(cls, name, value):
         if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
-            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            kernel = state.get_kernel(cls.__twin_id__)
             return kernel.set_attribute(cls, name, value)
         else:
             type.__setattr__(cls, name, value)
 
     def __delattr__(cls, name):
         if cls.__is_twin_proxy__ and name not in TwinMeta.__proxy_inherits_attributes__:
-            kernel = kernel_state.get_kernel(cls.__twin_id__)
+            kernel = state.get_kernel(cls.__twin_id__)
             return kernel.del_attribute(cls, name)
         else:
             type.__setattr__(cls, name)
 
 
-TwinMeta.register_proxy(object, TwinProxy)
+TwinMeta.register_proxy(object, InstanceProxy)

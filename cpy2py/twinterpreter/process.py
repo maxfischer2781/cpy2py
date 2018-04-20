@@ -16,10 +16,10 @@ import subprocess
 
 from cpy2py.utility.compat import stringabc
 from cpy2py.utility import twinspect
-from cpy2py.kernel import kernel_single, kernel_async, kernel_multi
+from cpy2py.kernel.flavours import async, threaded, single
 
 
-class TwinDef(object):
+class TwinProcess(object):
     """
     Definition of how a twinterpreter operates
 
@@ -53,9 +53,9 @@ class TwinDef(object):
     the class works like a singleton in this case.
     """
     default_kernels = {
-        'single': kernel_single,
-        'async': kernel_async,
-        'multi': kernel_multi,
+        'single': single,
+        'async': async,
+        'multi': threaded,
     }
 
     def __init__(self, executable=None, twinterpreter_id=None, kernel=None):

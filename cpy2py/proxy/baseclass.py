@@ -13,9 +13,9 @@
 # - # limitations under the License.
 import time
 
-from cpy2py.proxy import proxy_tracker
-from cpy2py.proxy.proxy_meta import TwinMeta
-from cpy2py.proxy.proxy_twin import TwinProxy
+from cpy2py.proxy import tracker
+from cpy2py.proxy.metaclass import TwinMeta
+from cpy2py.proxy.proxy import InstanceProxy
 
 
 def instance_id(instance):
@@ -41,7 +41,7 @@ def new_twin_object(cls, *args, **kwargs):  # pylint: disable=unused-argument
     self = object.__new__(cls)
     object.__setattr__(self, '__instance_id__', instance_id(self))
     # register our reference for lookup
-    proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
+    tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
     return self
 
 # calling TwinMeta to set metaclass explicitly works for py2 and py3
@@ -76,6 +76,6 @@ def localmethod(method):
     setattr(method, TwinMeta.mark_localmember, True)
     return method
 
-# TwinObject and TwinProxy are not created by metaclass, initialize manually
+# TwinObject and InstanceProxy are not created by metaclass, initialize manually
 TwinObject.__import_mod_name__ = (TwinObject.__module__, TwinObject.__name__)
-TwinProxy.__import_mod_name__ = TwinObject.__import_mod_name__
+InstanceProxy.__import_mod_name__ = TwinObject.__import_mod_name__

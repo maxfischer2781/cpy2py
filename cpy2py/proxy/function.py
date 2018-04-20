@@ -12,7 +12,7 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 from cpy2py.utility.proxy import clone_function_meta
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state
 
 
 def twinfunction(twinterpreter_id):
@@ -28,7 +28,7 @@ def twinfunction(twinterpreter_id):
     def decorator(func):
         func.__twin_id__ = twinterpreter_id
         # native twin, never redirect
-        if kernel_state.is_twinterpreter(twinterpreter_id):
+        if state.is_twinterpreter(twinterpreter_id):
             return func
         # redirect to kernel
         # - must dispatch to the proxy, otherwise pickling will fail
@@ -40,7 +40,7 @@ def twinfunction(twinterpreter_id):
         def function_runner_factory(*fargs, **fkwargs):
             def function_runner(*args, **kwargs):
                 return function_runner.dispatch_call(function_dispatch_proxy, *args, **kwargs)
-            function_runner.dispatch_call = kernel_state.get_kernel(twinterpreter_id).dispatch_call
+            function_runner.dispatch_call = state.get_kernel(twinterpreter_id).dispatch_call
             function_dispatch_proxy.function_runner = function_runner
             return function_runner(*fargs, **fkwargs)
 

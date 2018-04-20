@@ -16,15 +16,15 @@ Alternative interpreters deployed in parallel
 """
 import logging
 # bootstrap group state
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state
 from cpy2py.twinterpreter import group_state
 
 
 def _register_twin_group_state(twin_group_state):
-    kernel_state.TWIN_GROUP_STATE = twin_group_state
+    state.TWIN_GROUP_STATE = twin_group_state
 
 
-if kernel_state.is_master():
+if state.is_master():
     TGS = group_state.TwinGroupState()
     _register_twin_group_state(TGS)
     TGS.add_finalizer(_register_twin_group_state, TGS)
@@ -47,5 +47,5 @@ def _bootstrap_coverage():
             logger.info('plugin coverage disabled')
 
 
-if kernel_state.is_master():
-    kernel_state.TWIN_GROUP_STATE.add_initializer(_bootstrap_coverage)
+if state.is_master():
+    state.TWIN_GROUP_STATE.add_initializer(_bootstrap_coverage)

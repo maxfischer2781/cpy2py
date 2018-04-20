@@ -2,7 +2,7 @@ from __future__ import print_function
 import unittest
 import time
 
-from cpy2py import kernel_state, TwinMaster, TwinObject
+from cpy2py import state, TwinMaster, TwinObject
 
 
 class DescriptorObject(TwinObject):
@@ -13,7 +13,7 @@ class DescriptorObject(TwinObject):
 
     @property
     def prop(self):
-        return self.numeric_value, kernel_state.TWIN_ID
+        return self.numeric_value, state.TWIN_ID
 
     @prop.setter
     def prop(self, value):

@@ -22,7 +22,7 @@ import errno
 
 from cpy2py.utility.compat import BytesFile
 from cpy2py.utility.utils import random_str
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state
 
 
 class DuplexSocketIPyC(object):
@@ -62,7 +62,7 @@ class DuplexSocketIPyC(object):
             self.client_socket, client_address = self.server_socket.accept()
             self._logger.warning(
                 '<%s> [%s] accepted from %r',
-                kernel_state.TWIN_ID,
+                state.TWIN_ID,
                 self.__class__.__name__,
                 client_address
             )
@@ -71,7 +71,7 @@ class DuplexSocketIPyC(object):
             self.client_socket.connect(self.address)
             self._logger.warning(
                 '<%s> [%s] connected from %r',
-                kernel_state.TWIN_ID,
+                state.TWIN_ID,
                 self.__class__.__name__,
                 self.client_socket.getsockname()
             )

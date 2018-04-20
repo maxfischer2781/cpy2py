@@ -1,16 +1,16 @@
 import unittest
 import time
 
-from cpy2py import kernel_state, TwinMaster, TwinObject
+from cpy2py import state, TwinMaster, TwinObject
 from cpy2py.utility.compat import range
-from cpy2py.ipyc import ipyc_fifo, ipyc_socket
+from cpy2py.ipyc import fifo_pipe, duplex_socket
 
 
 class PrimitiveObject(TwinObject):
     __twin_id__ = 'pypy_multi'
 
     def mod(self, num=0, mod=1):
-        return self.__twin_id__ == kernel_state.TWIN_ID, num % mod
+        return self.__twin_id__ == state.TWIN_ID, num % mod
 
 
 class TestIpycDefault(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestIpycDefault(unittest.TestCase):
 class TestIpycFifo(TestIpycDefault):
     def setUp(self):
         self.twinterpreter = TwinMaster(
-            executable='pypy', twinterpreter_id='pypy_multi', kernel='multi', ipyc=ipyc_fifo.DuplexFifoIPyC
+            executable='pypy', twinterpreter_id='pypy_multi', kernel='multi', ipyc=fifo_pipe.DuplexFifoIPyC
         )
         self.twinterpreter.start()
 
@@ -45,7 +45,7 @@ class TestIpycFifo(TestIpycDefault):
 class TestIpycSocket(TestIpycDefault):
     def setUp(self):
         self.twinterpreter = TwinMaster(
-            executable='pypy', twinterpreter_id='pypy_multi', kernel='multi', ipyc=ipyc_socket.DuplexSocketIPyC
+            executable='pypy', twinterpreter_id='pypy_multi', kernel='multi', ipyc=duplex_socket.DuplexSocketIPyC
         )
         self.twinterpreter.start()
 

@@ -2,17 +2,17 @@ from __future__ import with_statement
 import unittest
 import time
 
-from cpy2py import kernel_state, TwinMaster
-from cpy2py.proxy import proxy_func
+from cpy2py import state, TwinMaster
+from cpy2py.proxy import function
 
 
-@proxy_func.twinfunction(kernel_state.TWIN_ID)
+@function.twinfunction(state.TWIN_ID)
 def native_func(arg):
     """docstring"""
     return arg
 
 
-@proxy_func.twinfunction('pypy')
+@function.twinfunction('pypy')
 def proxied_func(arg):
     """docstring"""
     return arg
