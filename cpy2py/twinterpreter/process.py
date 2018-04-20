@@ -59,9 +59,6 @@ class TwinProcess(object):
     }
 
     def __init__(self, executable=None, twinterpreter_id=None, kernel=None):
-        if isinstance(executable, self.__class__):
-            assert twinterpreter_id is None and kernel is None, "Mixing cloning and explicit assignment"
-            executable, twinterpreter_id, kernel = executable.executable, executable.twinterpreter_id, executable.kernel
         # Resolve incomplete argument list using defaults
         assert executable is not None or twinterpreter_id is not None,\
             "At least one of 'executable' and 'twinterpreter_id' must be set"
