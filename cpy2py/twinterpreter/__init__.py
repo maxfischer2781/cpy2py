@@ -12,7 +12,11 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 """
-Alternative interpreters deployed in parallel
+Control and Management of additional interpreters deployed in parallel
+
+This module is tasked with managing the actual interpreter - its process and environment.
+It is meant to start, initialise, finalise and stop interpreters.
+While running, the :py:mod:`~cpy2py.kernel` module handles the interaction between interpreters.
 """
 import logging
 # bootstrap group state
