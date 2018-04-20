@@ -14,7 +14,7 @@
 import logging
 
 from cpy2py.kernel import state
-from cpy2py.ipyc import ipyc_exceptions
+from cpy2py.ipyc import exceptions
 from cpy2py.utility.exceptions import format_exception, CPy2PyException
 from cpy2py.kernel.exceptions import StopTwinterpreter, TwinterpeterTerminated
 
@@ -209,7 +209,7 @@ class RequestDispatcher(object):
         """Forward a request to peer and return the result"""
         try:
             result_type, result_body = self.kernel_client.run_request((request_type, args))
-        except (ipyc_exceptions.IPyCTerminated, IOError, ValueError):
+        except (exceptions.IPyCTerminated, IOError, ValueError):
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         if result_type == __E_SUCCESS__:
             return result_body
@@ -223,7 +223,7 @@ class RequestDispatcher(object):
         """Forward a request to peer and return the result"""
         try:
             self.kernel_client.run_event((request_type, args))
-        except (ipyc_exceptions.IPyCTerminated, IOError, ValueError):
+        except (exceptions.IPyCTerminated, IOError, ValueError):
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         return True
 

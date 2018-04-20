@@ -22,7 +22,7 @@ from __future__ import print_function
 import threading
 
 from cpy2py.utility.exceptions import format_exception
-from cpy2py.ipyc import ipyc_exceptions
+from cpy2py.ipyc import exceptions
 from cpy2py.kernel import state
 from cpy2py.kernel.flavours.single import SingleThreadKernelClient, SingleThreadKernelServer
 
@@ -86,7 +86,7 @@ class AsyncKernelClient(SingleThreadKernelClient):
                 request[1] = reply_body
                 request[0].set()
                 del request_id, reply_body, request
-        except (ipyc_exceptions.IPyCTerminated, EOFError, ValueError):
+        except (exceptions.IPyCTerminated, EOFError, ValueError):
             self._logger.warning('<%s> [%s] Client Released', state.TWIN_ID, self.peer_id)
             self.stop_local()
         except Exception as err:  # pylint: disable=broad-except

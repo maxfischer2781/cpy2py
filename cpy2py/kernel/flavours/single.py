@@ -29,7 +29,7 @@ import threading
 from cpy2py.kernel import state
 
 from cpy2py.utility.exceptions import format_exception
-from cpy2py.ipyc import ipyc_exceptions
+from cpy2py.ipyc import exceptions
 from cpy2py.kernel.exceptions import StopTwinterpreter
 from cpy2py.proxy import tracker
 from cpy2py.kernel.requesthandler import RequestDispatcher, RequestHandler
@@ -89,7 +89,7 @@ class SingleThreadKernelServer(object):
             self._logger.critical('<%s> [%s] TWIN KERNEL TERMINATED: %s', state.TWIN_ID, self.peer_id, err)
             exit_code = err.exit_code
         # cPickle may raise EOFError by itself
-        except (ipyc_exceptions.IPyCTerminated, EOFError) as err:
+        except (exceptions.IPyCTerminated, EOFError) as err:
             # regular shutdown by master
             self._logger.critical('<%s> [%s] TWIN KERNEL RELEASED: %s', state.TWIN_ID, self.peer_id, err)
             exit_code = 0
