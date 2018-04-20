@@ -2,7 +2,7 @@ import unittest
 import random
 import time
 
-from cpy2py import state, TwinMaster, TwinObject
+from cpy2py import kernel_state, TwinMaster, TwinObject
 
 
 class PyPyBaseA1(TwinObject):
@@ -13,7 +13,7 @@ class PyPyBaseA1(TwinObject):
 
     def test_kernel(self, kernel_id=None):
         kernel_id = kernel_id if kernel_id is not None else self.__twin_id__
-        return state.is_twinterpreter(kernel_id=kernel_id)
+        return kernel_state.is_twinterpreter(kernel_id=kernel_id)
 
     def get_instance_attribute(self):
         return self.numeric_value

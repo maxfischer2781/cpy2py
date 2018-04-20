@@ -2,11 +2,11 @@ from __future__ import with_statement
 import unittest
 import time
 
-from cpy2py import state, TwinMaster
+from cpy2py import kernel_state, TwinMaster
 from cpy2py.proxy import function
 
 
-@function.twinfunction(state.TWIN_ID)
+@function.twinfunction(kernel_state.TWIN_ID)
 def native_func(arg):
     """docstring"""
     return arg

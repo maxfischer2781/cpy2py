@@ -1,12 +1,12 @@
 import unittest
 import time
 
-from cpy2py import state, TwinMaster, TwinObject
+from cpy2py import kernel_state, TwinMaster, TwinObject
 from cpy2py.proxy.baseclass import localmethod
 
 
 def test_kernel(kernel_id):
-    return state.is_twinterpreter(kernel_id=kernel_id)
+    return kernel_state.is_twinterpreter(kernel_id=kernel_id)
 
 
 class PyPyObject(TwinObject):
@@ -14,11 +14,11 @@ class PyPyObject(TwinObject):
 
     def test_kernel(self, kernel_id=None):
         kernel_id = kernel_id if kernel_id is not None else self.__twin_id__
-        return state.is_twinterpreter(kernel_id=kernel_id)
+        return kernel_state.is_twinterpreter(kernel_id=kernel_id)
 
     @localmethod
     def local_kernel(self):
-        return state.TWIN_ID
+        return kernel_state.TWIN_ID
 
     def deferred_local_kernel(self):
         return self.local_kernel()
@@ -40,8 +40,8 @@ class TestCallScope(unittest.TestCase):
         self.assertFalse(pypy_instance.test_kernel('foobar'))
 
     def test_function_native(self):
-        self.assertTrue(test_kernel(state.TWIN_ID))
-        self.assertTrue(test_kernel(state.MASTER_ID))
+        self.assertTrue(test_kernel(kernel_state.TWIN_ID))
+        self.assertTrue(test_kernel(kernel_state.MASTER_ID))
         self.assertFalse(test_kernel('pypy'))
         self.assertFalse(test_kernel('foobar'))
 
@@ -53,6 +53,6 @@ class TestCallScope(unittest.TestCase):
     def test_local_method(self):
         pypy_instance = PyPyObject()
         # call from master scope
-        self.assertEqual(pypy_instance.local_kernel(), state.MASTER_ID)
+        self.assertEqual(pypy_instance.local_kernel(), kernel_state.MASTER_ID)
         # bounce via regular method
         self.assertEqual(pypy_instance.deferred_local_kernel(), 'pypy')

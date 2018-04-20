@@ -1,6 +1,6 @@
 import unittest
 
-from cpy2py import TwinObject, state
+from cpy2py import TwinObject, kernel_state
 from cpy2py.utility.compat import range
 from cpy2py_unittests.utility import TestEnvironment
 
@@ -22,7 +22,7 @@ class VEnvObject(TwinObject):
 
     @staticmethod
     def get_kernel_id():
-        return state.TWIN_ID
+        return kernel_state.TWIN_ID
 
 
 class TestObjectPrimitives(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestObjectPrimitives(unittest.TestCase):
         """Test interpreter of object"""
         instance = VEnvObject()
         self.assertEqual(instance.get_kernel_id(), 'pypy_venv_test_testenv')
-        self.assertNotEqual(instance.get_kernel_id(), state.TWIN_ID)
+        self.assertNotEqual(instance.get_kernel_id(), kernel_state.TWIN_ID)
 
     def test_method_call(self):
         """Test method result"""
