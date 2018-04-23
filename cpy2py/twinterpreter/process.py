@@ -110,25 +110,7 @@ class TwinProcess(object):
         :returns: the spawned process
         :rtype: :py:class:`subprocess.Popen`
         """
-        _spawn_args = []
-        if isinstance(self.executable, stringabc):
-            # bare interpreter - /foo/bar/python
-            _spawn_args.append(self.executable)
-        else:
-            # invoked interpreter - [ssh foo@bar python] or [which python]
-            _spawn_args.extend(self.executable)
-        if cli_args is not None:
-            _spawn_args.extend(cli_args)
-        env = {} if env is None else env
-        return subprocess.Popen(
-            args=_spawn_args,
-            # do not redirect std streams
-            # this fakes the impression of having just one program running
-            stdin=None,
-            stdout=None,
-            stderr=None,
-            env=env,
-        )
+        return self.interpreter.spawn(arguments=cli_args, environment=env)
 
     def __repr__(self):
         return '%s(executable=%r, twinterpreter_id=%r, kernel=%r)' % (
