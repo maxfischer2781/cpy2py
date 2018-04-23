@@ -47,7 +47,7 @@ class TestExecutablePath(unittest.TestCase):
         with self.assertRaises(OSError):
             twinspect.exepath('executable.py')
         # reset
-        if old_path is not None:
+        if old_path is None:
             del os.environ['PATH']
         else:
             os.environ['PATH'] = old_path
