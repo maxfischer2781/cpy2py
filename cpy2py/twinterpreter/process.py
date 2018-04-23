@@ -18,6 +18,8 @@ from cpy2py.utility.compat import stringabc
 from cpy2py.utility import twinspect
 from cpy2py.kernel.flavours import async, threaded, single
 
+from .interpreter import Interpreter
+
 
 class TwinProcess(object):
     """
@@ -58,20 +60,28 @@ class TwinProcess(object):
         'multi': threaded,
     }
 
+    @property
+    def executable(self):
+        return self.interpreter.executable
+
+    @property
+    def pickle_protocol(self):
+        return self.interpreter.pickle_protocol
+
     def __init__(self, executable=None, twinterpreter_id=None, kernel=None):
         # Resolve incomplete argument list using defaults
         assert executable is not None or twinterpreter_id is not None,\
             "At least one of 'executable' and 'twinterpreter_id' must be set"
-        if twinterpreter_id is None:
-            twinterpreter_id = os.path.basename(executable)
-            executable = twinspect.exepath(executable)
-        elif executable is None:
-            executable = twinspect.exepath(twinterpreter_id)
+        if executable is None:
+            interpreter = Interpreter(twinterpreter_id)
+        elif not isinstance(executable, Interpreter):
+            interpreter = Interpreter(executable)
         else:
-            executable = twinspect.exepath(executable)
-        self.executable = executable
+            interpreter = executable
+        if twinterpreter_id is None:
+            twinterpreter_id = os.path.basename(interpreter.executable)
+        self.interpreter = interpreter
         self.twinterpreter_id = twinterpreter_id
-        self.pickle_protocol = twinspect.get_best_pickle_protocol(self.executable)
         self.kernel_client, self.kernel_server = self._resolve_kernel_arg(kernel)
 
     @property
