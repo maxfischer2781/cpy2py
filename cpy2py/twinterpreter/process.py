@@ -15,7 +15,6 @@ import os
 import subprocess
 
 from cpy2py.utility.compat import stringabc
-from cpy2py.utility import twinspect
 from cpy2py.kernel.flavours import async, threaded, single
 
 from .interpreter import Interpreter
