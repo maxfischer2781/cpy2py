@@ -30,4 +30,4 @@ class RemoteCpy2PyNotFound(ImportError, CPy2PyException):
     def __init__(self, interpreter):
         self.name = 'cpy2py'
         self.interpreter = interpreter
-        super(RemoteCpy2PyNotFound, self).__init__("No module named 'cpy2py' in %r" % interpreter)
+        super(RemoteCpy2PyNotFound, self).__init__("No module named 'cpy2py' available for %r" % interpreter)
