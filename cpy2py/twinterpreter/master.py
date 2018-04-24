@@ -22,7 +22,6 @@ from cpy2py.kernel import state
 from cpy2py.twinterpreter import bootstrap
 from cpy2py.ipyc import fifo_pipe
 
-from .process import TwinProcess
 from .main_module import TwinMainModule
 from . import exceptions
 from .interpreter import Interpreter
