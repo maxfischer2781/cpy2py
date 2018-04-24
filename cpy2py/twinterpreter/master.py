@@ -43,45 +43,25 @@ class TwinMaster(object):
 
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
-
-    def __new__(
-            cls, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
-            restore_argv=False, ipyc=fifo_pipe.DuplexFifoIPyC
-    ):
-        twin_def = TwinProcess(executable, twinterpreter_id, kernel)
-        try:
-            master = cls._master_store[twin_def.twinterpreter_id]
-        except KeyError:
-            self = object.__new__(cls)
-            cls._master_store[twin_def.twinterpreter_id] = self
-            return self
-        else:
-            main_def = TwinMainModule(main_module, run_main, restore_argv)
-            assert master.twin_def == twin_def and master.main_def == main_def, \
-                "interpreter with same twinterpreter_id but different settings already exists"
-            return master
+    _store_mutex = threading.Lock()
 
     def __init__(
             self, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
             restore_argv=False, ipyc=fifo_pipe.DuplexFifoIPyC
     ):
         # avoid duplicate initialisation of singleton
-        if self._initialized:
-            return
-        self._initialized = True
-        self._interpreter = Interpreter(executable or twinterpreter_id)
-        self.twinterpreter_id = twinterpreter_id or os.path.basename(self._interpreter.executable)
-        self.main_def = TwinMainModule(main_module, run_main, restore_argv)
-        self._logger = logging.getLogger(
-            '__cpy2py__.twin.%s_to_%s.master' % (state.TWIN_ID, self.twinterpreter_id)
-        )
-        self._process = None
-        self._kernel_master = TwinKernelMaster(twin_id=self.twinterpreter_id, kernel=kernel, ipyc=ipyc, protocol=self._interpreter.pickle_protocol)
-
-    @property
-    def executable(self):
-        """Executable used to launch a twinterpreter"""
-        return self._interpreter.executable
+        with self._store_mutex:
+            self._interpreter = Interpreter(executable or twinterpreter_id)
+            self.twinterpreter_id = twinterpreter_id or os.path.basename(self._interpreter.executable)
+            if twinterpreter_id in self._master_store:
+                raise RuntimeError('Attempt to overwrite existing Master for %r' % twinterpreter_id)
+            self._master_store[self.twinterpreter_id] = self
+            self.main_def = TwinMainModule(main_module, run_main, restore_argv)
+            self._logger = logging.getLogger(
+                '__cpy2py__.twin.%s_to_%s.master' % (state.TWIN_ID, self.twinterpreter_id)
+            )
+            self._process = None
+            self._kernel_master = TwinKernelMaster(twin_id=self.twinterpreter_id, kernel=kernel, ipyc=ipyc, protocol=self._interpreter.pickle_protocol)
 
     @property
     def native(self):
