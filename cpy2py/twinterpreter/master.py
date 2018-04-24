@@ -37,7 +37,12 @@ class TwinMaster(object):
     use any twinterpeters, a corresponding TwinMaster must be created and its
     :py:meth:`TwinMaster.start` method called.
 
-    :see: :py:class:`~.TwinProcess` and :py:class:`~.TwinMainModule` for parameters and their meaning.
+    :param executable: path to executable of secondary interpreter
+    :type executable: str or None
+    :param twinterpreter_id: identified for the twinterpreter
+    :type twinterpreter_id: str or None
+    :param kernel: the type of kernel to use to connect interpreters
+    :param ipyc: the type of interprocess communication to use
     """
     _initialized = False
 
