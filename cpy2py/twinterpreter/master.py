@@ -25,6 +25,7 @@ from cpy2py.ipyc import fifo_pipe
 from .process import TwinProcess
 from .main_module import TwinMainModule
 from . import exceptions
+from .interpreter import Interpreter
 from ._kernel import TwinKernelMaster
 
 
@@ -68,23 +69,19 @@ class TwinMaster(object):
         if self._initialized:
             return
         self._initialized = True
-        self.twin_def = TwinProcess(executable, twinterpreter_id, kernel)
+        self._interpreter = Interpreter(executable or twinterpreter_id)
+        self.twinterpreter_id = twinterpreter_id or os.path.basename(self._interpreter.executable)
         self.main_def = TwinMainModule(main_module, run_main, restore_argv)
         self._logger = logging.getLogger(
             '__cpy2py__.twin.%s_to_%s.master' % (state.TWIN_ID, self.twinterpreter_id)
         )
         self._process = None
-        self._kernel_master = TwinKernelMaster(twin_id=self.twin_def.twinterpreter_id, kernel=kernel, ipyc=ipyc, protocol=self.twin_def.interpreter.pickle_protocol)
+        self._kernel_master = TwinKernelMaster(twin_id=self.twinterpreter_id, kernel=kernel, ipyc=ipyc, protocol=self._interpreter.pickle_protocol)
 
     @property
     def executable(self):
         """Executable used to launch a twinterpreter"""
-        return self.twin_def.executable
-
-    @property
-    def twinterpreter_id(self):
-        """Identifier of a twinterpreter"""
-        return self.twin_def.twinterpreter_id
+        return self._interpreter.executable
 
     @property
     def native(self):
@@ -123,9 +120,9 @@ class TwinMaster(object):
             raise RuntimeError("Attempt to start TwinMaster after destroying it")
         if not self.is_alive:
             self._logger.warning('<%s> Starting Twin [%s]', state.TWIN_ID, self.twinterpreter_id)
-            self._process = self.twin_def.spawn(
-                cli_args=self._twin_args(),
-                env=self._twin_env()
+            self._process = self._interpreter.spawn(
+                arguments=self._twin_args(),
+                environment=self._twin_env()
             )
             time.sleep(0.1)  # sleep while child initializes
             if self._process.poll() is not None:
