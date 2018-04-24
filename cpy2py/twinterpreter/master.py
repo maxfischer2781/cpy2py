@@ -25,6 +25,7 @@ from cpy2py.ipyc import fifo_pipe
 from .process import TwinProcess
 from .main_module import TwinMainModule
 from . import exceptions
+from ._kernel import TwinKernelMaster
 
 
 class TwinMaster(object):
@@ -73,10 +74,7 @@ class TwinMaster(object):
             '__cpy2py__.twin.%s_to_%s.master' % (state.TWIN_ID, self.twinterpreter_id)
         )
         self._process = None
-        self._kernel_server = None
-        self._kernel_client = None
-        self._server_thread = None
-        self.ipyc = ipyc
+        self._kernel_master = TwinKernelMaster(twin_id=self.twin_def.twinterpreter_id, kernel=kernel, ipyc=ipyc, protocol=self.twin_def.interpreter.pickle_protocol)
 
     @property
     def executable(self):
@@ -109,7 +107,7 @@ class TwinMaster(object):
                 return False
             else:
                 return True
-        assert self._process == self._kernel_client == self._kernel_server,\
+        assert self._process is None and not self._kernel_master.alive,\
             "Client, Server and Process must have been realeased together"
         return False
 
@@ -125,10 +123,8 @@ class TwinMaster(object):
             raise RuntimeError("Attempt to start TwinMaster after destroying it")
         if not self.is_alive:
             self._logger.warning('<%s> Starting Twin [%s]', state.TWIN_ID, self.twinterpreter_id)
-            my_server_ipyc = self.ipyc()
-            my_client_ipyc = self.ipyc()
             self._process = self.twin_def.spawn(
-                cli_args=self._twin_args(my_client_ipyc=my_client_ipyc, my_server_ipyc=my_server_ipyc),
+                cli_args=self._twin_args(),
                 env=self._twin_env()
             )
             time.sleep(0.1)  # sleep while child initializes
@@ -136,19 +132,7 @@ class TwinMaster(object):
                 raise exceptions.TwinterpreterProcessError(
                     'Twinterpreter process failed at start with %s' % self._process.poll()
                 )
-            self._kernel_client = self.twin_def.kernel_client(
-                self.twin_def.twinterpreter_id,
-                ipyc=my_client_ipyc,
-                pickle_protocol=self.twin_def.pickle_protocol,
-            )
-            self._kernel_server = self.twin_def.kernel_server(
-                self.twin_def.twinterpreter_id,
-                ipyc=my_server_ipyc,
-                pickle_protocol=self.twin_def.pickle_protocol,
-            )
-            self._server_thread = threading.Thread(target=self._kernel_server.run)
-            self._server_thread.daemon = True
-            self._server_thread.start()
+            self._kernel_master.accept()
             # finalize the twinterpreter
             state.TWIN_GROUP_STATE.run_finalizers(self.twinterpreter_id)
             self._logger.info('<%s> Initialized Twin [%s]', state.TWIN_ID, self.twinterpreter_id)
@@ -156,26 +140,24 @@ class TwinMaster(object):
             self._logger.warning('<%s> Reusing Twin [%s]', state.TWIN_ID, self.twinterpreter_id)
         return self.is_alive
 
-    def _twin_args(self, my_client_ipyc, my_server_ipyc):
+    def _twin_args(self):
         """Create the twin's CLI args"""
         twin_args = []
         # preserve -O
         if not __debug__:
             twin_args.append('-O')
         # bootstrap
-        twin_args.extend([
-            '-m', 'cpy2py.twinterpreter.bootstrap',
-            '--peer-id', state.TWIN_ID,
-            '--twin-id', self.twinterpreter_id,
-            '--master-id', state.MASTER_ID,
-            '--server-ipyc', bootstrap.dump_connector(my_client_ipyc.connector),
-            '--client-ipyc', bootstrap.dump_connector(my_server_ipyc.connector),
-            '--ipyc-pkl-protocol', str(self.twin_def.pickle_protocol),
-            '--kernel', bootstrap.dump_kernel(*self.twin_def.kernel),
-            '--main-def', bootstrap.dump_main_def(self.main_def),
-            '--cwd', os.getcwd(),
-            '--initializer',
-        ] + bootstrap.dump_initializer(state.TWIN_GROUP_STATE.initializers))
+        twin_args.extend((
+                '-m', 'cpy2py.twinterpreter.bootstrap',
+                '--peer-id', state.TWIN_ID,
+                '--twin-id', self.twinterpreter_id,
+                '--master-id', state.MASTER_ID,
+                '--main-def', bootstrap.dump_main_def(self.main_def),
+                '--cwd', os.getcwd(),
+                ))
+        twin_args.extend(self._kernel_master.cli_args)
+        twin_args.append('--initializer')
+        twin_args.extend(bootstrap.dump_initializer(state.TWIN_GROUP_STATE.initializers))
         return twin_args
 
     def _twin_env(self):
@@ -198,9 +180,7 @@ class TwinMaster(object):
 
     def _cleanup(self):
         """Try and close all connections"""
-        if self._kernel_client is not None and self._kernel_client.stop():
-            self._kernel_client = None
-            self._logger.info('<%s> Cleaned up Twin Client [%s]', state.TWIN_ID, self.twinterpreter_id)
+        self._kernel_master.shutdown()
         if self._process is not None:
             # allow twin to shut down before killing it outright
             shutdown_time = time.time()
@@ -211,10 +191,6 @@ class TwinMaster(object):
             if self._process.poll() is not None:
                 self._process = None
                 self._logger.info('<%s> Cleaned up Twin Process [%s]', state.TWIN_ID, self.twinterpreter_id)
-        # reap server LAST in case twin shutdown needs it
-        if self._kernel_server is not None and self._kernel_server.stop():
-            self._kernel_server = None
-            self._logger.info('<%s> Cleaned up Twin Server [%s]', state.TWIN_ID, self.twinterpreter_id)
 
     def execute(self, call, *call_args, **call_kwargs):
         """
@@ -228,5 +204,4 @@ class TwinMaster(object):
         """
         if self.native:
             return call(*call_args, **call_kwargs)
-        assert self._kernel_client is not None
-        return self._kernel_client.request_dispatcher.dispatch_call(call, *call_args, **call_kwargs)
+        return self._kernel_master.client.request_dispatcher.dispatch_call(call, *call_args, **call_kwargs)
