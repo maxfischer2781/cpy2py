@@ -46,6 +46,14 @@ the application.
 Quick Guide
 ===========
 
+To connect two interpreters using ``cpy2py``, it must be installed in both of them.
+For example, to use CPython and PyPy in a single application, make sure the package is available to them:
+
+.. code:: bash
+
+    python -m pip install cpy2py --user
+    pypy -m pip install cpy2py --user
+
 Twinterpreters and TwinMasters
 ------------------------------
 
