@@ -13,10 +13,10 @@
 # - # limitations under the License.
 import logging
 
-from cpy2py.kernel import kernel_state
-from cpy2py.ipyc import ipyc_exceptions
+from cpy2py.kernel import state
+from cpy2py.ipyc import exceptions
 from cpy2py.utility.exceptions import format_exception, CPy2PyException
-from cpy2py.kernel.kernel_exceptions import StopTwinterpreter, TwinterpeterTerminated
+from cpy2py.kernel.exceptions import StopTwinterpreter, TwinterpeterTerminated
 
 
 # Message Enums
@@ -70,7 +70,7 @@ class RequestHandler(object):
     :type kernel_server: :py:class:`~cpy2py.kernel.kernel_single.SingleThreadKernelServer`
     """
     def __init__(self, peer_id, kernel_server):
-        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.handler' % (kernel_state.TWIN_ID, peer_id))
+        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.handler' % (state.TWIN_ID, peer_id))
         self.peer_id = peer_id
         self.kernel_server = kernel_server
         # instance => ref_count
@@ -100,7 +100,7 @@ class RequestHandler(object):
         try:
             if __debug__:
                 self._logger.warning(
-                    '<%s> [%s] Directive %s', kernel_state.TWIN_ID, self.peer_id, E_SYMBOL[directive_type]
+                    '<%s> [%s] Directive %s', state.TWIN_ID, self.peer_id, E_SYMBOL[directive_type]
                 )
             response = directive_method(directive_body)
         # catch internal errors to reraise them
@@ -109,7 +109,7 @@ class RequestHandler(object):
         # send everything else back to calling scope
         except Exception as err:  # pylint: disable=broad-except
             self.kernel_server.send_reply(request_id, (__E_EXCEPTION__, err))
-            self._logger.critical('<%s> [%s] TWIN KERNEL PAYLOAD EXCEPTION', kernel_state.TWIN_ID, self.peer_id)
+            self._logger.critical('<%s> [%s] TWIN KERNEL PAYLOAD EXCEPTION', state.TWIN_ID, self.peer_id)
             format_exception(self._logger, 3)
             if isinstance(err, (KeyboardInterrupt, SystemExit)):
                 raise StopTwinterpreter(message=err.__class__.__name__, exit_code=1)
@@ -200,7 +200,7 @@ class RequestDispatcher(object):
     empty_reply = (None, None)
 
     def __init__(self, peer_id, kernel_client):
-        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.dispatcher' % (kernel_state.TWIN_ID, peer_id))
+        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.dispatcher' % (state.TWIN_ID, peer_id))
         self.peer_id = peer_id
         self.kernel_client = kernel_client
         self.exit_code = None
@@ -209,7 +209,7 @@ class RequestDispatcher(object):
         """Forward a request to peer and return the result"""
         try:
             result_type, result_body = self.kernel_client.run_request((request_type, args))
-        except (ipyc_exceptions.IPyCTerminated, IOError, ValueError):
+        except (exceptions.IPyCTerminated, IOError, ValueError):
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         if result_type == __E_SUCCESS__:
             return result_body
@@ -223,7 +223,7 @@ class RequestDispatcher(object):
         """Forward a request to peer and return the result"""
         try:
             self.kernel_client.run_event((request_type, args))
-        except (ipyc_exceptions.IPyCTerminated, IOError, ValueError):
+        except (exceptions.IPyCTerminated, IOError, ValueError):
             raise TwinterpeterTerminated(twin_id=self.peer_id)
         return True
 

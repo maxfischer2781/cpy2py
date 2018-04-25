@@ -19,8 +19,9 @@ import logging
 
 from cpy2py.meta import __version__ as cpy2py_version
 from cpy2py.utility.compat import pickle, str_to_bytes
-from cpy2py.kernel import kernel_single, kernel_state
-from cpy2py.kernel.kernel_exceptions import TwinterpeterTerminated
+from cpy2py.kernel import state
+from cpy2py.kernel.flavours import single
+from cpy2py.kernel.exceptions import TwinterpeterTerminated
 
 
 DEFAULT_PKL_PROTO = 2  # prot2 is supported by all supported versions
@@ -145,8 +146,8 @@ def bootstrap_kernel():
         default=[],
     )
     settings = parser.parse_args()
-    assert kernel_state.TWIN_ID == settings.twin_id
-    assert kernel_state.MASTER_ID == settings.master_id
+    assert state.TWIN_ID == settings.twin_id
+    assert state.MASTER_ID == settings.master_id
     # setup parent environment/namespace first
     if settings.cwd:
         os.chdir(settings.cwd)
@@ -154,9 +155,9 @@ def bootstrap_kernel():
     # run initializers before creating any resources
     # TwinMaster will run the finalizers directly
     run_initializer(settings.initializer)
-    logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
+    logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (state.TWIN_ID, settings.peer_id)).warning(
         '<%s> [%s] %s.bootstrap_kernel deploying cpy2py %s',
-        kernel_state.TWIN_ID,
+        state.TWIN_ID,
         settings.peer_id,
         'cpy2py.twinterpreter',
         cpy2py_version
@@ -168,9 +169,9 @@ def bootstrap_kernel():
         peer_id=settings.peer_id,
         ipyc_pkl_protocol=settings.ipyc_pkl_protocol
     )
-    logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (kernel_state.TWIN_ID, settings.peer_id)).warning(
+    logging.getLogger('__cpy2py__.kernel.%s_to_%s.bootstrap' % (state.TWIN_ID, settings.peer_id)).warning(
         '<%s> [%s] %s.bootstrap_kernel exiting with %s',
-        kernel_state.TWIN_ID,
+        state.TWIN_ID,
         settings.peer_id,
         'cpy2py.twinterpreter',
         exit_code
@@ -183,7 +184,7 @@ def run_kernel(kernel, client_ipyc, server_ipyc, peer_id, ipyc_pkl_protocol):
     if kernel:
         client, server = kernel
     else:
-        client, server = kernel_single.CLIENT, kernel_single.SERVER
+        client, server = single.CLIENT, single.SERVER
     kernel_server = server(
         peer_id=peer_id,
         ipyc=server_ipyc,

@@ -34,7 +34,7 @@ do so via environment variables:
 import os
 import sys
 
-from cpy2py.kernel.kernel_exceptions import TwinterpeterUnavailable
+from cpy2py.kernel.exceptions import TwinterpeterUnavailable
 
 
 # current twin state

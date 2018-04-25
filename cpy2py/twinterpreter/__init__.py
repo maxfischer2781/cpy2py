@@ -12,19 +12,23 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 """
-Alternative interpreters deployed in parallel
+Control and Management of additional interpreters deployed in parallel
+
+This module is tasked with managing the actual interpreter - its process and environment.
+It is meant to start, initialise, finalise and stop interpreters.
+While running, the :py:mod:`~cpy2py.kernel` module handles the interaction between interpreters.
 """
 import logging
 # bootstrap group state
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state
 from cpy2py.twinterpreter import group_state
 
 
 def _register_twin_group_state(twin_group_state):
-    kernel_state.TWIN_GROUP_STATE = twin_group_state
+    state.TWIN_GROUP_STATE = twin_group_state
 
 
-if kernel_state.is_master():
+if state.is_master():
     TGS = group_state.TwinGroupState()
     _register_twin_group_state(TGS)
     TGS.add_finalizer(_register_twin_group_state, TGS)
@@ -47,5 +51,5 @@ def _bootstrap_coverage():
             logger.info('plugin coverage disabled')
 
 
-if kernel_state.is_master():
-    kernel_state.TWIN_GROUP_STATE.add_initializer(_bootstrap_coverage)
+if state.is_master():
+    state.TWIN_GROUP_STATE.add_initializer(_bootstrap_coverage)

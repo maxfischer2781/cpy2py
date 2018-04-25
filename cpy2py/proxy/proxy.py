@@ -11,19 +11,23 @@
 # - # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
-from cpy2py.kernel.kernel_exceptions import TwinterpeterUnavailable
-from cpy2py.kernel import kernel_state
+"""
+Proxies for entities in other twinterpreters
+"""
+from cpy2py.kernel.exceptions import TwinterpeterUnavailable
+from cpy2py.kernel import state
 
-from cpy2py.proxy import proxy_tracker
+from cpy2py.proxy import tracker
 
 
-class ProxyMethod(object):
+class UnboundedMethodProxy(object):
     """
-    Proxy for Methods
+    Proxy for unbounded methods
 
-    :param real_method: the method object to be proxied
+    :param real_method: the unbounded method object to be proxied
+
+    :note: In Python3 terms, an unbounded method is simply a function bound to a class.
     """
-
     def __init__(self, real_method):
         self.__wrapped__ = real_method
         for attribute in ('__doc__', '__defaults__', '__name__', '__module__'):
@@ -36,7 +40,7 @@ class ProxyMethod(object):
     def __get__(self, instance, owner):
         if instance is None:
             subject = owner
-            kernel = kernel_state.get_kernel(subject.__twin_id__)
+            kernel = state.get_kernel(subject.__twin_id__)
         else:
             subject = instance
             kernel = subject.__kernel__
@@ -48,9 +52,9 @@ class ProxyMethod(object):
         )
 
 
-class TwinProxy(object):
+class InstanceProxy(object):
     """
-    Proxy for instances existing in another twinterpreter
+    Proxy for instances of classes
 
     :see: Real object :py:class:`~cpy2py.proxy.proxy_object.TwinObject` for magic attributes.
 
@@ -65,7 +69,7 @@ class TwinProxy(object):
 
     def __new__(cls, *args, **kwargs):
         self = object.__new__(cls)
-        __kernel__ = kernel_state.get_kernel(self.__twin_id__)
+        __kernel__ = state.get_kernel(self.__twin_id__)
         object.__setattr__(self, '__kernel__', __kernel__)
         try:
             # native instance exists, but no proxy yet
@@ -81,7 +85,7 @@ class TwinProxy(object):
             object.__setattr__(self, '__instance_id__', __instance_id__)
             __kernel__.increment_instance_ref(self)
         # store for later use without requiring explicit lookup/converter calls
-        proxy_tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
+        tracker.__active_instances__[self.__twin_id__, self.__instance_id__] = self
         return self
 
     def __repr__(self):

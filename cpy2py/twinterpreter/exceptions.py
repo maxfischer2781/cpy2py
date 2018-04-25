@@ -12,10 +12,10 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 # pylint: disable=too-many-ancestors,non-parent-init-called,super-init-not-called
-import cpy2py.utility.exceptions
+from cpy2py.utility.exceptions import CPy2PyException
 
 
-class TwinterpreterException(cpy2py.utility.exceptions.CPy2PyException):
+class TwinterpreterException(CPy2PyException):
     """Exceptions relating to Twinterpreter"""
     pass
 
@@ -23,3 +23,11 @@ class TwinterpreterException(cpy2py.utility.exceptions.CPy2PyException):
 class TwinterpreterProcessError(TwinterpreterException):
     """Error relating to a Twinterpreter process"""
     pass
+
+
+class RemoteCpy2PyNotFound(ImportError, CPy2PyException):
+    """Module ``cpy2py`` not available in twinterpreter"""
+    def __init__(self, interpreter):
+        self.name = 'cpy2py'
+        self.interpreter = interpreter
+        super(RemoteCpy2PyNotFound, self).__init__("No module named 'cpy2py' available for %r" % interpreter)

@@ -12,8 +12,8 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 from __future__ import print_function
-from cpy2py.proxy.proxy_object import TwinObject, localmethod
-from cpy2py.kernel import kernel_state
+from cpy2py.proxy.baseclass import TwinObject, localmethod
+from cpy2py.kernel import state
 import threading
 
 
@@ -66,7 +66,7 @@ class TwinGroupState(TwinObject):
         :type init_existing: bool
         """
         init_existing = kwargs.pop("init_existing", True)
-        initializer = TwinInitDirective(call=func, args=args, kwargs=kwargs, parent_twin_id=kernel_state.TWIN_ID)
+        initializer = TwinInitDirective(call=func, args=args, kwargs=kwargs, parent_twin_id=state.TWIN_ID)
         self._add_initializer(initializer=initializer, init_existing=init_existing, collection='initializers')
 
     @localmethod
@@ -81,14 +81,14 @@ class TwinGroupState(TwinObject):
         :type init_existing: bool
         """
         init_existing = kwargs.pop("init_existing", True)
-        initializer = TwinInitDirective(call=func, args=args, kwargs=kwargs, parent_twin_id=kernel_state.TWIN_ID)
+        initializer = TwinInitDirective(call=func, args=args, kwargs=kwargs, parent_twin_id=state.TWIN_ID)
         self._add_initializer(initializer=initializer, init_existing=init_existing, collection='finalizers')
 
     def _add_initializer(self, initializer, init_existing, collection):
         with self._global_lock:
             getattr(self, collection).append(initializer)
             if init_existing:
-                for twin_id, client in kernel_state.KERNEL_INTERFACE.items():
+                for twin_id, client in state.KERNEL_INTERFACE.items():
                     if twin_id == initializer.parent_twin_id:
                         continue
                     client.dispatch_call(initializer.call, *initializer.args, **initializer.kwargs)
@@ -102,6 +102,6 @@ class TwinGroupState(TwinObject):
         :note: This function is called automatically when bootstrapping
                a twinterpreter. It is not intended for manual use.
         """
-        client = kernel_state.get_kernel(twin_id)
+        client = state.get_kernel(twin_id)
         for finalizer in self.finalizers:
             client.dispatch_call(finalizer)

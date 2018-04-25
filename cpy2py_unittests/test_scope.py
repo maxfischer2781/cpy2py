@@ -2,7 +2,7 @@ import unittest
 import time
 
 from cpy2py import kernel_state, TwinMaster, TwinObject
-from cpy2py.proxy.proxy_object import localmethod
+from cpy2py.proxy.baseclass import localmethod
 
 
 def test_kernel(kernel_id):

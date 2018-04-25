@@ -26,20 +26,20 @@ import time
 import logging
 import threading
 
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state
 
 from cpy2py.utility.exceptions import format_exception
-from cpy2py.ipyc import ipyc_exceptions
-from cpy2py.kernel.kernel_exceptions import StopTwinterpreter
-from cpy2py.proxy import proxy_tracker
-from cpy2py.kernel.kernel_requesthandler import RequestDispatcher, RequestHandler
+from cpy2py.ipyc import exceptions
+from cpy2py.kernel.exceptions import StopTwinterpreter
+from cpy2py.proxy import tracker
+from cpy2py.kernel.requesthandler import RequestDispatcher, RequestHandler
 
 
 def _connect_ipyc(ipyc, pickle_protocol):
     """Connect pickle/unpickle trackers to a duplex IPyC"""
-    pickler = proxy_tracker.twin_pickler(ipyc.writer, pickle_protocol)
+    pickler = tracker.twin_pickler(ipyc.writer, pickle_protocol)
     send = pickler.dump
-    unpickler = proxy_tracker.twin_unpickler(ipyc.reader)
+    unpickler = tracker.twin_unpickler(ipyc.reader)
     recv = unpickler.load
     return send, recv
 
@@ -56,12 +56,12 @@ class SingleThreadKernelServer(object):
     :type pickle_protocol: int
     """
     def __new__(cls, peer_id, *args, **kwargs):  # pylint: disable=unused-argument
-        assert peer_id not in kernel_state.KERNEL_SERVERS, 'Twinterpreters must have unique IDs'
-        kernel_state.KERNEL_SERVERS[peer_id] = object.__new__(cls)
-        return kernel_state.KERNEL_SERVERS[peer_id]
+        assert peer_id not in state.KERNEL_SERVERS, 'Twinterpreters must have unique IDs'
+        state.KERNEL_SERVERS[peer_id] = object.__new__(cls)
+        return state.KERNEL_SERVERS[peer_id]
 
     def __init__(self, peer_id, ipyc, pickle_protocol=2):
-        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.server' % (kernel_state.TWIN_ID, peer_id))
+        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.server' % (state.TWIN_ID, peer_id))
         self.peer_id = peer_id
         self._ipyc = ipyc
         self._ipyc.open()
@@ -80,42 +80,42 @@ class SingleThreadKernelServer(object):
         self._terminate.clear()
         exit_code = 1
         self._logger.warning(
-            '<%s> [%s] Starting %s @ %s', kernel_state.TWIN_ID, self.peer_id, self.__class__.__name__, time.asctime()
+            '<%s> [%s] Starting %s @ %s', state.TWIN_ID, self.peer_id, self.__class__.__name__, time.asctime()
         )
         try:
             self._serve_requests()
         except StopTwinterpreter as err:
             # actively shutting down
-            self._logger.critical('<%s> [%s] TWIN KERNEL TERMINATED: %s', kernel_state.TWIN_ID, self.peer_id, err)
+            self._logger.critical('<%s> [%s] TWIN KERNEL TERMINATED: %s', state.TWIN_ID, self.peer_id, err)
             exit_code = err.exit_code
         # cPickle may raise EOFError by itself
-        except (ipyc_exceptions.IPyCTerminated, EOFError) as err:
+        except (exceptions.IPyCTerminated, EOFError) as err:
             # regular shutdown by master
-            self._logger.critical('<%s> [%s] TWIN KERNEL RELEASED: %s', kernel_state.TWIN_ID, self.peer_id, err)
+            self._logger.critical('<%s> [%s] TWIN KERNEL RELEASED: %s', state.TWIN_ID, self.peer_id, err)
             exit_code = 0
         except Exception as err:  # pylint: disable=broad-except
             # unexpected shutdown
             # provide extended traceback if requested
             self._logger.critical(
-                '<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION: %s', kernel_state.TWIN_ID, self.peer_id, err
+                '<%s> [%s] TWIN KERNEL INTERNAL EXCEPTION: %s', state.TWIN_ID, self.peer_id, err
             )
             format_exception(self._logger, 3)
             # emulate regular python exit
             import traceback
             exit_code = 1
             traceback.print_exc(file=sys.stderr)
-            print('TwinError: unhandled exception in', kernel_state.TWIN_ID, file=sys.stderr)
+            print('TwinError: unhandled exception in', state.TWIN_ID, file=sys.stderr)
         finally:
             self._terminate.set()
-            self._logger.critical('<%s> [%s] TWIN KERNEL SHUTDOWN: %d', kernel_state.TWIN_ID, self.peer_id, exit_code)
+            self._logger.critical('<%s> [%s] TWIN KERNEL SHUTDOWN: %d', state.TWIN_ID, self.peer_id, exit_code)
             self._ipyc.close()
-            del kernel_state.KERNEL_SERVERS[self.peer_id]
+            del state.KERNEL_SERVERS[self.peer_id]
         return exit_code
 
     def _serve_requests(self):
         while not self._terminate.is_set():
             if __debug__:
-                self._logger.warning('<%s> [%s] Server Listening', kernel_state.TWIN_ID, self.peer_id)
+                self._logger.warning('<%s> [%s] Server Listening', state.TWIN_ID, self.peer_id)
             request_id, directive = self._server_recv()
             self.request_handler.serve_request(request_id, directive)
 
@@ -144,19 +144,19 @@ class SingleThreadKernelClient(object):
     :type pickle_protocol: int
     """
     def __new__(cls, peer_id, *args, **kwargs):  # pylint: disable=unused-argument
-        assert peer_id not in kernel_state.KERNEL_CLIENTS, 'Twinterpreters must have unique IDs'
-        kernel_state.KERNEL_CLIENTS[peer_id] = object.__new__(cls)
-        return kernel_state.KERNEL_CLIENTS[peer_id]
+        assert peer_id not in state.KERNEL_CLIENTS, 'Twinterpreters must have unique IDs'
+        state.KERNEL_CLIENTS[peer_id] = object.__new__(cls)
+        return state.KERNEL_CLIENTS[peer_id]
 
     def __init__(self, peer_id, ipyc, pickle_protocol=2):
-        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.client' % (kernel_state.TWIN_ID, peer_id))
+        self._logger = logging.getLogger('__cpy2py__.kernel.%s_to_%s.client' % (state.TWIN_ID, peer_id))
         self.peer_id = peer_id
         # communication
         self._ipyc = ipyc
         self._ipyc.open()
         self._client_send, self._client_recv = _connect_ipyc(ipyc, pickle_protocol)
         self.request_dispatcher = RequestDispatcher(peer_id=self.peer_id, kernel_client=self)
-        kernel_state.KERNEL_INTERFACE[peer_id] = self.request_dispatcher
+        state.KERNEL_INTERFACE[peer_id] = self.request_dispatcher
 
     def run_request(self, request_body):
         my_id = threading.current_thread().ident
@@ -179,8 +179,8 @@ class SingleThreadKernelClient(object):
         """Shutdown the local server"""
         self._ipyc.close()
         try:
-            del kernel_state.KERNEL_CLIENTS[self.peer_id]
-            del kernel_state.KERNEL_INTERFACE[self.peer_id]
+            del state.KERNEL_CLIENTS[self.peer_id]
+            del state.KERNEL_INTERFACE[self.peer_id]
         except KeyError:
             pass
 

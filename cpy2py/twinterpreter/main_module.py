@@ -12,10 +12,10 @@
 # - # See the License for the specific language governing permissions and
 # - # limitations under the License.
 """
-Instances of :py:class:`~.MainDef` define how ``__main__`` is
+Instances of :py:class:`~.TwinMainModule` define how ``__main__`` is
 bootstrapped in twinterpreters. A
 :py:class:`~cpy2py.twinterpeter.twin_master.TwinMaster` without
-a :py:class:`~.MainDef` defaults to :py:data:`DEFAULT_DEF`.
+a :py:class:`~.TwinMainModule` defaults to :py:data:`DEFAULT_DEF`.
 
 Bootstrap the ``__main__`` module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -51,10 +51,10 @@ It may be specified explicitly, automatically detected or turned off.
   run like invoking "python -m foo.bar". Useful for interpreter-specific
   definitions of ``__main__``, e.g. respecting different python versions.
 
-:py:attr:`~.MainDef.FETCH_PATH`
+:py:attr:`~.TwinMainModule.FETCH_PATH`
   Use the file path of ``__main__``.
 
-:py:attr:`~.MainDef.FETCH_NAME`
+:py:attr:`~.TwinMainModule.FETCH_NAME`
   Use the module name of ``__main__``.
 
 :py:const:`True`
@@ -85,10 +85,10 @@ import runpy
 import types
 import logging
 
-from cpy2py.kernel import kernel_state
+from cpy2py.kernel import state as kernel_state
 
 
-class MainDef(object):
+class TwinMainModule(object):
     """
     Definition on bootstrapping a program into a twinterpreter
 
@@ -240,5 +240,5 @@ class MainDef(object):
     def __ne__(self, other):
         return not self == other
 
-#: The default :py:class:`MainDef` instance to use
-DEFAULT_DEF = MainDef()
+#: The default :py:class:`TwinMainModule` instance to use
+DEFAULT_DEF = TwinMainModule()
