@@ -56,7 +56,7 @@ class TwinMaster(object):
         # avoid duplicate initialisation of singleton
         with self._store_mutex:
             self._interpreter = Interpreter(executable or twinterpreter_id)
-            self.twinterpreter_id = twinterpreter_id or os.path.basename(self._interpreter.executable)
+            self.twinterpreter_id = twinterpreter_id or os.path.basename(executable)
             if twinterpreter_id in self._master_store:
                 raise RuntimeError('Attempt to overwrite existing Master for %r' % twinterpreter_id)
             self._master_store[self.twinterpreter_id] = self
