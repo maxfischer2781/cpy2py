@@ -47,7 +47,7 @@ class TwinMaster(object):
 
     #: singleton store `twinterpreter_id` => `master`
     _master_store = {}
-    _store_mutex = threading.Lock()
+    _store_mutex = threading.RLock()
 
     def __init__(
             self, executable=None, twinterpreter_id=None, kernel=None, main_module=True, run_main=None,
@@ -186,3 +186,23 @@ class TwinMaster(object):
         if self.native:
             return call(*call_args, **call_kwargs)
         return self._kernel_master.client.request_dispatcher.dispatch_call(call, *call_args, **call_kwargs)
+
+
+class AutoTwinMaster(TwinMaster):
+    """
+    Any :py:class:`TwinMaster` that is automatically created and started when no twin exists
+    """
+    def __init__(self, twinterpreter_id):
+        with self._store_mutex:
+            try:
+                existing_master = self._master_store[twinterpreter_id]
+            except KeyError:
+                # explicitly supply safe defaults
+                super(AutoTwinMaster, self).__init__(
+                    executable=None, twinterpreter_id=twinterpreter_id,
+                    kernel='async', ipyc=fifo_pipe.DuplexFifoIPyC,
+                    main_module=True, run_main=False, restore_argv=True,
+                )
+                self.start()
+            else:
+                existing_master.start()
