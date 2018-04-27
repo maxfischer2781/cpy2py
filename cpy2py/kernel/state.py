@@ -76,4 +76,9 @@ def get_kernel(kernel_id):
     try:
         return KERNEL_INTERFACE[kernel_id]
     except KeyError:
-        raise TwinterpeterUnavailable(twin_id=kernel_id)
+        if os.environ.get('CPY2PY_NOAUTO'):
+            raise TwinterpeterUnavailable(twin_id=kernel_id)
+        # TODO: fix that import circle...
+        from cpy2py.twinterpreter.master import AutoTwinMaster
+        AutoTwinMaster(kernel_id)
+        return KERNEL_INTERFACE[kernel_id]
