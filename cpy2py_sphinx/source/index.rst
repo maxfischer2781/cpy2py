@@ -20,15 +20,15 @@
 Welcome to CPy2Py's documentation!
 ==================================
 
-To start with :py:mod:`cpy2py`, you should start with the overview pages:
+The purpose of :py:mod:`cpy2py` is to run a single application across multiple Python interpreters.
+This allows for portability of old code, as well as compatibility across implementations.
 
-* A quick overview of features is available in the :doc:`README <docs/README>`.
-* Key terms are listed in the :doc:`Glossary <docs/definitions>`
+While :py:mod:`cpy2py` strives for usability, it uses some advanced techniques under the hood.
+The documentation thus covers several different
 
-Since the API is still being heavily extended, there is not guide or tutorial.
-Instead, refer to the examples for various features:
-
-* :doc:`examples/example_function`
+* :doc:`docs/tutorial_main`
+* :doc:`examples/main`
+* :doc:`Readme and Overview <docs/README>`
 
 The working principles and usage are described in the following topical pages:
 
