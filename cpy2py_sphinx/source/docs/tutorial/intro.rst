@@ -92,9 +92,8 @@ This is because :py:mod:`cpy2py` has to setup an extensive bookkeeping infrastru
 Runtime  CPython3 PyPy3
 ======== ======== =====
 unpinned  6.9s     0.4s
--------- -------- -----
 pinned    1.2s     0.8s
--------- -------- -----
+======== ======== =====
 
 While this overhead will likely be reduced in the future, it will always be notable for short scripts.
 Make sure the use of :py:mod:`cpy2py` is beneficial or required before applying it.
